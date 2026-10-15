@@ -6,13 +6,14 @@
 #                                          (reproducible: this is the committed binary)
 set -euo pipefail
 cd "$(dirname "$0")/.."
-TC="${RISC0_RUST:-$(ls -d "$HOME"/.risc0/toolchains/v1.*-rust-* | sort -V | tail -1)/bin}"
 FLAGS=$(printf '%s\x1f' -C passes=lower-atomic -C link-arg=-Ttext=0x00200800 -C link-arg=--fatal-warnings \
   -C panic=abort --cfg 'getrandom_backend="custom"')
 FLAGS=${FLAGS%$'\x1f'}
-# blst is C: the RISC Zero C toolchain (rzup install cpp), as risc0-build sets it up.
-CC_RV="${RISC0_CC:-$(ls -d "$HOME"/.risc0/toolchains/v*-cpp-* | sort -V | tail -1)/riscv32im-osx-arm64/bin/riscv32-unknown-elf-gcc}"
-build() { # dir bin
+build() { # dir bin  (local toolchains, looked up only when a local build runs)
+  local TC CC_RV
+  TC="${RISC0_RUST:-$(ls -d "$HOME"/.risc0/toolchains/v1.*-rust-* | sort -V | tail -1)/bin}"
+  # blst is C: the RISC Zero C toolchain (rzup install cpp), as risc0-build sets it up.
+  CC_RV="${RISC0_CC:-$(ls -d "$HOME"/.risc0/toolchains/v*-cpp-* | sort -V | tail -1)/riscv32im-osx-arm64/bin/riscv32-unknown-elf-gcc}"
   (cd "$1" && RUSTC="$TC/rustc" CARGO_ENCODED_RUSTFLAGS="$FLAGS" CC=/no_cc RISC0_FEATURE_bigint2= \
     CC_riscv32im_risc0_zkvm_elf="$CC_RV" CFLAGS_riscv32im_risc0_zkvm_elf="-march=rv32im -nostdlib" \
     cargo build -j "${JOBS:-4}" --release --target riscv32im-risc0-zkvm-elf --bin "$2")

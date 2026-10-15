@@ -6,9 +6,13 @@
 //! has them now (the **pre-check**). An instruction the program accepts is
 //! sent with a gas limit of its measured gas plus 10%; one it refuses is
 //! reported with its typed code (`E72xx`) and, with `--force`, sent anyway so
-//! that the chain's own verdict is on record. On v0.3.1 a public transaction
-//! whose program refuses fails settlement: the sequencer leaves it out of the
-//! block and charges nothing, so it never resolves by hash.
+//! that the chain's own verdict is on record. On v0.3 a public transaction
+//! whose program refuses is still included: it changes nothing and its payer
+//! is charged the whole gas limit (`from_public_transaction_metered`), while an
+//! accepted one is charged the cycles it used. The verdict is read back from
+//! the chain both ways: the accounts the instruction touches, and the gas the
+//! block's fee transaction records (`applied`: the pre-checked gas, below the
+//! limit; `reverted`: exactly the limit, nothing changed).
 //!
 //! The fee payer co-signs every transaction without joining its accounts, as
 //! the wallet does for program_loader writes. A transaction the sequencer
@@ -16,8 +20,8 @@
 //! payer's nonce as the chain has it, so at most one attempt can land.
 //!
 //! Each transaction prints one JSON line: label, operation, pre-check, gas
-//! limit, every attempt's hash, the block it landed in, and the verdict
-//! (`applied`: included; `not-included`: no attempt resolved).
+//! limit, every attempt's hash, the block it landed in, the block's charged gas,
+//! and the verdict.
 
 use std::{path::PathBuf, time::Duration};
 
@@ -47,6 +51,16 @@ const CHECKPOINT_BLOCK_DIR: &str = "vectors/mainnet/block-26170219";
 const CHECKPOINT_TX: u64 = 16;
 /// The keccak of `Transfer(address,address,uint256)`: topic 0 of an ERC-20 transfer log.
 const TRANSFER: &str = "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+/// The gas limit a refused instruction is sent with: the largest gas the honest
+/// instruction of that kind uses (docs/raw/measure-lez-*.txt), plus 10%.
+const HONEST_INIT: u64 = 2_017_028;
+const HONEST_BEGIN: u64 = 6_020_394;
+const HONEST_MILLER: u64 = 4_639_329;
+const HONEST_FINISH: u64 = 4_145_066;
+const HONEST_ATTEST_LOG: u64 = 100_290;
+const HONEST_ATTEST_STORAGE: u64 = 334_693;
+/// The fee program (`fee_core::fee_account_id()`): every block ends with its `Distribute`.
+const FEE_PROGRAM: &str = "2TsGdKDWTY92X4vSBZzjzemZpThhyqNEdZJj3xBrQ9AZ";
 /// Sepolia's genesis validators root: an instance configured with it is another chain's.
 const SEPOLIA_GVR: &str = "d8ea171f3c94aea21ebc42a1ed61052acf3f9209c00e4efbaaddac09ed9b8078";
 
@@ -293,6 +307,23 @@ impl Ctx {
         Ok(!self.account(a).await?.data.shard(lee_core::program::PROGRAM_LOADER_ACCOUNT_ID).is_empty())
     }
 
+    /// `(gas_used_exec, gas_used_stor)` of block `b`, read from its fee transaction.
+    async fn block_fee_summary(&self, b: u64) -> Result<(u64, u64)> {
+        let block = self.rpc.get_block(b).await.map_err(|e| anyhow!("getBlock {b}: {e}"))?.ok_or_else(|| anyhow!("no block {b}"))?;
+        let fee: AccountId = FEE_PROGRAM.parse().map_err(|e| anyhow!("{e:?}"))?;
+        for tx in &block.body.transactions {
+            if let LeeTransaction::Public(t) = tx {
+                let m = t.message();
+                // fee_core::Instruction::Distribute { summary: BlockFeeSummary { gas_used_exec, gas_used_stor, .. }, .. }
+                if m.program_account_id == fee && m.instruction_data.first() == Some(&0) && m.instruction_data.len() >= 17 {
+                    let d = &m.instruction_data;
+                    return Ok((u64::from_le_bytes(d[1..9].try_into()?), u64::from_le_bytes(d[9..17].try_into()?)));
+                }
+            }
+        }
+        Err(anyhow!("block {b} has no fee transaction"))
+    }
+
     async fn balance(&self, who: AccountId) -> Result<u128> {
         self.rpc.get_account_balance(who).await.map_err(|e| anyhow!("balance of {who}: {e}"))
     }
@@ -311,6 +342,9 @@ impl Ctx {
         let pre = self.precheck(&ix, &rows).await?;
         let (gas_limit, pre_json) = match &pre {
             Pre::Gas(g) => ((g + g / 10).clamp(100_000, GAS_CAP), serde_json::json!({"gas": g})),
+            // A refused public transaction is included and charged its whole gas limit;
+            // the limit is the honest instruction's, so running out of gas cannot be
+            // what refused it.
             Pre::Refused(e) => (fallback_gas, serde_json::json!({"refused": e})),
         };
         let mut line = serde_json::json!({"op": op, "label": self.label, "precheck": pre_json, "gas_limit": gas_limit});
@@ -339,6 +373,10 @@ impl Ctx {
         line["fee_reserve"] = reserve.to_string().into();
         line["payer_balance_before"] = balance.to_string().into();
         ensure!(balance > reserve, "the payer holds {balance}, below the fee reserve {reserve}: a send would be dropped at the fee screen");
+        let mut before = vec![];
+        for r in &rows {
+            before.push(self.shard(*r).await?);
+        }
         let mut hashes: Vec<HashType> = vec![];
         let mut found = None;
         for attempt in 1..=3 {
@@ -372,7 +410,28 @@ impl Ctx {
             Some((h, b)) => {
                 line["tx"] = h.to_string().into();
                 line["block"] = b.into();
-                line["verdict"] = "applied".into();
+                let mut after = vec![];
+                for r in &rows {
+                    after.push(self.shard(*r).await?);
+                }
+                let changed = after != before;
+                line["state_changed"] = changed.into();
+                // What the chain charged, from the block's fee transaction: its summary
+                // counts every charged transaction of the block, so it is this one's
+                // alone when the block's storage gas is exactly this transaction's bytes.
+                // Applied: the program's cycles. Refused: the whole gas limit.
+                let (exec, stor) = self.block_fee_summary(b).await?;
+                line["block_gas_exec"] = exec.into();
+                line["block_gas_stor"] = stor.into();
+                let alone = stor == data_bytes as u64;
+                let writes = op != "attest";
+                line["verdict"] = match (alone, &pre) {
+                    (false, _) => "included-shared-block",
+                    (true, Pre::Gas(g)) if exec == *g && exec < gas_limit && (changed || !writes) => "applied",
+                    (true, _) if exec == gas_limit && !changed => "reverted",
+                    _ => "inconsistent",
+                }
+                .into();
             }
             None => {
                 line["tx"] = hashes.last().map(|h| h.to_string()).unwrap_or_else(|| "-".into()).into();
@@ -528,7 +587,7 @@ async fn main() -> Result<()> {
                 branch: m.boot_branch.clone(),
             };
             let rows = vec![instance_account(&p, &id), header_account(&p, &id, boot.finalized.slot)];
-            ctx.run(wallet.as_ref().unwrap(), "init", ix, rows, 2_000_000).await?;
+            ctx.run(wallet.as_ref().unwrap(), "init", ix, rows, HONEST_INIT).await?;
         }
         Cmd::Begin { n, tamper } => {
             let p = ctx.program()?;
@@ -538,13 +597,13 @@ async fn main() -> Result<()> {
             let w = witness(&committee, &u.bits, AggMode::Subtract);
             let job = job_account(&p, &id, &job_id(&current, &u));
             let ix = Instruction::Begin { instance_id: id, current, update: u, committee, witness: w };
-            ctx.run(wallet.as_ref().unwrap(), "begin", ix, vec![instance_account(&p, &id), job], 6_000_000).await?;
+            ctx.run(wallet.as_ref().unwrap(), "begin", ix, vec![instance_account(&p, &id), job], HONEST_BEGIN).await?;
         }
         Cmd::Miller { n, tamper } => {
             let p = ctx.program()?;
             let jid = job_id(&ctx.current(n)?, &ctx.update(n, tamper)?);
             let ix = Instruction::Miller { instance_id: id, job_id: jid };
-            ctx.run(wallet.as_ref().unwrap(), "miller", ix, vec![job_account(&p, &id, &jid)], 5_000_000).await?;
+            ctx.run(wallet.as_ref().unwrap(), "miller", ix, vec![job_account(&p, &id, &jid)], HONEST_MILLER).await?;
         }
         Cmd::Finish { n, tamper } => {
             let p = ctx.program()?;
@@ -553,7 +612,7 @@ async fn main() -> Result<()> {
             let next = ctx.next(n)?;
             let rows = vec![instance_account(&p, &id), job_account(&p, &id, &jid), header_account(&p, &id, next.finalized.slot)];
             let ix = Instruction::Finish { instance_id: id, job_id: jid, current, next };
-            ctx.run(wallet.as_ref().unwrap(), "finish", ix, rows, 4_500_000).await?;
+            ctx.run(wallet.as_ref().unwrap(), "finish", ix, rows, HONEST_FINISH).await?;
         }
         Cmd::Attest { at, kind, chain_id, negate, wrong_slot, slot_offset } => {
             let p = ctx.program()?;
@@ -585,8 +644,9 @@ async fn main() -> Result<()> {
                     (Proof::Storage(wp), Predicate { field: Field::SlotValue, cmp, value: one })
                 }
             };
+            let honest = if kind == Kind::Log { HONEST_ATTEST_LOG } else { HONEST_ATTEST_STORAGE };
             let ix = Instruction::Attest { instance_id: id, slot, query: Query { chain_id, proof, predicates: vec![predicate] } };
-            ctx.run(wallet.as_ref().unwrap(), "attest", ix, vec![header_account(&p, &id, slot)], 500_000).await?;
+            ctx.run(wallet.as_ref().unwrap(), "attest", ix, vec![header_account(&p, &id, slot)], honest).await?;
         }
     }
     Ok(())

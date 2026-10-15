@@ -8,16 +8,23 @@
 #                     1884), attestations against the last header, and the
 #                     refusals that need applied steps first (a resigned
 #                     update refused at Finish, another chain's instance)
-#   SCENARIO=testnet  what the public testnet payer can fund: Init, update 1
-#                     (period 1881), attestations against the checkpoint's
-#                     header, and every refusal that needs nothing applied
+#   SCENARIO=testnet  what the public testnet payer can fund (a refusal is
+#                     charged its whole gas limit): Init, update 1 (period
+#                     1881), attestations against the checkpoint's header, the
+#                     refusals that cost an Attest or an Init, and the duplicate
+#                     Finish if the balance still covers it
 #
 # Needs: cli/target/release/sextant, LEE_WALLET_HOME_DIR holding PAYER's key,
 # and DEPLOY=1 or SEXTANT_PROGRAM. Writes $OUT, one line per transaction:
-#   label  expected(applied|refused)  verdict  block  tx  attempts  precheck
-# On v0.3.1 a refused public transaction fails settlement and is left out of
-# the block, uncharged: `refused` means the local pre-check returned the
-# program's typed refusal and no attempt sent to the chain ever resolved.
+#   label expected verdict block tx attempts precheck gas_limit charged_gas
+# On LEZ v0.3 a public transaction the program refuses is still included in a
+# block: it changes nothing, and its payer is charged the whole gas limit. An
+# accepted one is charged the cycles it used. So every transaction here is
+# included, and its verdict is read back from the chain: `applied` (charged
+# exactly the pre-checked gas, below its limit, and for Init/Begin/Miller/
+# Finish the accounts changed) or `reverted` (charged exactly its limit,
+# nothing changed). Refusals are sent with the gas limit of the honest
+# instruction of the same kind, so running out of gas cannot explain them.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -79,12 +86,12 @@ step() {
   verdict="$(jget "$line" verdict)"
   pre="$(jget "$line" precheck.gas)"; [ -n "$pre" ] && pre="gas=$pre" || pre="$(jget "$line" precheck.refused | cut -c1-5)"
   want=applied; [ "$expect" = applied ] || want=refused
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$label" "$want" "$verdict" "$(jget "$line" block)" "$(jget "$line" tx)" \
-    "$(attempts_of "$line")" "${pre:--}" >> "$OUT"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$label" "$want" "$verdict" "$(jget "$line" block)" "$(jget "$line" tx)" \
+    "$(attempts_of "$line")" "${pre:--}" "$(jget "$line" gas_limit)" "$(jget "$line" block_gas_exec)" >> "$OUT"
   echo "# line $label $line" >> "$OUT"
   case "$expect:$verdict:$pre" in
     (applied:applied:gas=*) echo "  ok  $label: applied ($pre)" ;;
-    (E72*:not-included:"$expect") echo "  ok  $label: refused ($pre), no attempt included" ;;
+    (E72*:reverted:"$expect") echo "  ok  $label: refused ($pre), included and charged its whole limit, nothing changed" ;;
     (*) echo "  FAIL $label: $verdict ($pre), expected $expect"; fail=1 ;;
   esac
 }
@@ -106,10 +113,12 @@ step attest-predicate-false E7208 -- attest --at checkpoint --kind log --negate
 step attest-slot-not-covered E7207 -- attest --at checkpoint --kind storage --wrong-slot
 step attest-unrecorded-header E7292 -- attest --at checkpoint --kind log --slot-offset 1
 
-echo "== 3. fabricated updates never open a job"
-step begin-below-participation E7205 -- begin 1 --tamper participation
-step begin-altered-signature E7203 -- begin 1 --tamper bitflip
-step begin-header-not-finalized E7202 -- begin 1 --tamper moved
+if [ "$SCENARIO" = full ]; then
+  echo "== 3. fabricated updates never open a job"
+  step begin-below-participation E7205 -- begin 1 --tamper participation
+  step begin-altered-signature E7203 -- begin 1 --tamper bitflip
+  step begin-header-not-finalized E7202 -- begin 1 --tamper moved
+fi
 
 echo "== 4. update 1 (period 1881, committee handoff): Begin, Miller, Finish"
 step u1-begin applied -- begin 1
@@ -118,9 +127,16 @@ step u1-finish applied -- finish 1
 check "instance after update 1" "$(jget "$(show)" period)" 1882
 
 echo "== 5. the same update again: nothing is applied twice"
-step u1-begin-again E7293 -- begin 1
-step u1-miller-again E7294 -- miller 1
-step u1-finish-again E7294 -- finish 1
+if [ "$SCENARIO" = full ]; then
+  step u1-begin-again E7293 -- begin 1
+  step u1-miller-again E7294 -- miller 1
+  step u1-finish-again E7294 -- finish 1
+elif [ "$("$CLI" balance)" -gt "${FINISH_AGAIN_MIN:-45000000}" ]; then
+  step u1-finish-again E7294 -- finish 1
+else
+  echo "  (skipped: the payer cannot fund a refused Finish, charged its whole 4.1M gas limit)"
+  echo "# skipped u1-finish-again: payer balance $("$CLI" balance)" >> "$OUT"
+fi
 
 if [ "$SCENARIO" = full ]; then
   echo "== 6. a real signature over another header passes Begin and Miller, and is refused at Finish"
