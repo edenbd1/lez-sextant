@@ -1,0 +1,25 @@
+# The benchmark guest, stock: the same source as guest/ with no patched
+# crates, so every field operation and hash is plain RV32IM software.
+[workspace]
+
+[package]
+name = "sextant-bench-guest-stock"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "sextant_bench_stock"
+path = "../guest/src/main.rs"
+
+[dependencies]
+sextant-core = { path = "../core" }
+borsh = "1.5"
+risc0-zkvm = { version = "=3.0.5", default-features = false, features = ["std"] }
+
+[profile.release]
+opt-level     = 3
+lto           = "thin"
+codegen-units = 1
+panic         = "abort"

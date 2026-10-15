@@ -1,0 +1,29 @@
+# sextant-core: the verification core of the RFP-021 prototype.
+#
+# One crate, compiled three ways: natively in the host (stock `bls12_381`,
+# used to build witnesses and to cross-check every verdict), and inside the
+# RISC Zero guest twice, once against stock `bls12_381` and once against RISC
+# Zero's accelerated fork (`[patch.crates-io]` in guest/Cargo.toml). The
+# source is identical in all three; only the field arithmetic underneath moves.
+[package]
+name = "sextant-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+bls12_381 = { version = "0.8", default-features = false, features = ["groups", "pairings", "alloc", "experimental"], optional = true }
+# SSZ hashing (accelerated in the guest by risc0's sha2 fork).
+sha2 = { version = "0.10", default-features = false }
+# hash_to_curve in bls12_381 0.8 is written against digest 0.9.
+sha2_09 = { package = "sha2", version = "0.9", default-features = false, optional = true }
+borsh = { version = "1.5", features = ["derive"] }
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+blst = "0.3.16"
+
+[features]
+# The zkcrypto backend, for the comparison benchmark. The LEZ program builds
+# without it: blst only.
+default = ["zkcrypto"]
+zkcrypto = ["dep:bls12_381", "dep:sha2_09"]

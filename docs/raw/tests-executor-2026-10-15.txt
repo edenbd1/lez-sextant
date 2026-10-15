@@ -1,0 +1,9 @@
+     Running tests/program.rs (target/release/deps/program-42a627a4d603d038)
+test the_configuration_is_written_once ... ok
+test a_fabricated_update_never_gets_a_job ... ok
+test a_bad_signature_is_refused_at_finish_and_nothing_moves ... ok
+test a_competing_operator_is_refused_cleanly ... ok
+test the_real_chain_advances_through_three_handoffs_each_step_under_the_cap ... ok
+test a_stalled_instance_resumes_without_repair ... ok
+test attestations_verify_and_refuse_with_typed_codes ... ok
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.84s

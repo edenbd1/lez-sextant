@@ -1,0 +1,115 @@
+# sextant: measured user cycles (RISC Zero executor, r0vm 3.0.5)
+
+Mainnet vectors: the update of sync-committee period 1882 (signature slot 15418319, 512 of 512 signed) unless noted.
+
+## 1. The primitives
+
+| operation | stock guest | accelerated guest | speedup | share of 10M (accelerated) | fits one transaction (accelerated) |
+|---|---:|---:|---:|---:|---:|
+| (a) pairing check `e(pk,H(m)) = e(g1,sig)`, zkcrypto | 100510560 | 19725300 | 5.1x | 197.3% | **no** |
+| (a) pairing check `e(pk,H(m)) = e(g1,sig)`, blst | 129951187 | 7849796 | 16.6x | 78.5% | yes |
+| hash_to_curve G2 of the signing root, zkcrypto | 35389027 | 2815078 | 12.6x | 28.2% | yes |
+| hash_to_curve G2 of the signing root, blst | 25201148 | 1192728 | 21.1x | 11.9% | yes |
+| signature decompression + G2 subgroup check, zkcrypto | 19335945 | 1466435 | 13.2x | 14.7% | yes |
+| signature decompression + G2 subgroup check, blst | 11153316 | 545356 | 20.5x | 5.5% | yes |
+| hash_tree_root of a 512-key SyncCommittee (SHA-256) | 9751472 | 1509370 | 6.5x | 15.1% | yes |
+
+## 2. Assembling the signing key (b)
+
+| operation | stock guest | accelerated guest | speedup | share of 10M (accelerated) | fits one transaction (accelerated) |
+|---|---:|---:|---:|---:|---:|
+| 512 of 512 (mainnet), decompress + subgroup-check each key, sum, zkcrypto | 3132916365 | 525079512 | 6.0x | 5250.8% | **no** |
+| 512 of 512 (mainnet), decompress each key (no subgroup check), sum, zkcrypto | 960612494 | 96456664 | 10.0x | 964.6% | **no** |
+| 512 of 512 (mainnet), uncompressed witness checked against the committed bytes, sum, zkcrypto | 36735118 | 8171992 | 4.5x | 81.7% | yes |
+| 512 of 512 (mainnet), committee aggregate minus non-signers (0 here), zkcrypto | 2323177 | 451573 | 5.1x | 4.5% | yes |
+| 512 of 512 (mainnet), decompress + subgroup-check each key, sum, blst | 3826823461 | 233602653 | 16.4x | 2336.0% | **no** |
+| 512 of 512 (mainnet), decompress each key (no subgroup check), sum, blst | 1029310245 | 50507357 | 20.4x | 505.1% | **no** |
+| 512 of 512 (mainnet), uncompressed witness checked against the committed bytes, sum, blst | 50616101 | 6575453 | 7.7x | 65.8% | yes |
+| 512 of 512 (mainnet), committee aggregate minus non-signers (0 here), blst | 539272 | 448732 | 1.2x | 4.5% | yes |
+| 511 of 512 (mainnet, period 1881), aggregate minus 1 non-signer, blst | 898471 | 466128 | 1.9x | 4.7% | yes |
+| 342 of 512 (synthetic, the 2/3 floor), decompress + subgroup-check each key, sum, zkcrypto | 2093232607 | 350675013 | 6.0x | 3506.8% | **no** |
+| 342 of 512 (synthetic, the 2/3 floor), uncompressed witness, sum, zkcrypto | 25080289 | 5396943 | 4.6x | 54.0% | yes |
+| 342 of 512 (synthetic, the 2/3 floor), aggregate minus 170 non-signers, zkcrypto | 13649362 | 2891995 | 4.7x | 28.9% | yes |
+| 342 of 512 (synthetic, the 2/3 floor), decompress + subgroup-check each key, sum, blst | 2556196402 | 155976147 | 16.4x | 1559.8% | **no** |
+| 342 of 512 (synthetic, the 2/3 floor), uncompressed witness, sum, blst | 33807892 | 4329954 | 7.8x | 43.3% | yes |
+| 342 of 512 (synthetic, the 2/3 floor), aggregate minus 170 non-signers, blst | 17233901 | 2324517 | 7.4x | 23.2% | yes |
+| FastAggregateVerify, 342 of 512 (synthetic), witness + aggregate minus non-signers, zkcrypto | 168857176 | 26871105 | 6.3x | 268.7% | **no** |
+| FastAggregateVerify, 342 of 512 (synthetic), witness + aggregate minus non-signers, blst | 183511882 | 11884928 | 15.4x | 118.8% | **no** |
+
+## 3. A whole LightClientUpdate in one session (c)
+
+| operation | stock guest | accelerated guest | speedup | share of 10M (accelerated) | fits one transaction (accelerated) |
+|---|---:|---:|---:|---:|---:|
+| period 1882 with handoff, naive (decompress + check 512 keys, sum), zkcrypto | 3307714611 | 551582379 | 6.0x | 5515.8% | **no** |
+| period 1882 with handoff, witness + aggregate minus non-signers, zkcrypto | 177199739 | 27032756 | 6.6x | 270.3% | **no** |
+| period 1882 with handoff, naive (decompress + check 512 keys, sum), blst | 4012692806 | 245687455 | 16.3x | 2456.9% | **no** |
+| period 1882 with handoff, witness + aggregate minus non-signers, blst | 186486933 | 12611850 | 14.8x | 126.1% | **no** |
+| period 1881 with handoff (511 signed), fast path, blst | 186923061 | 12706485 | 14.7x | 127.1% | **no** |
+| period 1884 finality update, no handoff (510 signed), fast path, blst | 177238486 | 11225342 | 15.8x | 112.3% | **no** |
+
+## 4. The same update split into three steps (blst, the program's design)
+
+| operation | stock guest | accelerated guest | speedup | share of 10M (accelerated) | fits one transaction (accelerated) |
+|---|---:|---:|---:|---:|---:|
+| step 1 `prepare`, period 1882 with handoff: every check but the pairing | 56546907 | 4773214 | 11.8x | 47.7% | yes |
+| step 1 `prepare`, period 1884 finality update, no handoff (510 signed) | 47298556 | 3386802 | 14.0x | 33.9% | yes |
+| step 2 `miller`: the two Miller loops, product into one Fp12 | 79954266 | 4194822 | 19.1x | 41.9% | yes |
+| step 3 `finish`: final exponentiation, compare to one | 50009913 | 3667965 | 13.6x | 36.7% | yes |
+| instance bootstrap from the checkpoint (committee root + branch) | 10263930 | 1582131 | 6.5x | 15.8% | yes |
+
+## 5. The consumer side: inclusion under a finalized header
+
+| operation | stock guest | accelerated guest | speedup | share of 10M (accelerated) | fits one transaction (accelerated) |
+|---|---:|---:|---:|---:|---:|
+| account + storage slot (WETH `balanceOf`), 9 + 7 nodes, Keccak | 1031305 | 187776 | 5.5x | 1.9% | yes |
+| receipt + log 0 (tx 2 of block 26197200), 3 nodes, 1242 bytes | 214810 | 47737 | 4.5x | 0.5% | yes |
+| receipt + log 0 (tx 0 of block 26197200), 3 nodes, 1991 bytes | 307806 | 63863 | 4.8x | 0.6% | yes |
+
+## 6. Stage breakdowns (accelerated guest)
+
+**(a) pairing check, zkcrypto**: 19725300 user cycles (20 segments)
+
+| stage | cycles | share of the 10M cap |
+|---|---:|---:|
+| decode_uncompressed | 7200 | 0.1% |
+| g2_prepare_x2 | 2401881 | 24.0% |
+| miller_loop_x2 | 6473223 | 64.7% |
+| final_exponentiation | 10832615 | 108.3% |
+
+**(a) pairing check, blst**: 7849796 user cycles (8 segments)
+
+| stage | cycles | share of the 10M cap |
+|---|---:|---:|
+| miller_loop_x2 | 4182531 | 41.8% |
+| final_exponentiation | 3657369 | 36.6% |
+
+**(c) period 1882 with handoff, fast path, blst**: 12611850 user cycles (13 segments)
+
+| stage | cycles | share of the 10M cap |
+|---|---:|---:|
+| checks | 1364 | 0.0% |
+| committee_root | 1081370 | 10.8% |
+| signing_key | 18968 | 0.2% |
+| finality_branch | 60872 | 0.6% |
+| next_committee | 1088866 | 10.9% |
+| signing_root | 12142 | 0.1% |
+| hash_to_g2 | 1184431 | 11.8% |
+| signature_decode | 536173 | 5.4% |
+| next_store | 1004 | 0.0% |
+| pairing | 7840755 | 78.4% |
+
+**(c) period 1882 with handoff, fast path, zkcrypto**: 27032756 user cycles (28 segments)
+
+| stage | cycles | share of the 10M cap |
+|---|---:|---:|
+| checks | 1364 | 0.0% |
+| committee_root | 1081370 | 10.8% |
+| signing_key | 21807 | 0.2% |
+| finality_branch | 60872 | 0.6% |
+| next_committee | 1088866 | 10.9% |
+| signing_root | 12142 | 0.1% |
+| hash_to_g2 | 2806806 | 28.1% |
+| signature_decode | 1457249 | 14.6% |
+| next_store | 1004 | 0.0% |
+| pairing | 19715369 | 197.2% |
+./target/release/measure  215.18s user 1.93s system 109% cpu 3:19.12 total

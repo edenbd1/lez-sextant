@@ -1,0 +1,33 @@
+# Runs the committed sextant_lc binary through `lee::V03State`, the state
+# machine the LEZ v0.3 sequencer applies public transactions with, under the
+# 10,000,000-cycle per-transaction gas cap, on real mainnet vectors.
+[workspace]
+
+[package]
+name = "sextant-executor-tests"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+sextant-program = { path = "../programs/sextant" }
+sextant-core = { path = "../core", default-features = false }
+sextant-host = { path = "../host" }
+lee        = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+lee_core   = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77", features = ["host"] }
+borsh = { version = "1.5", features = ["derive"] }
+serde_json = "1"
+risc0-binfmt = "3.0"
+risc0-zkvm = { version = "=3.0.5", features = ["client"] }
+risc0-zkos-v1compat = "=2.2.2"
+
+[[bin]]
+name = "measure_lez"
+path = "src/bin/measure_lez.rs"
+[[bin]]
+name = "pack"
+path = "src/bin/pack.rs"
+[[bin]]
+name = "prove"
+path = "src/bin/prove.rs"
