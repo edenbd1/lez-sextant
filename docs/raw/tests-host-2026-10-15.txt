@@ -1,24 +1,26 @@
+     Running unittests src/lib.rs (host/target/release/deps/sextant_host-285974f6709b7c9a)
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/measure.rs (host/target/release/deps/measure-63bb36f3835a7e21)
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-     Running tests/execution.rs (target/release/deps/execution-1d6f5db181fa9179)
+     Running tests/execution.rs (host/target/release/deps/execution-1d6f5db181fa9179)
+test the_finalized_block_is_the_one_the_proofs_are_for ... ok
 test an_account_and_a_storage_slot_verify_under_the_finalized_state_root ... ok
 test a_tampered_or_misrooted_proof_is_refused ... ok
-test the_finalized_block_is_the_one_the_proofs_are_for ... ok
 test a_receipt_log_verifies_under_the_finalized_receipts_root ... ok
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
-     Running tests/mainnet.rs (target/release/deps/mainnet-66552ab60f90b95b)
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+     Running tests/mainnet.rs (host/target/release/deps/mainnet-66552ab60f90b95b)
 test the_checkpoint_must_match ... ok
 test a_committee_never_handed_off_is_refused ... ok
-test another_chain_is_refused ... ok
-test an_applied_update_is_refused_as_a_duplicate ... ok
-test a_header_that_is_not_finalized_is_refused ... ok
-test a_tampered_execution_root_is_refused ... ok
 test a_fabricated_chain_is_refused ... ok
+test a_tampered_execution_root_is_refused ... ok
+test a_header_that_is_not_finalized_is_refused ... ok
+test another_chain_is_refused ... ok
 test the_real_chain_verifies_from_the_checkpoint ... ok
+test an_applied_update_is_refused_as_a_duplicate ... ok
 test a_tampered_signature_or_bitfield_is_refused ... ok
 test participation_below_two_thirds_is_refused ... ok
 test both_libraries_agree_on_every_real_update ... ok
 test every_key_strategy_yields_the_same_key ... ok
 test synthetic_committees_verify_at_any_participation ... ok
-test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.19s
+test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.31s
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

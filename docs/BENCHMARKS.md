@@ -125,32 +125,34 @@ apply in the RISC Zero executor, summed. Raw output:
 
 | transaction | gas (cycles) | share of the cap | signer |
 |---|---:|---:|---|
-| `Init` from the mainnet checkpoint (slot 15409152) | 1691026 | 16.9% | fresh account |
-| update 1 (period 1881, with handoff): `Begin` | 5199608 | 52.0% | fresh account |
-| update 1 (period 1881): `Miller` | 4217286 | 42.2% | fresh account |
-| update 1 (period 1881): `Finish` | 3765257 | 37.7% | fresh account |
-| update 2 (period 1882, with handoff): `Begin` | 5071002 | 50.7% | fresh account |
-| update 2 (period 1882): `Miller` | 4217286 | 42.2% | fresh account |
-| update 2 (period 1882): `Finish` | 3764510 | 37.6% | fresh account |
-| update 3 (period 1883, with handoff): `Begin` | 5115048 | 51.2% | fresh account |
-| update 3 (period 1883): `Miller` | 4217286 | 42.2% | fresh account |
-| update 3 (period 1883): `Finish` | 3764510 | 37.6% | fresh account |
-| update 4 (period 1884, finality only): `Begin` | 3520435 | 35.2% | fresh account |
-| update 4 (period 1884): `Miller` | 4217286 | 42.2% | fresh account |
-| update 4 (period 1884): `Finish` | 3762924 | 37.6% | fresh account |
-| `Attest`: WETH balance slot of an account ≥ 1 wei, block 26197200 | 303140 | 3.0% | fresh account |
-| `Attest`: an ERC-20 `Transfer` log in tx 2 of block 26197200 | 90092 | 0.9% | fresh account |
+| `Init` from the mainnet checkpoint (slot 15409152) | 1833662 | 18.3% | fresh account |
+| update 1 (period 1881, with handoff): `Begin` | 5473086 | 54.7% | fresh account |
+| update 1 (period 1881): `Miller` | 4217572 | 42.2% | fresh account |
+| update 1 (period 1881): `Finish` | 3768242 | 37.7% | fresh account |
+| update 2 (period 1882, with handoff): `Begin` | 5344557 | 53.4% | fresh account |
+| update 2 (period 1882): `Miller` | 4217572 | 42.2% | fresh account |
+| update 2 (period 1882): `Finish` | 3767512 | 37.7% | fresh account |
+| update 3 (period 1883, with handoff): `Begin` | 5388603 | 53.9% | fresh account |
+| update 3 (period 1883): `Miller` | 4217572 | 42.2% | fresh account |
+| update 3 (period 1883): `Finish` | 3767512 | 37.7% | fresh account |
+| update 4 (period 1884, finality only): `Begin` | 3662548 | 36.6% | fresh account |
+| update 4 (period 1884): `Miller` | 4217572 | 42.2% | fresh account |
+| update 4 (period 1884): `Finish` | 3765844 | 37.7% | fresh account |
+| `Attest`: WETH balance slot of an account ≥ 1 wei, block 26197200 | 304267 | 3.0% | fresh account |
+| `Attest`: an ERC-20 `Transfer` log in tx 2 of block 26197200 | 90708 | 0.9% | fresh account |
 
 | update | three transactions together |
 |---|---:|
-| period 1881, with handoff | 13182151 (1.32x the cap of one transaction) |
-| period 1882, with handoff | 13052798 (1.31x the cap of one transaction) |
-| period 1883, with handoff | 13096844 (1.31x the cap of one transaction) |
-| period 1884, finality only | 11500645 (1.15x the cap of one transaction) |
+| period 1881, with handoff | 13458900 (1.35x the cap of one transaction) |
+| period 1882, with handoff | 13329641 (1.33x the cap of one transaction) |
+| period 1883, with handoff | 13373687 (1.34x the cap of one transaction) |
+| period 1884, finality only | 11645964 (1.16x the cap of one transaction) |
 
 Every step is signed by an account the chain has never seen. The heaviest
-step is 52% of the cap. An update costs 1.15x to 1.32x one transaction's cap in
-total, spread over three.
+step is 55% of the cap. An update costs 1.16x to 1.35x one transaction's cap in
+total, spread over three. These figures are for the committed binary, the
+reproducible Docker build (ImageID `fa229edd…`); the same instructions run on
+LEZ (§7).
 
 ## 3. Real proving (Performance #2, #4)
 
@@ -184,8 +186,8 @@ path on the declared minimum hardware is part of M2.
 
 | attestation | in the guest | through the program (gas) |
 |---|---:|---:|
-| account + storage slot (WETH `balanceOf`), 9 + 7 nodes, Keccak | 187,776 | 303,140 |
-| receipt + log (tx 2 of block 26,197,200), 3 nodes, 1,242 bytes | 47,737 | 90,092 |
+| account + storage slot (WETH `balanceOf`), 9 + 7 nodes, Keccak | 187,776 | 304,267 |
+| receipt + log (tx 2 of block 26,197,200), 3 nodes, 1,242 bytes | 47,737 | 90,708 |
 | receipt + log (tx 0, a receipt with many logs), 3 nodes, 1,991 bytes | 63,863 | |
 
 Under 3% of a transaction. Inclusion is Keccak hashing down a path, with no
@@ -194,9 +196,9 @@ curve operation: this is what a user's device proves in a private transaction.
 ## 5. Amortisation, latency, storage (Performance #3, #5, #7, #9)
 
 - **Tracking**: one update per sync-committee period (8,192 slots, 27.3 hours)
-  is the minimum that follows the handoffs: about 13.1M gas over three
-  transactions. Each extra finality-only header costs about 11.5M. At one
-  header an hour, about 276M gas a day, shared by every consumer of those
+  is the minimum that follows the handoffs: about 13.4M gas over three
+  transactions. Each extra finality-only header costs about 11.6M. At one
+  header an hour, about 279M gas a day, shared by every consumer of those
   headers; each attestation pays only its own 0.09M to 0.3M.
 - **Latency**: Ethereum finality (two to three epochs, 13 to 19 minutes), the
   next finality update (available seconds after its attested block), the

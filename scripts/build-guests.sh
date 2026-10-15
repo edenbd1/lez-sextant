@@ -2,6 +2,8 @@
 # Build both benchmark guests (accelerated and stock) with the RISC Zero Rust
 # toolchain installed by rzup, the same flags `cargo risczero build` uses.
 #   scripts/build-guests.sh [accelerated|stock|lez]   (default: accelerated and stock)
+#   DOCKER=1 scripts/build-guests.sh lez   the program with RISC Zero's pinned builder
+#                                          (reproducible: this is the committed binary)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 TC="${RISC0_RUST:-$(ls -d "$HOME"/.risc0/toolchains/v1.*-rust-* | sort -V | tail -1)/bin}"
@@ -21,7 +23,15 @@ for w in ${@:-accelerated stock}; do
   case $w in
     accelerated) build guest sextant_bench artifacts/bench/sextant_bench.accelerated.elf ;;
     stock) build guest-stock sextant_bench_stock artifacts/bench/sextant_bench.stock.elf ;;
-    lez) build programs/sextant sextant_lc
+    lez) if [ "${DOCKER:-0}" = 1 ]; then
+           # Run from the repository root: the Docker context is the working
+           # directory, and the program depends on ../../core.
+           RISC0_DOCKER_CONTAINER_TAG=r0.1.91.1 cargo risczero build --manifest-path programs/sextant/Cargo.toml
+           cp programs/sextant/target/riscv32im-risc0-zkvm-elf/docker/sextant_lc.bin artifacts/programs/v0.3/sextant_lc.bin
+           cargo run -q --release --manifest-path executor-tests/Cargo.toml --bin image_id -- artifacts/programs/v0.3/sextant_lc.bin
+           continue
+         fi
+         build programs/sextant sextant_lc
          cargo run -q --release --manifest-path executor-tests/Cargo.toml --bin pack -- \
            programs/sextant/target/riscv32im-risc0-zkvm-elf/release/sextant_lc artifacts/programs/v0.3/sextant_lc.bin ;;
   esac

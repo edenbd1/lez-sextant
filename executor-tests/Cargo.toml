@@ -31,3 +31,6 @@ path = "src/bin/pack.rs"
 [[bin]]
 name = "prove"
 path = "src/bin/prove.rs"
+[[bin]]
+name = "image_id"
+path = "src/bin/image_id.rs"

@@ -1,0 +1,41 @@
+# `sextant`: deploys sextant_lc on a LEZ v0.3 sequencer and drives it from the
+# committed mainnet vectors: Init, the three steps of each sync-committee
+# update, consumer attestations, and the refusals. Built on the v0.3.0
+# `wallet` crate for keys and the program_loader; it builds and signs its own
+# public transactions so that every one declares an explicit gas limit.
+[workspace]
+
+[package]
+name = "sextant-cli"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[[bin]]
+name = "sextant"
+path = "src/main.rs"
+
+[dependencies]
+sextant-program = { path = "../programs/sextant" }
+sextant-core = { path = "../core", default-features = false }
+sextant-host = { path = "../host" }
+wallet     = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+lee        = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+lee_core   = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77", features = ["host"] }
+common     = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+program_loader_core = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+sequencer_service_rpc = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77", features = ["client"] }
+risc0-binfmt = "3.0"
+tokio  = { version = "1", features = ["macros", "rt-multi-thread"] }
+clap   = { version = "4.5", features = ["derive", "env"] }
+anyhow = "1"
+hex    = "0.4"
+borsh  = { version = "1.5", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+# The public testnet runs v0.3.1, whose blocks a v0.3.0 `common` cannot decode.
+# See vendor/lez-common/Cargo.toml.
+[patch."https://github.com/logos-blockchain/logos-execution-zone.git"]
+common = { path = "vendor/lez-common" }

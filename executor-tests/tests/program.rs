@@ -6,7 +6,7 @@ use sextant_core::lc::{self, AggMode};
 use sextant_core::statement::{Cmp, Field, Predicate, Proof, Query};
 use sextant_core::Error;
 use sextant_executor_tests::*;
-use sextant_host::{mainnet, mainnet_steps, receipt_proof, weth_proof, witness};
+use sextant_host::{mainnet, mainnet_steps, receipt_proof, receipt_proof_from, weth_proof, weth_proof_from, witness};
 use sextant_program::*;
 
 fn code(e: Error) -> u32 {
@@ -169,4 +169,24 @@ fn attestations_verify_and_refuse_with_typed_codes() {
     assert_eq!(refused(attest(&mut c, slot, q)), code(Error::BadInclusion));
     // Against a header the instance never recorded.
     assert_eq!(refused(attest(&mut c, slot + 1, log(Cmp::Eq, transfer))), E_NO_INSTANCE);
+}
+
+#[test]
+fn attestations_verify_against_the_checkpoint_header() {
+    // Init records the checkpoint's header, so a consumer can attest against it
+    // before any update: execution block 26,170,219 (vectors/mainnet/block-26170219).
+    let m = mainnet();
+    let mut c = Chain::new();
+    init(&mut c, &m, ID).unwrap();
+    let slot = c.instance(&ID).store.finalized.slot;
+    let transfer = sextant_host::h::<32>(&serde_json::json!("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+    let log = |p| Query { chain_id: 1, proof: Proof::Log(p), predicates: vec![Predicate { field: Field::LogTopic(0), cmp: Cmp::Eq, value: transfer }] };
+    attest(&mut c, slot, log(receipt_proof_from("vectors/mainnet/block-26170219/receipt-proof-tx16.json", 16))).unwrap();
+    let mut one = [0u8; 32];
+    one[31] = 1;
+    let wp = weth_proof_from("vectors/mainnet/block-26170219/getproof-weth.json");
+    let q = Query { chain_id: 1, proof: Proof::Storage(wp), predicates: vec![Predicate { field: Field::SlotValue, cmp: Cmp::Ge, value: one }] };
+    attest(&mut c, slot, q).unwrap();
+    // A proof from another block does not verify against this header's roots.
+    assert_eq!(refused(attest(&mut c, slot, log(receipt_proof(2)))), code(Error::BadInclusion));
 }

@@ -1,9 +1,21 @@
-     Running tests/program.rs (target/release/deps/program-42a627a4d603d038)
+     Running unittests src/lib.rs (executor-tests/target/release/deps/sextant_executor_tests-ce0a995a4ff381c1)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/image_id.rs (executor-tests/target/release/deps/image_id-563c499bd6b67f3c)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/measure_lez.rs (executor-tests/target/release/deps/measure_lez-74238c3b6c6b9391)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/pack.rs (executor-tests/target/release/deps/pack-21141fd6d070a52b)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running unittests src/bin/prove.rs (executor-tests/target/release/deps/prove-e33c83b9429a035f)
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+     Running tests/program.rs (executor-tests/target/release/deps/program-3a4e30db5d446d54)
+test attestations_verify_against_the_checkpoint_header ... ok
 test the_configuration_is_written_once ... ok
 test a_fabricated_update_never_gets_a_job ... ok
 test a_bad_signature_is_refused_at_finish_and_nothing_moves ... ok
 test a_competing_operator_is_refused_cleanly ... ok
-test the_real_chain_advances_through_three_handoffs_each_step_under_the_cap ... ok
 test a_stalled_instance_resumes_without_repair ... ok
+test the_real_chain_advances_through_three_handoffs_each_step_under_the_cap ... ok
 test attestations_verify_and_refuse_with_typed_codes ... ok
-test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.84s
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.07s
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

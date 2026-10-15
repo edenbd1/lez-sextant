@@ -1,0 +1,74 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  host:
+    name: Verification on mainnet vectors (host tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --release --manifest-path host/Cargo.toml
+  executor:
+    name: The committed binary through lee::V03State
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: RISC0
+        run: |
+          curl -L https://risczero.com/install | bash
+          echo "$HOME/.risc0/bin" >> "$GITHUB_PATH"
+      # The executor runs the program in r0vm. rzup asks api.github.com for
+      # release metadata; anonymous calls from a shared runner hit the rate
+      # limit, so authenticate and retry.
+      - name: r0vm 3.0.5
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for i in 1 2 3; do rzup install r0vm 3.0.5 && exit 0; sleep $((i * 20)); done
+          exit 1
+      - run: cargo test --release --manifest-path executor-tests/Cargo.toml
+      - name: The gas table is reproducible
+        run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez | tee measure-lez.txt
+  reproduce:
+    name: A clean Docker rebuild is the committed binary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: RISC0
+        run: |
+          curl -L https://risczero.com/install | bash
+          echo "$HOME/.risc0/bin" >> "$GITHUB_PATH"
+      # The build runs in RISC Zero's pinned builder image (r0.1.91.1);
+      # cargo-risczero still refuses to start without a host guest toolchain.
+      - name: cargo-risczero 3.0.5, r0vm 3.0.5
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          for i in 1 2 3; do
+            rzup install cargo-risczero 3.0.5 && rzup install r0vm 3.0.5 && rzup install rust && exit 0
+            sleep $((i * 20))
+          done
+          exit 1
+      - run: |
+          cp artifacts/programs/v0.3/sextant_lc.bin /tmp/committed.bin
+          DOCKER=1 scripts/build-guests.sh lez
+          cmp /tmp/committed.bin artifacts/programs/v0.3/sextant_lc.bin
+  cli:
+    name: The client builds against LEZ v0.3 (v0.3.1 block format)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: sudo apt-get update && sudo apt-get install -y libpcsclite-dev pkg-config libclang-dev
+      - run: cargo build --release --manifest-path cli/Cargo.toml
+      - run: cli/target/release/sextant image-id
+  docs:
+    name: Docs links resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check-links.py

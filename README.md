@@ -10,8 +10,9 @@ against what it verified, measured on real Ethereum mainnet data.
 - `programs/sextant/`: `sextant_lc`, the LEZ v0.3 program (plan/apply on
   `lee_core` at v0.3.0, `db66590ab`): `Init`, `Begin`, `Miller`, `Finish`,
   `Attest`. The packed binary is `artifacts/programs/v0.3/sextant_lc.bin`
-  (ImageID `a241fa02…`, a local toolchain build; the reproducible Docker
-  build comes with the testnet deployment).
+  (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`,
+  642,168 bytes, sha256 `d17de1ea…`): RISC Zero's pinned Docker builder
+  (`r0.1.91.1`), byte-for-byte reproducible, checked in CI.
 - `guest/`, `guest-stock/`: one benchmark guest, built twice: with RISC Zero's
   accelerated forks and without.
 - `host/`: decodes the beacon-API and JSON-RPC vectors, cross-checks every
@@ -23,7 +24,9 @@ against what it verified, measured on real Ethereum mainnet data.
   `LightClientUpdate`s of sync-committee periods 1881 to 1883, a finality
   update in period 1884, and for its finalized block 26,197,200 an
   `eth_getProof` (WETH `balanceOf` of the Uniswap v3 USDC/WETH pool) and the
-  block's receipts.
+  block's receipts; the same two proofs for the checkpoint's own execution
+  block 26,170,219 (`vectors/mainnet/block-26170219/`), which a consumer can
+  attest against as soon as `Init` has run.
 
 ## Reproduce
 
@@ -31,9 +34,9 @@ Requires the RISC Zero toolchains (`rzup install`: rust and cpp, r0vm 3.0.5).
 
 ```console
 scripts/build-guests.sh                       # the two benchmark guests -> artifacts/bench/
-scripts/build-guests.sh lez                   # the program -> artifacts/programs/v0.3/sextant_lc.bin
+DOCKER=1 scripts/build-guests.sh lez          # the program, reproducibly -> artifacts/programs/v0.3/sextant_lc.bin
 cargo test --release --manifest-path host/Cargo.toml             # 17 tests, natively, on mainnet data
-cargo test --release --manifest-path executor-tests/Cargo.toml   # 7 tests, the binary through lee::V03State
+cargo test --release --manifest-path executor-tests/Cargo.toml   # 8 tests, the binary through lee::V03State
 cargo run --release --manifest-path host/Cargo.toml --bin measure            # docs/raw/measure-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez  # docs/raw/measure-lez-*.txt
 RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove

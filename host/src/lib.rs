@@ -246,7 +246,13 @@ pub fn execute(bin: &[u8], op: &sextant_core::Op) -> Run {
 /// `eth_getProof` for WETH's `balanceOf[Uniswap v3 USDC/WETH pool]` (slot
 /// `keccak(pool ‖ 3)`) at the block finalized by `finality_update.json`.
 pub fn weth_proof() -> sextant_core::mpt::AccountStorageProof {
-    let j = json("vectors/mainnet/getproof-weth.json");
+    weth_proof_from("vectors/mainnet/getproof-weth.json")
+}
+
+/// The same storage slot from another `eth_getProof` response (e.g. at the
+/// checkpoint's block, `vectors/mainnet/block-26170219/`).
+pub fn weth_proof_from(rel: &str) -> sextant_core::mpt::AccountStorageProof {
+    let j = json(rel);
     let r = &j["result"];
     let nodes = |v: &Value| v.as_array().unwrap().iter().map(|x| hexv(x.as_str().unwrap())).collect::<Vec<_>>();
     sextant_core::mpt::AccountStorageProof {
@@ -260,7 +266,12 @@ pub fn weth_proof() -> sextant_core::mpt::AccountStorageProof {
 /// A receipt proof built by scripts/receipt_proof.py (root checked there
 /// against the block's receiptsRoot), and the index of a log in it.
 pub fn receipt_proof(tx: u64) -> sextant_core::mpt::ReceiptProof {
-    let j = json(&format!("vectors/mainnet/receipt-proof-tx{tx}.json"));
+    receipt_proof_from(&format!("vectors/mainnet/receipt-proof-tx{tx}.json"), tx)
+}
+
+/// A receipt proof file written by scripts/receipt_proof.py, for transaction `tx`.
+pub fn receipt_proof_from(rel: &str, tx: u64) -> sextant_core::mpt::ReceiptProof {
+    let j = json(rel);
     sextant_core::mpt::ReceiptProof {
         tx_index: tx,
         proof: j["proof"].as_array().unwrap().iter().map(|x| hexv(x.as_str().unwrap())).collect(),

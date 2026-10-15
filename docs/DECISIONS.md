@@ -53,8 +53,8 @@ three: `Begin` (every check but the pairing), `Miller` (the two Miller loops),
 `Finish` (final exponentiation, then the store advances in the same
 transaction).
 
-**Chosen: (c).** Measured through `lee::V03State`: `Begin` 5.07M to 5.20M with
-a handoff, 3.52M without; `Miller` 4.22M; `Finish` 3.76M. Every step stays near
+**Chosen: (c).** Measured through `lee::V03State`: `Begin` 5.34M to 5.47M with
+a handoff, 3.66M without; `Miller` 4.22M; `Finish` 3.77M. Every step stays near
 the block target instead of filling 80% of a block, leaves room for other
 transactions, and keeps a margin if a fork or a LEZ change moves costs. The job
 account carries the signing key, the message point, the signature, the Miller
