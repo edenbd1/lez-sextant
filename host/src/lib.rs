@@ -88,9 +88,12 @@ pub fn update(d: &Value) -> Update {
     }
 }
 
-pub fn mainnet_config() -> ChainConfig {
-    let g = json("vectors/mainnet/genesis.json");
-    let f = json("vectors/mainnet/fork_schedule.json");
+/// A chain's configuration from the beacon-API `genesis.json` and
+/// `fork_schedule.json` in its vector directory. Unscheduled forks
+/// (`FAR_FUTURE_EPOCH`) are left out.
+pub fn chain_config(dir: &str, chain_id: u64) -> ChainConfig {
+    let g = json(&format!("{dir}/genesis.json"));
+    let f = json(&format!("{dir}/fork_schedule.json"));
     let forks = f["data"]
         .as_array()
         .unwrap()
@@ -98,12 +101,17 @@ pub fn mainnet_config() -> ChainConfig {
         .map(|x| (n(&x["epoch"]), h(&x["current_version"])))
         .filter(|(e, _)| *e != u64::MAX)
         .collect();
-    ChainConfig { chain_id: 1, genesis_validators_root: h(&g["data"]["genesis_validators_root"]), forks, min_participants: 342 }
+    ChainConfig { chain_id, genesis_validators_root: h(&g["data"]["genesis_validators_root"]), forks, min_participants: 342 }
 }
 
-/// The real mainnet chain in `vectors/mainnet`: a bootstrap at the first
-/// slot of period 1881, the best update of periods 1881-1883, and a recent
-/// finality update in period 1884.
+pub fn mainnet_config() -> ChainConfig {
+    chain_config("vectors/mainnet", 1)
+}
+
+/// A real chain from a vector directory: a bootstrap at the first slot of a
+/// sync-committee period, the best update of that period and the next two,
+/// and a finality update in the period after (`scripts/fetch-vectors.py`).
+/// Mainnet: periods 1881-1884; Hoodi: 505-508; Sepolia: 1385-1388.
 pub struct Mainnet {
     pub cfg: ChainConfig,
     pub checkpoint: [u8; 32],
@@ -114,13 +122,28 @@ pub struct Mainnet {
     pub finality: Update,
 }
 
-pub fn mainnet() -> Mainnet {
-    let b = json("vectors/mainnet/bootstrap-15409152.json");
-    let root = std::fs::read_to_string(root_dir().join("vectors/mainnet/bootstrap-15409152.root")).unwrap();
-    let u = json("vectors/mainnet/updates-1881-1883.json");
-    let f = json("vectors/mainnet/finality_update.json");
+/// Any chain's vectors; the type kept its first name.
+pub type Vectors = Mainnet;
+
+/// The one file in `dir` named `<prefix>*<suffix>`.
+fn one(dir: &str, prefix: &str, suffix: &str) -> String {
+    let mut found: Vec<String> = std::fs::read_dir(root_dir().join(dir))
+        .unwrap()
+        .filter_map(|e| e.ok()?.file_name().into_string().ok())
+        .filter(|f| f.starts_with(prefix) && f.ends_with(suffix))
+        .collect();
+    assert_eq!(found.len(), 1, "exactly one {prefix}*{suffix} in {dir}");
+    format!("{dir}/{}", found.pop().unwrap())
+}
+
+pub fn load_chain(dir: &str, chain_id: u64) -> Vectors {
+    let boot = one(dir, "bootstrap-", ".json");
+    let b = json(&boot);
+    let root = std::fs::read_to_string(root_dir().join(boot.replace(".json", ".root"))).unwrap();
+    let u = json(&one(dir, "updates-", ".json"));
+    let f = json(&format!("{dir}/finality_update.json"));
     Mainnet {
-        cfg: mainnet_config(),
+        cfg: chain_config(dir, chain_id),
         checkpoint: hexv(root.trim()).try_into().unwrap(),
         boot_header: lc_header(&b["data"]["header"]),
         boot_committee: committee(&b["data"]["current_sync_committee"]),
@@ -128,6 +151,16 @@ pub fn mainnet() -> Mainnet {
         updates: u.as_array().unwrap().iter().map(|x| update(&x["data"])).collect(),
         finality: update(&f["data"]),
     }
+}
+
+pub fn mainnet() -> Mainnet {
+    load_chain("vectors/mainnet", 1)
+}
+
+/// Hoodi (chain 560048), fetched 2026-10-16: Fulu, the same light-client
+/// containers as mainnet.
+pub fn hoodi() -> Vectors {
+    load_chain("vectors/hoodi", 560048)
 }
 
 /// The signing committee for each step of the real chain, and the store
