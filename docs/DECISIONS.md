@@ -91,7 +91,7 @@ consumer reads the instance account, which every update rewrites.
 **Chosen.** `Finish` writes one record per finalized header (`header`
 PDA: chain id, slot, beacon root, block number, execution state root, receipts
 root; 120 bytes), written once and never modified. `Attest` reads only that
-record. The instance account is constant-size; header records grow by one per
+record. The instance account is bounded (at most 411 bytes); header records grow by one per
 recorded header (projections in BENCHMARKS.md, P.7) and no action reads more
 than one (P.9).
 

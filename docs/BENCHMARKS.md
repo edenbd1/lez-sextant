@@ -205,7 +205,7 @@ curve operation: this is what a user's device proves in a private transaction.
 - **Latency**: Ethereum finality (two to three epochs, 13 to 19 minutes), the
   next finality update (available seconds after its attested block), the
   submitter's deferral, then three LEZ blocks.
-- **Storage**: the instance account holds 379 bytes whatever happens (configuration and store, replaced in place); a job holds 1,137 bytes from `Begin` to `Finish`, which releases it; each header record holds 120 bytes, written once. A `Begin` with a handoff carries 52,165 bytes of instruction data (two 512-key committees), well inside a block. Header records accumulate: 38 kB a year at one
+- **Storage**: the instance account holds at most 411 bytes, 379 when no next committee is known (configuration and store, replaced in place); a job holds 1,137 bytes from `Begin` to `Finish`, which releases it; each header record holds 120 bytes, written once. A `Begin` with a handoff carries 52,165 bytes of instruction data (two 512-key committees), well inside a block. Header records accumulate: 38 kB a year at one
   per period, about 1 MB a year at one an hour, about 5 MB over five years. No
   action reads more than one header record or the instance, so no action's cost
   grows with stored data.
