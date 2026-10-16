@@ -151,7 +151,10 @@ holds the period-1884 record and the final header record `ERpz…` exists with
 the bytes the run left. The client recorded `attest-final-transfer-log` as
 `included-shared-block` (block 25805, shared with `u4-finish`): the block's
 execution gas, 3,856,552, is exactly `u4-finish`'s 3,765,844 plus the
-attestation's pre-checked 90,708.
+attestation's pre-checked 90,708. The client, which accepts only a block of
+its own as proof of a charge, counted that line as a failure, which is why
+`transcript-part3.txt` ends in `FAIL`; the verifier reads the same block and
+reports the transaction as included, its charge not separable.
 
 ## The local v0.3.1 sequencer run
 
