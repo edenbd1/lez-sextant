@@ -10,9 +10,13 @@ against what it verified, measured on real Ethereum mainnet data.
 - `programs/sextant/`: `sextant_lc`, the LEZ v0.3 program (plan/apply on
   `lee_core` at v0.3.0, `db66590ab`): `Init`, `Begin`, `Miller`, `Finish`,
   `Attest`. The packed binary is `artifacts/programs/v0.3/sextant_lc.bin`
-  (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`,
-  642,168 bytes, sha256 `d17de1ea…`): RISC Zero's pinned Docker builder
-  (`r0.1.91.1`), byte-for-byte reproducible, checked in CI.
+  (on this branch, `v2`: ImageID
+  `ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`,
+  651,932 bytes, sha256 `58a600a4…`, with the weak-subjectivity check `E7206`
+  and Gloas light-client headers): RISC Zero's pinned Docker builder
+  (`r0.1.91.1`), byte-for-byte reproducible, checked in CI. The program on the
+  public testnet is `main`'s binary, ImageID `fa229edd…`; `v2` is not deployed
+  yet ([`docs/ONCHAIN.md`](docs/ONCHAIN.md#redeploying-v2)).
 - `guest/`, `guest-stock/`: one benchmark guest, built twice: with RISC Zero's
   accelerated forks and without.
 - `host/`: decodes the beacon-API and JSON-RPC vectors, cross-checks every
@@ -38,6 +42,11 @@ against what it verified, measured on real Ethereum mainnet data.
   block's receipts; the same two proofs for the checkpoint's own execution
   block 26,170,219 (`vectors/mainnet/block-26170219/`), which a consumer can
   attest against as soon as `Init` has run.
+- `vectors/hoodi/`, `vectors/sepolia/`, `vectors/sepolia-gloas-fork/`: the same
+  shape for the two public Ethereum testnets, fetched 2026-10-16
+  (`scripts/fetch-vectors.py`): Hoodi periods 505 to 508 (Fulu), Sepolia
+  periods 1385 to 1388 (Gloas since epoch 353,024), and one Sepolia instance
+  from a Fulu checkpoint across the Gloas fork.
 
 ## Reproduce
 
@@ -48,7 +57,7 @@ scripts/build-guests.sh                       # the two benchmark guests -> arti
 DOCKER=1 scripts/build-guests.sh lez          # the program, reproducibly -> artifacts/programs/v0.3/sextant_lc.bin
 DOCKER=1 scripts/build-guests.sh receiver     # the consumer, reproducibly -> artifacts/programs/v0.3/erc20_receiver.bin
 cargo test --release --manifest-path host/Cargo.toml             # 30 tests, natively: mainnet, Hoodi, Sepolia (Gloas)
-cargo test --release --manifest-path executor-tests/Cargo.toml   # EXECN tests, the binaries through lee::V03State
+cargo test --release --manifest-path executor-tests/Cargo.toml   # 16 tests, the binaries through lee::V03State
 cargo run --release --manifest-path host/Cargo.toml --bin measure            # docs/raw/measure-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez  # docs/raw/measure-lez-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver  # docs/raw/measure-receiver-*.txt
@@ -65,7 +74,8 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 ## On chain today
 
 - **Public LEZ testnet** (v0.3.1): program header
-  `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, the reproducible binary.
+  `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, `main`'s reproducible binary
+  (ImageID `fa229edd…`).
   The full chain to period 1884: `Init` from the mainnet checkpoint, updates 1
   to 4 (`Begin`, `Miller`, `Finish` each; handoffs at periods 1881 to 1883) to
   the finalized execution block 26,197,200, attestations accepted against the
@@ -82,9 +92,10 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
-program (`erc20_receiver`) runs in the executor tests only, not on a sequencer; no weak-subjectivity
-staleness check, no transaction proofs (native ether sender), no historical
-headers; end-to-end runs against a sequencer are not in CI. These are the
+program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
+this branch's binary (`E7206`, Gloas) is not deployed; no transaction proofs
+(native ether sender), no historical headers; end-to-end runs against a
+sequencer are not in CI. These are the
 milestones of the proposal.
 
 MIT OR Apache-2.0.

@@ -1,0 +1,31 @@
+# sextant_lc through lee::V03State (LEZ v0.3.0), gas cap 10000000 per transaction
+
+| transaction | gas (cycles) | share of the cap | signer |
+|---|---:|---:|---|
+| `Init` from the mainnet checkpoint (slot 15409152) | 1835474 | 18.4% | fresh account |
+| update 1 (period 1881, with handoff): `Begin` | 5474785 | 54.7% | fresh account |
+| update 1 (period 1881): `Miller` | 4217768 | 42.2% | fresh account |
+| update 1 (period 1881): `Finish` | 3769621 | 37.7% | fresh account |
+| update 2 (period 1882, with handoff): `Begin` | 5346523 | 53.5% | fresh account |
+| update 2 (period 1882): `Miller` | 4217768 | 42.2% | fresh account |
+| update 2 (period 1882): `Finish` | 3769208 | 37.7% | fresh account |
+| update 3 (period 1883, with handoff): `Begin` | 5390598 | 53.9% | fresh account |
+| update 3 (period 1883): `Miller` | 4217768 | 42.2% | fresh account |
+| update 3 (period 1883): `Finish` | 3769208 | 37.7% | fresh account |
+| update 4 (period 1884, finality only): `Begin` | 3664393 | 36.6% | fresh account |
+| update 4 (period 1884): `Miller` | 4217768 | 42.2% | fresh account |
+| update 4 (period 1884): `Finish` | 3767505 | 37.7% | fresh account |
+| `Attest`: WETH balance slot of an account ≥ 1 wei, block 26197200 | 304478 | 3.0% | fresh account |
+| `Attest`: an ERC-20 `Transfer` log in tx 2 of block 26197200 | 90919 | 0.9% | fresh account |
+
+| update | three transactions together |
+|---|---:|
+| period 1881, with handoff | 13462174 (1.35x the cap of one transaction) |
+| period 1882, with handoff | 13333499 (1.33x the cap of one transaction) |
+| period 1883, with handoff | 13377574 (1.34x the cap of one transaction) |
+| period 1884, finality only | 11649666 (1.16x the cap of one transaction) |
+
+final store: slot 15436224, period 1884, execution block 26197200
+
+account sizes (borsh): instance 403 bytes (constant), header record 120 bytes (one per recorded header), job 1137 bytes (released at Finish)
+instruction sizes: Begin with handoff 52197 bytes

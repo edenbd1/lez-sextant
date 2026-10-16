@@ -1,7 +1,8 @@
 # sextant_lc on a LEZ v0.3 sequencer
 
-The committed binary (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`,
-the reproducible Docker build) deployed and driven from the committed mainnet
+`main`'s committed binary (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`,
+the reproducible Docker build; branch `v2`'s binary, `ad6fbedb…`, is not
+deployed: [Redeploying v2](#redeploying-v2)) deployed and driven from the committed mainnet
 vectors by the client in `cli/` and `scripts/e2e.sh`, twice:
 
 - on the **public LEZ testnet** (https://testnet.lez.logos.co, sequencer v0.3.1
@@ -188,6 +189,31 @@ transcript [`transcript.txt`](../evidence/local/transcript.txt). It mirrors
 `Init`, every update step and the two attestations under block 26,197,200 were
 charged on chain exactly the gas `measure_lez` reports for them
 ([`raw/measure-lez-2026-10-15.txt`](raw/measure-lez-2026-10-15.txt)).
+
+## Redeploying v2
+
+Branch `v2`'s binary (ImageID
+`ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`, `E7206`
+and Gloas) changes the instance's wire format, so it is a new program, not an
+upgrade of `A89TcYmW…`. Nothing is deployed yet. The plan:
+
+1. Deploy the `DOCKER=1` build after `cmp` against the committed binary
+   (`DEPLOY=1 scripts/e2e.sh`): seven segments and a header, a new program id.
+   `A89TcYmW…` stays as it is: its header records remain attestable.
+2. `Init` a mainnet instance and run the same scenario as above
+   (`SCENARIO=testnet`, then `RESUME=1 SCENARIO=testnet-rest`), with
+   `verify-onchain.sh` and the mutation test over the new manifest.
+3. `Init` a Sepolia instance (Gloas) and a Hoodi instance from their vectors,
+   and attest against their last headers.
+
+One deadline: `Init`, `Begin` and `Finish` now declare a timestamp window that
+closes two weeks after the store's finalized header, so the committed
+checkpoints stop being usable on a sequencer at 2026-10-25 15:50 UTC
+(mainnet, slot 15,409,152), 2026-10-27 02:02 UTC (Hoodi) and 2026-10-27
+09:44 UTC (Sepolia). After those, fresh checkpoints have to be fetched
+(`scripts/fetch-vectors.py` for Hoodi and Sepolia; it has no mainnet
+endpoints yet). The budget is about 38M gas per four-update chain, about 310M of the
+testnet token at a base fee of 8 per gas, per instance.
 
 ## Reproduce
 

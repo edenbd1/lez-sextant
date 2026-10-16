@@ -155,6 +155,33 @@ reproducible Docker build (ImageID `fa229edd…`); the chain charged exactly
 these figures, every row on a local v0.3.1 sequencer and on the public testnet,
 as recorded at the time of each run ([`ONCHAIN.md`](ONCHAIN.md)).
 
+### The `v2` binary (ImageID `ad6fbedb…`): `E7206` and Gloas, mainnet, Hoodi and Sepolia
+
+Branch `v2` adds the weak-subjectivity check (`E7206`, three `u64`s in the
+configuration with the Gloas epoch) and Gloas light-client headers. On the
+mainnet vectors each transaction costs a few hundred to about 2,000 more
+cycles (`Init` 1,835,474, update 1 `Begin` 5,474,785, `Miller` 4,217,768,
+`Finish` 3,769,621; [`raw/measure-lez-2026-10-17-v2.txt`](raw/measure-lez-2026-10-17-v2.txt)).
+The instance account grows by 24 bytes (403, 435 with a next committee); a
+`Begin` with a handoff carries 52,197 bytes. The consumer's `Claim` with its
+chained `Attest` costs 171,404 gas
+([`raw/measure-receiver-2026-10-17-v2.txt`](raw/measure-receiver-2026-10-17-v2.txt)).
+
+The same binary on the two public Ethereum testnets
+(`executor-tests/tests/testnets.rs`,
+[`raw/testnets-executor-2026-10-17.txt`](raw/testnets-executor-2026-10-17.txt)):
+
+| chain | updates | heaviest `Begin` | `Miller` | heaviest `Finish` |
+|---|---|---:|---:|---:|
+| Hoodi (Fulu), periods 505 to 508 | 4 | 5,949,207 (59.5%) | 4,217,768 | 3,770,278 |
+| Sepolia (Gloas), periods 1385 to 1388 | 4 | 5,498,751 (55.0%) | 4,217,768 | 3,770,380 |
+| Sepolia across the Gloas fork, periods 1377 to 1380 | 4 | 5,827,490 (58.3%) | 4,217,768 | 3,770,278 |
+
+Every step stays under 60% of the cap. Hoodi's `Begin` is the heaviest: more
+non-signers to subtract from the committee aggregate than on mainnet. A Gloas
+update carries the RLP execution header (about 670 bytes); the program
+checks its keccak against the proven `execution_block_hash`.
+
 ## 3. Real proving (Performance #2, #4)
 
 `RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove`

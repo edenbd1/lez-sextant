@@ -1,0 +1,9 @@
+# erc20_receiver through lee::V03State (LEZ v0.3.0), gas cap 10000000 per transaction
+
+| transfer claimed | `Claim` gas (cycles, with the chained `Attest`) | share of the cap | the same `Attest` alone | consumer's own share | `Claim` instruction (bytes) |
+|---|---:|---:|---:|---:|---:|
+| USDC `Transfer`, tx 16 of block 26170219 (checkpoint header) | 171404 | 1.7% | 99164 | 72240 | 1482 |
+| USDC `Transfer`, tx 2 of block 26197200 (after four updates) | 171579 | 1.7% | 99570 | 72009 | 1451 |
+
+A replay of each claim was refused with E7391 (the nullifier is spent).
+account sizes (borsh): nullifier 112 bytes (one per claimed transfer), receiver 40 bytes (one per receiver)

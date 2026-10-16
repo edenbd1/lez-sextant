@@ -133,7 +133,7 @@ signature fail) and removes the need to re-initialise for a scheduled fork; a
 container-changing fork still requires a new program version, released before
 activation, with the consumer migration documented (Verification Security #3).
 
-**Update (branch `sepolia-vectors`, 2026-10-16).** Gloas is no longer
+**Update (branch `v2`, 2026-10-16).** Gloas is no longer
 ahead of us. Sepolia moved to it at epoch 353,024 (2026-10-06), and Hoodi
 follows at epoch 132,352 (2026-10-26). Both RFP-eligible testnets will
 therefore be Gloas before LEZ testnet 0.4. The program now knows both shapes:
@@ -178,7 +178,7 @@ runs in the light client's own `Init`, `Begin` and `Finish`, so it cannot be
 added around the deployed program: anyone can call those instructions
 directly. It is guest code and changes the ImageID.
 
-**Chosen (this branch, milestone M1).** Two fields in `ChainConfig`, fixed at
+**Chosen (branch `v2`, milestone M1).** Two fields in `ChainConfig`, fixed at
 `Init`: `genesis_time` and `max_checkpoint_age` (seconds; two weeks for the
 mainnet vectors). Two checks:
 
@@ -196,6 +196,15 @@ stale (R.3). Tests: `a_store_past_the_weak_subjectivity_bound_refuses_updates_wi
 `the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable`
 (executor) and `a_store_older_than_the_weak_subjectivity_bound_is_refused`
 (host). Cost: about 1,000 cycles per transaction (`Begin` 5,473,903 against
-5,473,086). The rebuilt binary (Docker, `r0.1.91.1`) has ImageID
-`77c571e2374fd11a7118f25b48aefaa5039d194a31a7b55f76d0c17e0b998839`; it is not
-deployed, and the testnet instance keeps running `fa229edd…`.
+5,473,086 with this check alone). The `v2` binary, with this check and the
+Gloas shapes of D7 (Docker, `r0.1.91.1`), has ImageID
+`ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`: `Begin`
+of update 1 costs 5,474,785 gas
+([`raw/measure-lez-2026-10-17-v2.txt`](raw/measure-lez-2026-10-17-v2.txt)).
+It is not deployed, and the testnet instance keeps running `fa229edd…`
+([`ONCHAIN.md`](ONCHAIN.md#redeploying-v2)).
+
+The bound also applies to a mismatched store: a mainnet update offered to a
+Hoodi or Sepolia instance is refused with `E7206` first (its signature slot,
+on that chain's clock, lies years after the store), and with the bound lifted
+it is still refused (`HandoffNotVerified`).

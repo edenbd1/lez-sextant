@@ -38,7 +38,9 @@ accounts, and the transaction succeeds or fails as a whole:
    (`E7208` predicate false, `E7207` proof not under the record's root) if
    anything does not hold; the consumer's writes of steps 2 and 3 are then discarded.
 
-The light-client guest is unchanged (ImageID `fa229edd…`); the consumer is a
+The light-client guest is the deployed one on `main` (ImageID `fa229edd…`) and
+`ad6fbedb…` on branch `v2`, where `Claim` costs 171,404 gas instead of 171,193;
+the consumer is a
 second guest, `artifacts/programs/v0.3/erc20_receiver.bin`, 339,432 bytes,
 ImageID `dfe1163b5209cc6c7a9cf2efd510d4fa27da63d94dbb365da8a9ce4710faec09`, built in
 RISC Zero's pinned Docker builder (`DOCKER=1 scripts/build-guests.sh
