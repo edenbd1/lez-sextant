@@ -144,3 +144,35 @@ their types bring an Ethereum client's dependency tree into a LEZ program; the
 logic we need from them is the spec's, about 360 lines in `core/src/lc.rs` and
 `core/src/ssz.rs`, tested against real mainnet data. The audit surface is therefore: our light-client and inclusion code,
 the program shell, and the accelerated layer of the blst fork.
+
+## D9. Weak-subjectivity staleness (E7206): a new program version, not deployed
+
+**Context.** F.10: an instance whose finalized header is older than the
+weak-subjectivity period must stop advancing, and a checkpoint that old must
+not initialise one. The deployed sextant_lc (ImageID `fa229edd…`) defines
+`E7206` but never emits it. The check reads the instance's configuration and
+runs in the light client's own `Init`, `Begin` and `Finish`, so it cannot be
+added around the deployed program: anyone can call those instructions
+directly. It is guest code and changes the ImageID.
+
+**Chosen (this branch, milestone M1).** Two fields in `ChainConfig`, fixed at
+`Init`: `genesis_time` and `max_checkpoint_age` (seconds; two weeks for the
+mainnet vectors). Two checks:
+
+1. **Against the chain itself, typed.** `lc::prepare` refuses an update signed
+   more than `max_checkpoint_age` after the store's finalized header with
+   `E7206` (`lc::check_fresh`), before any job is opened.
+2. **Against LEZ time.** v0.3 gives a plan no clock, but a plan can declare a
+   timestamp validity window. `Init`, `Begin` and `Finish` declare
+   `..(genesis_time + 12 · finalized_slot + max_checkpoint_age) · 1000` ms, so
+   the sequencer refuses them once that time has passed
+   ("outside of the validity window").
+
+`Attest` declares no window: header records stay valid after the instance goes
+stale (R.3). Tests: `a_store_past_the_weak_subjectivity_bound_refuses_updates_with_e7206`,
+`the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable`
+(executor) and `a_store_older_than_the_weak_subjectivity_bound_is_refused`
+(host). Cost: about 1,000 cycles per transaction (`Begin` 5,473,903 against
+5,473,086). The rebuilt binary (Docker, `r0.1.91.1`) has ImageID
+`77c571e2374fd11a7118f25b48aefaa5039d194a31a7b55f76d0c17e0b998839`; it is not
+deployed, and the testnet instance keeps running `fa229edd…`.

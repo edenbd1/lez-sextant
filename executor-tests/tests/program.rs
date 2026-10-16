@@ -190,3 +190,60 @@ fn attestations_verify_against_the_checkpoint_header() {
     // A proof from another block does not verify against this header's roots.
     assert_eq!(refused(attest(&mut c, slot, log(receipt_proof(2)))), code(Error::BadInclusion));
 }
+
+#[test]
+fn a_store_past_the_weak_subjectivity_bound_refuses_updates_with_e7206() {
+    // F.10, against the chain itself: the first real update was signed some
+    // hours after the checkpoint; an instance whose bound is shorter than that
+    // refuses it at Begin with the typed code, and nothing moves.
+    let mut m = mainnet();
+    let steps = mainnet_steps(&m);
+    let (_, u, committee) = steps[0].clone();
+    let gap = lc::slot_time(&m.cfg, u.signature_slot) - lc::slot_time(&m.cfg, m.boot_header.beacon.slot);
+    m.cfg.max_checkpoint_age = gap - 1;
+    let mut c = Chain::new();
+    init(&mut c, &m, ID).unwrap();
+    let before = c.instance(&ID);
+    // Begin built without the client-side check, as a careless operator would.
+    let w = witness(&committee, &u.bits, AggMode::Subtract);
+    let jid = job_id(&before, &u);
+    let ix = Instruction::Begin { instance_id: ID, current: before.clone(), update: u.clone(), committee: committee.clone(), witness: w };
+    let e = c.send(&ix, vec![instance_account(&LC, &ID), job_account(&LC, &ID, &jid)]).expect_err("stale");
+    assert_eq!(refusal(&e), Some(code(Error::CheckpointStale)), "{e}");
+    assert_eq!(c.instance(&ID), before);
+    assert!(c.shard(job_account(&LC, &ID, &jid)).is_empty(), "no job was opened");
+    // At exactly the bound, the same update is accepted.
+    m.cfg.max_checkpoint_age = gap;
+    let other = *b"mainnet/test/instance/0000000002";
+    init(&mut c, &m, other).unwrap();
+    advance(&mut c, other, &u, &committee).unwrap();
+}
+
+#[test]
+fn the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable() {
+    // F.10, against LEZ time: Init, Begin and Finish declare a timestamp
+    // validity window that closes `max_checkpoint_age` after the store's
+    // finalized header, so the sequencer refuses them once it has passed.
+    let m = mainnet();
+    let stale = lc::stale_from_ms(&m.cfg, m.boot_header.beacon.slot);
+    let mut c = Chain::new();
+    c.now = stale;
+    let e = init(&mut c, &m, ID).expect_err("a checkpoint past the bound");
+    assert!(e.contains("validity window"), "{e}");
+    c.now = stale - 1;
+    init(&mut c, &m, ID).unwrap();
+    let slot = c.instance(&ID).store.finalized.slot;
+    c.now = stale;
+    let (_, u, committee) = mainnet_steps(&m)[0].clone();
+    let e = advance(&mut c, ID, &u, &committee).expect_err("a stale store");
+    assert!(e.contains("validity window"), "{e}");
+    // Header records are immutable and stay usable after the instance went
+    // stale: a consumer's proof against them still verifies (R.3).
+    let transfer = sextant_host::h::<32>(&serde_json::json!("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+    let q = Query {
+        chain_id: 1,
+        proof: Proof::Log(receipt_proof_from("vectors/mainnet/block-26170219/receipt-proof-tx16.json", 16)),
+        predicates: vec![Predicate { field: Field::LogTopic(0), cmp: Cmp::Eq, value: transfer }],
+    };
+    attest(&mut c, slot, q).unwrap();
+}

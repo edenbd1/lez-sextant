@@ -11,6 +11,7 @@ use crate::Error;
 pub const SLOTS_PER_EPOCH: u64 = 32;
 pub const SLOTS_PER_PERIOD: u64 = SLOTS_PER_EPOCH * 256;
 pub const COMMITTEE_SIZE: usize = 512;
+pub const SECONDS_PER_SLOT: u64 = 12;
 
 /// Electra generalized indices (`light-client/sync-protocol.md`, Electra).
 pub const FINALIZED_ROOT_DEPTH: usize = 7;
@@ -25,6 +26,28 @@ pub const EXECUTION_INDEX: u64 = 25 - 16;
 
 pub fn period(slot: u64) -> u64 {
     slot / SLOTS_PER_PERIOD
+}
+
+/// Unix seconds at the start of `slot`.
+pub fn slot_time(cfg: &ChainConfig, slot: u64) -> u64 {
+    cfg.genesis_time.saturating_add(slot.saturating_mul(SECONDS_PER_SLOT))
+}
+
+/// Unix milliseconds (exclusive) from which a store finalized at `slot` is
+/// stale: the upper bound of the timestamp validity window that `Init`,
+/// `Begin` and `Finish` declare, so the sequencer's clock enforces it.
+pub fn stale_from_ms(cfg: &ChainConfig, slot: u64) -> u64 {
+    slot_time(cfg, slot).saturating_add(cfg.max_checkpoint_age).saturating_mul(1000)
+}
+
+/// Weak-subjectivity staleness against the chain itself (F.10): an update
+/// signed more than `max_checkpoint_age` after the store's finalized header
+/// proves the store fell out of the period, whatever the LEZ clock says.
+pub fn check_fresh(cfg: &ChainConfig, store: &Store, signature_slot: u64) -> Result<(), Error> {
+    if slot_time(cfg, signature_slot) > slot_time(cfg, store.finalized.slot).saturating_add(cfg.max_checkpoint_age) {
+        return Err(Error::CheckpointStale);
+    }
+    Ok(())
 }
 
 pub fn fork_version(cfg: &ChainConfig, epoch: u64) -> [u8; 4] {
@@ -133,6 +156,7 @@ pub fn prepare(
     o: Opts,
     mark: &mut dyn FnMut(&'static str),
 ) -> Result<Prepared, Error> {
+    check_fresh(cfg, store, u.signature_slot)?;
     // Ordering, period and participation (`validate_light_client_update`).
     let n = bls::participants(&u.bits);
     if n < cfg.min_participants as usize {

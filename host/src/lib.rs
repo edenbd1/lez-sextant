@@ -98,7 +98,16 @@ pub fn mainnet_config() -> ChainConfig {
         .map(|x| (n(&x["epoch"]), h(&x["current_version"])))
         .filter(|(e, _)| *e != u64::MAX)
         .collect();
-    ChainConfig { chain_id: 1, genesis_validators_root: h(&g["data"]["genesis_validators_root"]), forks, min_participants: 342 }
+    ChainConfig {
+        chain_id: 1,
+        genesis_validators_root: h(&g["data"]["genesis_validators_root"]),
+        forks,
+        min_participants: 342,
+        genesis_time: g["data"]["genesis_time"].as_str().unwrap().parse().unwrap(),
+        // Two weeks: the checkpoint age light clients accept on mainnet, well
+        // inside its computed weak-subjectivity period.
+        max_checkpoint_age: 14 * 24 * 3600,
+    }
 }
 
 /// The real mainnet chain in `vectors/mainnet`: a bootstrap at the first
