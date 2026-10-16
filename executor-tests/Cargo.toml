@@ -12,6 +12,7 @@ publish = false
 
 [dependencies]
 sextant-program = { path = "../programs/sextant" }
+erc20-receiver = { path = "../programs/erc20_receiver" }
 sextant-core = { path = "../core", default-features = false }
 sextant-host = { path = "../host" }
 lee        = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
@@ -25,6 +26,9 @@ risc0-zkos-v1compat = "=2.2.2"
 [[bin]]
 name = "measure_lez"
 path = "src/bin/measure_lez.rs"
+[[bin]]
+name = "measure_receiver"
+path = "src/bin/measure_receiver.rs"
 [[bin]]
 name = "pack"
 path = "src/bin/pack.rs"

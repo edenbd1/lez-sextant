@@ -1,0 +1,44 @@
+# erc20_receiver: a minimal consumer of sextant_lc (RFP-021 prototype).
+#
+# It credits a recipient for ERC-20 `Transfer` logs that happened on Ethereum,
+# once each. It verifies nothing itself: the inclusion proof and the predicate
+# are checked by sextant_lc's `Attest`, which this program invokes as a
+# chained call in the same transaction. Its own work is binding the claim to
+# the header sextant_lc recorded, and the nullifier keyed by the statement
+# identifier. Written against lee_core at v0.3.0 (db66590ab), like sextant_lc.
+[workspace]
+
+[package]
+name = "erc20-receiver"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "erc20_receiver"
+path = "src/bin/erc20_receiver.rs"
+
+[dependencies]
+# For `Instruction::Attest`, `header_account` and the statement types only;
+# none of the light-client code is linked into this guest.
+sextant-program = { path = "../sextant" }
+sextant-core = { path = "../../core", default-features = false }
+lee_core   = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", rev = "db66590ab821a4e142c211017a3866d007f6fa77" }
+risc0-zkvm = { version = "=3.0.5", default-features = false, features = ["std", "unstable"] }
+borsh      = { version = "1.5", features = ["derive"] }
+
+[profile.release]
+opt-level     = 3
+lto           = "thin"
+codegen-units = 1
+panic         = "abort"
+
+# The same accelerated forks as sextant_lc (its dependency graph is shared).
+[patch.crates-io]
+blst        = { git = "https://github.com/risc0/blst", tag = "v0.3.16-risczero.0" }
+sha2        = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.8-risczero.0" }
+tiny-keccak = { git = "https://github.com/risc0/tiny-keccak", tag = "tiny-keccak/v2.0.2-risczero.0" }

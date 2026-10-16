@@ -32,6 +32,8 @@ jobs:
       - run: cargo test --release --manifest-path executor-tests/Cargo.toml
       - name: The gas table is reproducible
         run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez | tee measure-lez.txt
+      - name: The consumer's gas table is reproducible
+        run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver | tee measure-receiver.txt
   reproduce:
     name: A clean Docker rebuild is the committed binary
     runs-on: ubuntu-latest
@@ -57,6 +59,11 @@ jobs:
           cp artifacts/programs/v0.3/sextant_lc.bin /tmp/committed.bin
           DOCKER=1 scripts/build-guests.sh lez
           cmp /tmp/committed.bin artifacts/programs/v0.3/sextant_lc.bin
+      - name: The same for the erc20_receiver consumer
+        run: |
+          cp artifacts/programs/v0.3/erc20_receiver.bin /tmp/committed-receiver.bin
+          DOCKER=1 scripts/build-guests.sh receiver
+          cmp /tmp/committed-receiver.bin artifacts/programs/v0.3/erc20_receiver.bin
   cli:
     name: The client builds against LEZ v0.3 (v0.3.1 block format)
     runs-on: ubuntu-latest
