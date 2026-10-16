@@ -5,8 +5,9 @@ the reproducible Docker build) deployed and driven from the committed mainnet
 vectors by the client in `cli/` and `scripts/e2e.sh`, twice:
 
 - on the **public LEZ testnet** (https://testnet.lez.logos.co, sequencer v0.3.1
-  `1a003bfb`), as far as the testnet payer's balance went:
-  [`evidence/testnet/run.tsv`](../evidence/testnet/run.tsv), 12 transactions;
+  `1a003bfb`), the full chain to period 1884:
+  [`evidence/testnet/run.tsv`](../evidence/testnet/run.tsv), 24 transactions
+  (17 applied, 7 refused);
 - on a **local standalone v0.3.1 sequencer** (the same `1a003bfb` build), the
   whole chain the vectors hold:
   [`evidence/local/e2e.tsv`](../evidence/local/e2e.tsv), 36 transactions.
@@ -15,7 +16,7 @@ Re-check either from a clean clone, with nothing but python3:
 
 ```console
 scripts/verify-onchain.sh                         # the testnet run, against https://testnet.lez.logos.co
-scripts/mutation-test-verifier.sh                 # the verifier fails on each of 7 corruptions of the manifest
+scripts/mutation-test-verifier.sh                 # the verifier fails on each of 15 corruptions of the manifest
 ```
 
 ## How a verdict is read from the chain
@@ -47,13 +48,26 @@ every deployment transaction resolves, and a random hash does not. The
 block explorer (https://explorer.testnet.lez.logos.co) indexes thousands of
 blocks behind the sequencer; the sequencer RPC is the reference.
 
+A block rewrite on the testnet can move a transaction to another block (the
+verifier reports it, it is not a failure) or lose it from the hash index:
+`getTransaction` then returns null for a transaction that is in a block. The
+verifier then scans the blocks around the recorded one for a public
+transaction of this program whose hash (SHA-256 of its bytes after the variant
+tag) is the recorded one. Found, applied, and with every `# final` line of the
+run holding, it is reported as a distinct status: applied, index lost after a
+block rewrite, effect proven by the final state; its charge is then checked
+like any other. Not found, claimed refused, or any final line off, and it
+fails; the mutation test corrupts each of those for every such transaction and
+requires that transaction's own line to fail.
+
 ## The public testnet run
 
 Payer `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id
 `mainnet-10152211` (instance account `3T51gKhDkckqi3XuvPdN9Wj1wckAQouDMg9CsfBXG2iZ`,
-checkpoint header record `H6rGJgtLU67pBchitybgTfi8UdMpH3geS1jK2bMRsdV7`).
+checkpoint header record `H6rGJgtLU67pBchitybgTfi8UdMpH3geS1jK2bMRsdV7`, final
+header record `ERpzfMGRxgm4yZDSghkkHK1u81w5J7PYB7AsZLmouagv`).
 Verifier output: [`evidence/testnet/verify.txt`](../evidence/testnet/verify.txt)
-(24 checks, 0 fail); mutation test:
+(37 checks, 0 fail); mutation test (15 of 15 caught):
 [`evidence/testnet/mutation-test.txt`](../evidence/testnet/mutation-test.txt).
 
 Program header [`A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`](https://explorer.testnet.lez.logos.co/account/A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw), ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`.
@@ -83,34 +97,61 @@ Program header [`A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`](https://explorer
 | u1-finish-before-miller | refused | reverted | 20011 | [`73de61646bcfdff1…`](https://explorer.testnet.lez.logos.co/transaction/73de61646bcfdff137b010f6a16553a737303bfeb09e4aef82cd99d562f216bc) | E7295 | 4145066 / 4145066 |
 | u1-miller | applied | applied | 21861 | [`88c03e2d5a48ac32…`](https://explorer.testnet.lez.logos.co/transaction/88c03e2d5a48ac32e21cd9b940ab67d3af162e5b43b9f3aa97910108988a7125) | gas=4217572 | 4217572 / 4269747 |
 | u1-finish | applied | applied | 21874 | [`d414caa45b380502…`](https://explorer.testnet.lez.logos.co/transaction/d414caa45b38050298cf4b36c26c19c3230111c1eb15efc63638a12f76107d35) | gas=3768242 | 3768242 / 3815924 |
+| u1-miller | applied | applied | 21861 | [`88c03e2d5a48ac32…`](https://explorer.testnet.lez.logos.co/transaction/88c03e2d5a48ac32e21cd9b940ab67d3af162e5b43b9f3aa97910108988a7125) | gas=4217572 | 4217572 / 4269747 |
+| u1-finish | applied | applied | 21874 | [`d414caa45b380502…`](https://explorer.testnet.lez.logos.co/transaction/d414caa45b38050298cf4b36c26c19c3230111c1eb15efc63638a12f76107d35) | gas=3768242 | 3768242 / 3815924 |
+| u2-begin | applied | applied | 25788 | [`dcf68b9402c6d7c1…`](https://explorer.testnet.lez.logos.co/transaction/dcf68b9402c6d7c1e659ec2fff1e87dc3ddbf529ebcb8cc137f703f5db14357c) | gas=5344557 | 5344557 / 5408002 |
+| u2-miller | applied | applied | 25798 | [`28f93ac488eb426f…`](https://explorer.testnet.lez.logos.co/transaction/28f93ac488eb426f92ce7b620d87aae74e0195ff172ee9dffab9b0605a6dcb0e) | gas=4217572 | 4217572 / 4269747 |
+| u2-finish | applied | applied | 25799 | [`c057b7369bc5e503…`](https://explorer.testnet.lez.logos.co/transaction/c057b7369bc5e503c72bbeb9beb4698552e3bcbdb62143b3d1898cc40a7786c8) | gas=3767512 | 3767512 / 3815187 |
+| u3-begin | applied | applied | 25800 | [`01bf9c26609a370d…`](https://explorer.testnet.lez.logos.co/transaction/01bf9c26609a370d5827cfaea7cedced69075dbf777d1c05ff3d8daad33b2f71) | gas=5388603 | 5388603 / 5452489 |
+| u3-miller | applied | applied | 25801 | [`5a9f698e04dd2e22…`](https://explorer.testnet.lez.logos.co/transaction/5a9f698e04dd2e22e9d293c44733af0a54f5486cd5200e79b726ec6933778343) | gas=4217572 | 4217572 / 4269747 |
+| u3-finish | applied | applied | 25802 | [`3b2b06f66334c424…`](https://explorer.testnet.lez.logos.co/transaction/3b2b06f66334c4245aebacd1889b444a89eaa191e5a73bf4fde8f534da569b56) | gas=3767512 | 3767512 / 3815187 |
+| u4-begin | applied | applied | 25804 | [`327613bf856c3625…`](https://explorer.testnet.lez.logos.co/transaction/327613bf856c3625408f6208ca5c56e45555e43876d023f9223f49e296e7c83f) | gas=3662548 | 3662548 / 3709173 |
+| u4-miller | applied | applied | 25805 | [`89ba6202aa481c82…`](https://explorer.testnet.lez.logos.co/transaction/89ba6202aa481c8242d79b7d01b9aeba7f39214ef5cd19fba2d581add459ff4a) | gas=4217572 | 4217572 / 4269747 |
+| u4-finish | applied | applied | 25806 | [`e84df17848e5d190…`](https://explorer.testnet.lez.logos.co/transaction/e84df17848e5d190d7512e3bdf195367fa528c19ef28a96b7bda921fac66f279) | gas=3765844 | 3765844 / 3813502 |
+| attest-final-transfer-log | applied | included-shared-block | 25805 | [`34a592585f680316…`](https://explorer.testnet.lez.logos.co/transaction/34a592585f680316697c797fe0d92721e111501a94234b0a567e7e11b48de7ea) | gas=90708 | 90708 (block 25805 charged 3856552 = u4-finish 3765844 + 90708) / 101615 |
+| attest-final-weth-balance | applied | applied | 25814 | [`3c8b4fea45d1d00d…`](https://explorer.testnet.lez.logos.co/transaction/3c8b4fea45d1d00de5847998dcff7d2dbb601621ec13640a0b602bd18c1b3dae) | gas=304267 | 304267 / 317309 |
+| attest-final-wrong-chain | refused | reverted | 25821 | [`74edea40a8d5be16…`](https://explorer.testnet.lez.logos.co/transaction/74edea40a8d5be16e58fce7abce464531c1e38e4c2bb091ae093012c2a4be622) | E7209 | 100290 / 100290 |
 
 What it shows: the reproducible binary deployed; `Init` from the mainnet
 checkpoint; two consumer attestations accepted against the checkpoint's header
 (execution block 26,170,219: an ERC-20 `Transfer` log by receipt proof, and the
 WETH `balanceOf` slot of the Uniswap v3 USDC/WETH pool by `eth_getProof`);
-update 1 (period 1881) verified across `Begin`, `Miller`, `Finish`, its three
-steps charged 5,473,086, 4,217,572 and 3,768,242 gas, as measured off chain;
-and six refusals.
+the full chain of the vectors: updates 1 to 4 (periods 1881, 1882 and 1883
+with committee handoffs, 1884 finality only), each across `Begin`, `Miller`,
+`Finish`, to the finalized execution block 26,197,200 (instance 379 bytes,
+digest `8955da4f…`, the same bytes the local run ends with); the two
+attestations against that last header (the `Transfer` log, 90,708 gas, and the
+WETH balance, 304,267 gas) and another chain's query refused (`E7209`); and
+seven refusals in all. Every step was charged on chain the gas measured off
+chain ([`BENCHMARKS.md`](BENCHMARKS.md)).
 
-What it does not show, and why: update 1's finalized header is the
-checkpoint's own (slot 15,409,152); what it adds is the verified handoff to the
-period-1882 committee (`next_committee` in the instance). The first new header
-record comes with update 2, and the attestations under block 26,197,200 need
-updates 2 to 4: about 38M more gas, about 310M of the testnet token at today's
-base fee of 8 per gas, where the payer started with 191M and holds 5.4M now.
-Those steps, and the refusals that cost a whole `Begin` each, ran on the local
-sequencer below.
-
-Two things went wrong in the run and are in the manifest as they happened: the
-first try at update 1's `Miller` was never sent (the endpoint dropped the
-client's read of the job account; the client now retries reads), so the
-client's next step, `Finish`, was refused by its pre-check and not sent, and
-the following one, a deliberate duplicate `Finish`, landed before `Miller` had
-run and was refused with `E7295` (Miller not run) instead of the duplicate's
-`E7294`; it is recorded as that. The run was resumed with `RESUME=1`:
-`Miller` and `Finish` then applied. Transcripts:
+Two things went wrong in the first part of the run and are in the manifest as
+they happened: the first try at update 1's `Miller` was never sent (the
+endpoint dropped the client's read of the job account; the client now retries
+reads), so the client's next step, `Finish`, was refused by its pre-check and
+not sent, and the following one, a deliberate duplicate `Finish`, landed
+before `Miller` had run and was refused with `E7295` (Miller not run) instead
+of the duplicate's `E7294`; it is recorded as that. The run was resumed with
+`RESUME=1`: `Miller` and `Finish` then applied. The payer's balance then
+covered update 1 only; once topped up, updates 2 to 4 and the attestations
+under the last header ran with `RESUME=1 SCENARIO=testnet-rest`. The duplicate
+`Finish` of update 4 was skipped: its refusal would be charged its whole limit,
+more than the balance left. Transcripts:
 [`transcript-part1.txt`](../evidence/testnet/transcript-part1.txt),
-[`transcript-part2.txt`](../evidence/testnet/transcript-part2.txt).
+[`transcript-part2.txt`](../evidence/testnet/transcript-part2.txt),
+[`transcript-part3.txt`](../evidence/testnet/transcript-part3.txt).
+
+Since the run, block rewrites on the testnet moved seven of its transactions
+to a nearby block, put eight in blocks shared with other charged
+transactions (inclusion is then checked, the charge is not separable), and
+lost `u4-miller` (`89ba6202…`, now in block 25804) and `u4-finish`
+(`e84df178…`, now in block 25805) from the hash index. Both are found by the
+verifier's block scan, and the final state proves their effect: the instance
+holds the period-1884 record and the final header record `ERpz…` exists with
+the bytes the run left. The client recorded `attest-final-transfer-log` as
+`included-shared-block` (block 25805, shared with `u4-finish`): the block's
+execution gas, 3,856,552, is exactly `u4-finish`'s 3,765,844 plus the
+attestation's pre-checked 90,708.
 
 ## The local v0.3.1 sequencer run
 

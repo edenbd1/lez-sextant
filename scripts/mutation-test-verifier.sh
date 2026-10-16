@@ -2,6 +2,11 @@
 # The verifier is only evidence if it fails when the record is wrong. Each
 # mutation below corrupts one thing in a copy of a manifest; verify-onchain.sh
 # must exit non-zero on every one, and zero on the manifest as recorded.
+# A transaction the clean run reports as `index lost` (found by a block scan,
+# its effect proven by the final state) gets four more, each of which must
+# fail that transaction's own line, not only some other check: its hash
+# replaced, its verdict claimed as refused, the instance's final state
+# altered, and the final header's.
 #
 #   scripts/mutation-test-verifier.sh [--manifest FILE] [--rpc URL]
 set -uo pipefail
@@ -16,10 +21,10 @@ while [ $# -gt 0 ]; do
 done
 T="$(mktemp -d)"
 fake="$(python3 -c 'import secrets;print(secrets.token_hex(32))')"
-mutate() { # mutation name
-  python3 - "$MANIFEST" "$T/$1.tsv" "$1" "$fake" <<'PY'
+mutate() { # mutation name [label]
+  python3 - "$MANIFEST" "$T/$1.tsv" "$1" "$fake" "${2:-}" <<'PY'
 import sys
-src, dst, how, fake = sys.argv[1:5]
+src, dst, how, fake, label = sys.argv[1:6]
 lines = open(src).read().splitlines()
 rows = [i for i, l in enumerate(lines) if l and not l.startswith("#")]
 def cols(i): return lines[i].split("\t")
@@ -38,6 +43,14 @@ elif how == "image-id":            # another ImageID claimed for the deployed pr
     i = next(i for i, l in enumerate(lines) if l.startswith("# program ")); p = lines[i].split(); p[3] = "0" * 64; lines[i] = " ".join(p)
 elif how == "deploy-hash":         # a deployment transaction never sent
     i = next(i for i, l in enumerate(lines) if l.startswith("# deploy ")); p = lines[i].split(); p[3] = fake; lines[i] = " ".join(p)
+elif how == "lost-fake-hash":      # a transaction whose index was lost: its hash replaced by one never sent
+    i = next(i for i in rows if cols(i)[0] == label); c = cols(i); c[4] = fake; c[5] = fake; put(i, c)
+elif how == "lost-as-refused":     # a transaction whose index was lost claimed as refused
+    i = next(i for i in rows if cols(i)[0] == label); c = cols(i); c[1] = "refused"; c[2] = "reverted"; put(i, c)
+elif how in ("lost-instance", "lost-final-header"):  # the final state that proves its effect altered
+    acc = next(l for l in lines if l.startswith("# accounts ")).split()
+    who = acc[acc.index("instance" if how == "lost-instance" else "final_header") + 1]
+    i = next(i for i, l in enumerate(lines) if l.startswith("# final " + who + " ")); p = lines[i].split(); p[4] = "0" * 64; lines[i] = " ".join(p)
 open(dst, "w").write("\n".join(lines) + "\n")
 PY
 }
@@ -52,5 +65,16 @@ for m in fake-hash refusal-as-applied applied-as-refused wrong-gas final-state i
   else
     echo "  ok   mutation $m caught: $(grep -m1 FAIL "$T/$m.out" | sed 's/^ *FAIL *//' | cut -c1-110)"
   fi
+done
+for label in $(sed -n 's/^  ok   \([^:]*\): applied, .*index lost after a block rewrite.*/\1/p' "$T/clean.out"); do
+  for m in lost-fake-hash lost-as-refused lost-instance lost-final-header; do
+    mutate "$m" "$label"
+    if ! ./scripts/verify-onchain.sh --manifest "$T/$m.tsv" --rpc "$RPC" > "$T/$m-$label.out" 2>&1 \
+       && grep -q "^  FAIL $label:" "$T/$m-$label.out"; then
+      echo "  ok   mutation $m on $label caught: $(grep -m1 "FAIL $label:" "$T/$m-$label.out" | sed 's/^ *FAIL *//' | cut -c1-110)"
+    else
+      echo "  FAIL mutation $m on $label was NOT caught on its own line"; fail=1
+    fi
+  done
 done
 exit $fail

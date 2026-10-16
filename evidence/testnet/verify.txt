@@ -20,7 +20,20 @@ sextant_lc against https://testnet.lez.logos.co, from evidence/testnet/run.tsv
   ok   u1-finish-before-miller: refused (E7295), 73de61646bcfdff1… in block 20011, charged its whole limit 4145066
   ok   u1-miller: applied, 88c03e2d5a48ac32… in block 21861, charged 4217572 gas = the pre-checked gas, below its limit 4269747
   ok   u1-finish: applied, d414caa45b380502… in block 21874, charged 3768242 gas = the pre-checked gas, below its limit 3815924
-  ok   final state of 3T51gKhDkckq…: 411 bytes as the run left them
+  ok   u2-begin: applied, dcf68b9402c6d7c1… in block 25788, charged 5344557 gas = the pre-checked gas, below its limit 5408002
+  ok   u2-miller: applied, 28f93ac488eb426f… in block 25799 (recorded in 25798: moved by a block rewrite), charged 4217572 gas = the pre-checked gas, below its limit 4269747
+  ok   u2-finish: applied, included in block 25802 (recorded in 25799: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-begin: applied, included in block 25802 (recorded in 25800: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-miller: applied, included in block 25803 (recorded in 25801: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-finish: applied, included in block 25803 (recorded in 25802: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u4-begin: applied, included in block 25804; block shared with other charged transactions, charge not separable
+  ok   u4-miller: applied, included in block 25804 by a block scan (recorded in 25805); index lost after a block rewrite (getTransaction returns null), effect proven by the final state; block shared with other charged transactions, charge not separable
+  ok   u4-finish: applied, included in block 25805 by a block scan (recorded in 25806); index lost after a block rewrite (getTransaction returns null), effect proven by the final state; block shared with other charged transactions, charge not separable
+  ok   attest-final-transfer-log: applied, included in block 25805; block shared with other charged transactions, charge not separable
+  ok   attest-final-weth-balance: applied, 3c8b4fea45d1d00d… in block 25814, charged 304267 gas = the pre-checked gas, below its limit 317309
+  ok   attest-final-wrong-chain: refused (E7209), 74edea40a8d5be16… in block 25821, charged its whole limit 100290
+  ok   final state of 3T51gKhDkckq…: 379 bytes as the run left them
   ok   final state of H6rGJgtLU67p…: 120 bytes as the run left them
-  ok   control: a random hash (5dd3386c8231…) does not resolve
-24 checks pass, 0 fail (6 applied and 6 refused transactions in the manifest)
+  ok   final state of ERpzfMGRxgm4…: 120 bytes as the run left them
+  ok   control: a random hash (244bb67abe54…) does not resolve
+37 checks pass, 0 fail (17 applied and 7 refused transactions in the manifest; 8 in blocks shared with other charged transactions; 7 moved by a block rewrite since the run; 2 applied, index lost after a block rewrite, effect proven by the final state)

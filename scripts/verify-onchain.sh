@@ -26,6 +26,13 @@
 #   pre-checked gas and below the limit, `refused` needs it equal to the limit.
 #   A block shared with other charged transactions is reported as such, and the
 #   transaction is then checked for inclusion only;
+# - a transaction getTransaction no longer resolves is searched for in the blocks
+#   around the recorded one (its hash is SHA-256 of its bytes after the variant tag).
+#   Found there, and only if it was applied and the instance and every `final` line of the run
+#   hold, it is reported as `index lost`: included in
+#   that block, the hash index lost by a block rewrite, its effect proven by the
+#   final state. Its charge is then checked as for any other transaction. Not
+#   found, or a final line off, and it fails;
 # - every `final` line: the instance and header records hold exactly the recorded bytes;
 # - a random hash does not resolve, or the endpoint answers anything.
 #
@@ -110,9 +117,50 @@ def report(good, text):
     else:
         bad += 1; print(f"  FAIL {text}")
 
+def unb58_or_none(s):
+    try:
+        return unb58(s)
+    except Exception:
+        return None
+
+def scan_for(tx, around, program):
+    # A public transaction of this program whose SHA-256 over the bytes after its
+    # variant tag is `tx`, in a block near `around`: (block, bytes) or None.
+    want, pid = bytes.fromhex(tx), unb58(program)
+    for b in range(max(1, around - 10), around + 100):
+        r = call("getBlock", b).get("result")
+        if r is None:
+            break
+        raw = base64.b64decode(r)
+        i = raw.find(pid)
+        while i >= 1:
+            if raw[i - 1] == 0:
+                h = hashlib.sha256()
+                for j in range(i, len(raw)):
+                    h.update(raw[j:j + 1])
+                    if h.digest() == want:
+                        return b, raw[i - 1:j + 1]
+            i = raw.find(pid, i + 1)
+    return None
+
+# Pre-pass: the program, the instance and which `final` lines hold, so that a
+# transaction whose index was lost can be weighed against the final state.
+program = instance = None
+finals = {}
+for line in open(manifest):
+    if line.startswith("# program "):
+        program = line.split()[2]
+    elif line.startswith("# accounts "):
+        p = line.split()
+        instance = p[p.index("instance") + 1] if "instance" in p else None
+    elif line.startswith("# final ") and program:
+        _, _, account, length, want = line.split()[:5]
+        b = shard(account, program)
+        finals[unb58(account)] = hashlib.sha256(b).hexdigest() == want and len(b) == int(length)
+
 program = None
 print(f"sextant_lc against {rpc}, from {manifest}")
-applied = refused = shared = 0
+applied = refused = shared = lost = 0
 for line in open(manifest):
     line = line.rstrip("\n")
     if line.startswith("# program "):
@@ -135,14 +183,30 @@ for line in open(manifest):
             report(False, f"{label}: no transaction recorded ({verdict})")
             continue
         res = call("getTransaction", tx).get("result")
-        if not (isinstance(res, list) and len(res) > 1):
-            report(False, f"{label}: {tx[:16]}… NOT FOUND on chain")
-            continue
-        found = str(res[1] if not isinstance(res[1], dict) else res[1].get("height"))
+        if isinstance(res, list) and len(res) > 1:
+            found = str(res[1] if not isinstance(res[1], dict) else res[1].get("height"))
+            mine = base64.b64decode(res[0])
+            note = ""
+        else:
+            hit = scan_for(tx, int(block), program) if program and block.isdigit() else None
+            if hit is None:
+                report(False, f"{label}: {tx[:16]}… NOT FOUND on chain")
+                continue
+            found, mine = str(hit[0]), hit[1]
+            inst = unb58_or_none(instance) if instance else None
+            # Its effect shows in the final state only if this run's instance and every
+            # other account the run recorded hold exactly the bytes the run left them.
+            if not (expected == "applied" and inst in finals and all(finals.values())):
+                report(False, f"{label}: {tx[:16]}… not indexed, found in block {found} by a block scan, but the final state does not show its effect")
+                continue
+            lost += 1
+            note = "; index lost after a block rewrite (getTransaction returns null), effect proven by the final state"
         if found != block:
             moved += 1
-        where = f"block {found}" + ("" if found == block else f" (recorded in {block}: moved by a block rewrite)")
-        mine = base64.b64decode(res[0])
+        if note:
+            where = f"block {found} by a block scan" + ("" if found == block else f" (recorded in {block})") + note
+        else:
+            where = f"block {found}" + ("" if found == block else f" (recorded in {block}: moved by a block rewrite)")
         limit = gas_limit_of(mine)
         exec_gas, stor_gas = fee_summary(int(found))
         if expected == "applied":
@@ -167,6 +231,7 @@ ctl = secrets.token_hex(32)
 report(block_of(ctl) is None, f"control: a random hash ({ctl[:12]}…) does not resolve")
 print(f"{ok} checks pass, {bad} fail ({applied} applied and {refused} refused transactions in the manifest"
       + (f"; {shared} in blocks shared with other charged transactions" if shared else "")
-      + (f"; {moved} moved by a block rewrite since the run" if moved else "") + ")")
+      + (f"; {moved} moved by a block rewrite since the run" if moved else "")
+      + (f"; {lost} applied, index lost after a block rewrite, effect proven by the final state" if lost else "") + ")")
 sys.exit(1 if bad else 0)
 PY

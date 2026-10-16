@@ -49,7 +49,7 @@ cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez 
 RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove
 python3 scripts/receipt_proof.py vectors/mainnet/receipts.json vectors/mainnet/block.json 2 /tmp/p.json
 scripts/verify-onchain.sh                     # the public testnet run, against the sequencer's RPC
-scripts/mutation-test-verifier.sh             # the verifier catches 7 corruptions of the manifest
+scripts/mutation-test-verifier.sh             # the verifier catches 15 corruptions of the manifest
 ```
 
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
@@ -60,20 +60,21 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 
 - **Public LEZ testnet** (v0.3.1): program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, the reproducible binary.
-  `Init` from the mainnet checkpoint, update 1 (period 1881: `Begin`, `Miller`,
-  `Finish`), two attestations accepted against the checkpoint's header (a
-  `Transfer` log and a WETH balance slot, execution block 26,170,219), six
-  refusals; 12 transactions, each charged exactly its pre-checked gas (applied)
-  or its whole limit (refused). [`evidence/testnet/run.tsv`](evidence/testnet/run.tsv).
+  The full chain to period 1884: `Init` from the mainnet checkpoint, updates 1
+  to 4 (`Begin`, `Miller`, `Finish` each; handoffs at periods 1881 to 1883) to
+  the finalized execution block 26,197,200, attestations accepted against the
+  checkpoint's header (block 26,170,219) and against the last one (a
+  `Transfer` log and a WETH balance slot), seven refusals; 24 transactions, 17
+  applied and 7 refused, each charged its pre-checked gas (applied) or its
+  whole limit (refused). Verifier 37 checks, 0 fail.
+  [`evidence/testnet/run.tsv`](evidence/testnet/run.tsv).
 - **Local v0.3.1 standalone sequencer**: the whole chain in the vectors, four
   updates to block 26,197,200, the attestations under it, and every refusal of
   the executor tests: 36 transactions. [`evidence/local/e2e.tsv`](evidence/local/e2e.tsv).
 
 ## What this prototype is not yet
 
-Updates 2 to 4 and the attestations under block 26,197,200 are not on the
-public testnet (the payer's balance covered update 1; see `docs/ONCHAIN.md`);
-no instance tracks a live chain; no Logos core module or update daemon (the
+No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); no reference consumer
 programs (the consumer check is the `Attest` instruction); no weak-subjectivity
 staleness check, no transaction proofs (native ether sender), no historical

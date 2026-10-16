@@ -15,6 +15,9 @@
 #                     1881), attestations against the checkpoint's header, the
 #                     refusals that cost an Attest or an Init, and the duplicate
 #                     Finish if the balance still covers it
+#   SCENARIO=testnet-rest  with RESUME=1, after a testnet run whose update 1 is
+#                     applied: updates 2 to 4, attestations against the last
+#                     header, and the duplicate Finish if the balance covers it
 #
 # Needs: cli/target/release/sextant, LEE_WALLET_HOME_DIR holding PAYER's key,
 # and DEPLOY=1 or SEXTANT_PROGRAM. Writes $OUT, one line per transaction:
@@ -133,6 +136,7 @@ fi
 
 fi
 
+if [ "$SCENARIO" != testnet-rest ]; then
 echo "== 4. update 1 (period 1881, committee handoff): Begin, Miller, Finish"
 [ "${RESUME:-0}" = 1 ] || step u1-begin applied -- begin 1
 step u1-miller applied -- miller 1
@@ -154,6 +158,7 @@ else
   echo "  (skipped: the payer cannot fund a refused Finish, charged its whole 4.1M gas limit)"
   echo "# skipped u1-finish-again: payer balance $("$CLI" balance)" >> "$OUT"
 fi
+fi
 
 if [ "$SCENARIO" = full ]; then
   echo "== 6. a real signature over another header passes Begin and Miller, and is refused at Finish"
@@ -162,6 +167,9 @@ if [ "$SCENARIO" = full ]; then
   step u2-resigned-finish E7203 -- finish 2 --tamper resigned
   check "instance unmoved by the forged update" "$(jget "$(show)" digest)" "$(jget "$S" digest)"
 
+fi
+
+if [ "$SCENARIO" = full ] || [ "$SCENARIO" = testnet-rest ]; then
   echo "== 7. updates 2 to 4 (periods 1882, 1883 with handoffs; 1884 finality only)"
   for n in 2 3 4; do
     step "u$n-begin" applied -- begin $n
@@ -176,6 +184,19 @@ if [ "$SCENARIO" = full ]; then
   step attest-final-transfer-log applied -- attest --at final --kind log
   step attest-final-weth-balance applied -- attest --at final --kind storage
   step attest-final-wrong-chain E7209 -- attest --at final --kind log --chain-id 11155111
+fi
+
+if [ "$SCENARIO" = testnet-rest ]; then
+  echo "== 5b. the last update again: nothing is applied twice"
+  if [ "$("$CLI" balance)" -gt "${FINISH_AGAIN_MIN:-45000000}" ]; then
+    step u4-finish-again E7294 -- finish 4
+  else
+    echo "  (skipped: the payer cannot fund a refused Finish, charged its whole gas limit)"
+    echo "# skipped u4-finish-again: payer balance $("$CLI" balance)" >> "$OUT"
+  fi
+fi
+
+if [ "$SCENARIO" = full ]; then
 
   echo "== 9. another chain's configuration: a mainnet update cannot advance it"
   WRONG="wrong-chain-${INSTANCE#mainnet-}"
