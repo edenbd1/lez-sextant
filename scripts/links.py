@@ -17,14 +17,10 @@ if deploys:
     for what, h in deploys:
         print(f"| {what} | [`{h[:16]}…`]({explorer}/transaction/{h}) |")
     print()
-print("| step | expected | verdict | block | transaction | pre-check |\n|---|---|---|---:|---|---|")
+print("| step | expected | verdict | block | transaction | pre-check | charged gas / limit |\n|---|---|---|---:|---|---|---:|")
 for l in lines:
     if l.startswith("#") or not l.strip():
         continue
-    label, expected, verdict, block, tx, attempts, pre = (l.split("\t") + [""] * 7)[:7]
-    if verdict == "applied":
-        cell = f"[`{tx[:16]}…`]({explorer}/transaction/{tx})"
-    else:
-        n = len([a for a in attempts.split(",") if a and a != "-"])
-        cell = f"{n} attempt(s), none included"
-    print(f"| {label} | {expected} | {verdict} | {block or '-'} | {cell} | {pre} |")
+    label, expected, verdict, block, tx, attempts, pre, limit, charged = (l.split("\t") + [""] * 9)[:9]
+    cell = f"[`{tx[:16]}…`]({explorer}/transaction/{tx})" if len(tx) == 64 else "not sent"
+    print(f"| {label} | {expected} | {verdict} | {block or '-'} | {cell} | {pre} | {charged} / {limit} |")

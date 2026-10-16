@@ -1,0 +1,26 @@
+sextant_lc against https://testnet.lez.logos.co, from evidence/testnet/run.tsv
+  ok   program header A89TcYmWKXrz… names ImageID fa229eddbae15b2a…
+  ok   deploy segment6: 4696985669407edc… in block 19128
+  ok   deploy segment5: eadf6abf0a4a1442… in block 19145
+  ok   deploy segment4: 493cbc535a1e803b… in block 19150
+  ok   deploy segment3: a2cf0a241e2ffd88… in block 19154
+  ok   deploy segment2: b5006e54a7c5f55b… in block 19166
+  ok   deploy segment1: 3f8b3d81afcb051f… in block 19170
+  ok   deploy segment0: 41faafcc0cce9aac… in block 19184
+  ok   deploy header: cf7e066e244b0b00… in block 19184
+  ok   init: applied, ba6cdef7ccf95674… in block 19250, charged 1833662 gas = the pre-checked gas, below its limit 2017028
+  ok   init-again: refused (E7291), c4b6c79cec2fe1ae… in block 19251, charged its whole limit 2017028
+  ok   attest-checkpoint-transfer-log: applied, 33753c55f9985f03… in block 19252, charged 91173 gas = the pre-checked gas, below its limit 100290
+  ok   attest-checkpoint-weth-balance: applied, ffa95195ab06919c… in block 19253, charged 304267 gas = the pre-checked gas, below its limit 334693
+  ok   attest-wrong-chain: refused (E7209), fcbddb6935b9b450… in block 19397, charged its whole limit 100290
+  ok   attest-predicate-false: refused (E7208), 7c12add0f6cb8f83… in block 19534, charged its whole limit 100290
+  ok   attest-slot-not-covered: refused (E7207), 19be290878d91691… in block 19721, charged its whole limit 334693
+  ok   attest-unrecorded-header: refused (E7292), 345fc37dd43ca767… in block 19736, charged its whole limit 100290
+  ok   u1-begin: applied, f7bc0360db006954… in block 19780, charged 5473086 gas = the pre-checked gas, below its limit 6020394
+  ok   u1-finish-before-miller: refused (E7295), 73de61646bcfdff1… in block 20011, charged its whole limit 4145066
+  ok   u1-miller: applied, 88c03e2d5a48ac32… in block 21861, charged 4217572 gas = the pre-checked gas, below its limit 4269747
+  ok   u1-finish: applied, d414caa45b380502… in block 21874, charged 3768242 gas = the pre-checked gas, below its limit 3815924
+  ok   final state of 3T51gKhDkckq…: 411 bytes as the run left them
+  ok   final state of H6rGJgtLU67p…: 120 bytes as the run left them
+  ok   control: a random hash (464ec22ea573…) does not resolve
+24 checks pass, 0 fail (6 applied and 6 refused transactions in the manifest)

@@ -151,8 +151,9 @@ apply in the RISC Zero executor, summed. Raw output:
 Every step is signed by an account the chain has never seen. The heaviest
 step is 55% of the cap. An update costs 1.16x to 1.35x one transaction's cap in
 total, spread over three. These figures are for the committed binary, the
-reproducible Docker build (ImageID `fa229edd…`); the same instructions run on
-LEZ (§7).
+reproducible Docker build (ImageID `fa229edd…`); the chain charged exactly
+these figures, every row on a local v0.3.1 sequencer and `Init` and update 1 on
+the public testnet ([`ONCHAIN.md`](ONCHAIN.md)).
 
 ## 3. Real proving (Performance #2, #4)
 

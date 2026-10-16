@@ -1,0 +1,15 @@
+# resumed (testnet) against https://testnet.lez.logos.co, 2026-10-16T08:23:13Z, fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8
+== 4. update 1 (period 1881, committee handoff): Begin, Miller, Finish
+{"attempts":["88c03e2d5a48ac32e21cd9b940ab67d3af162e5b43b9f3aa97910108988a7125"],"block":21861,"block_gas_exec":4217572,"block_gas_stor":355,"fee_reserve":"34160816","gas_limit":4269747,"label":"u1-miller","op":"miller","payer_balance_after":"35506656","payer_balance_before":"69250072","precheck":{"gas":4217572},"state_changed":true,"tx":"88c03e2d5a48ac32e21cd9b940ab67d3af162e5b43b9f3aa97910108988a7125","tx_bytes":355,"verdict":"applied"}
+  ok  u1-miller: applied (gas=4217572)
+{"attempts":["d414caa45b38050298cf4b36c26c19c3230111c1eb15efc63638a12f76107d35","bedcc2a0b71ae8840a8574f477bdd4445b6c37bf2f94558d39e1f840fd1d55bb"],"block":21874,"block_gas_exec":3768242,"block_gas_stor":1111,"fee_reserve":"30536280","gas_limit":3815924,"label":"u1-finish","op":"finish","payer_balance_after":"5351832","payer_balance_before":"35506656","precheck":{"gas":3768242},"state_changed":true,"tx":"d414caa45b38050298cf4b36c26c19c3230111c1eb15efc63638a12f76107d35","tx_bytes":1111,"verdict":"applied"}
+  ok  u1-finish: applied (gas=3768242)
+  ok  after update 1: finalized slot unchanged: 15409152
+  ok  after update 1: next committee recorded: yes
+== 5. the same update again: nothing is applied twice
+  (skipped: the payer cannot fund a refused Finish, charged its whole 4.1M gas limit)
+== final state: the instance and the header records, as the run left them
+# final 3T51gKhDkckqi3XuvPdN9Wj1wckAQouDMg9CsfBXG2iZ 411 394f9a888bd75aa6ee4ea3c7f7bd9a8a2d6a74063bc75915a20ad3b50cb0fe5f
+# final H6rGJgtLU67pBchitybgTfi8UdMpH3geS1jK2bMRsdV7 120 ceca32e88b561fc3155afeffbbd06be8e7523744916142da29cfe7d9b735109f
+== PASS: 12 transactions in evidence/testnet/run.tsv
+exit=0

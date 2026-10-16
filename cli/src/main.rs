@@ -228,7 +228,7 @@ impl Ctx {
         self.payer.ok_or_else(|| anyhow!("name the fee payer with --payer or SEXTANT_PAYER"))
     }
     async fn account(&self, id: AccountId) -> Result<lee::Account> {
-        self.rpc.get_account(id).await.map_err(|e| anyhow!("reading {id} from the sequencer: {e}"))
+        retry(|| self.rpc.get_account(id)).await.map_err(|e| anyhow!("reading {id} from the sequencer: {e}"))
     }
     async fn shard(&self, id: AccountId) -> Result<Vec<u8>> {
         let p = self.program()?;
@@ -270,12 +270,13 @@ impl Ctx {
         }
         Ok(u)
     }
-    /// The store after update `n` (the native verifier; a tampered update keeps
-    /// the honest `next`, which is what a forger would claim).
+    /// The store after update `n`, by the native verifier under mainnet's
+    /// configuration: what an honest submitter claims, and what a forger or an
+    /// instance configured for another chain would claim too.
     fn next(&self, n: usize) -> Result<Store> {
         let (store, u, committee) = self.step(n)?;
         let w = witness(&committee, &u.bits, AggMode::Subtract);
-        lc::apply_update(&self.cfg(), &store, &u, &committee, &w, lc::FAST, &mut |_| {}).map_err(|e| anyhow!("{e:?}"))
+        lc::apply_update(&self.m.cfg, &store, &u, &committee, &w, lc::FAST, &mut |_| {}).map_err(|e| anyhow!("{e:?}"))
     }
 
     /// Execute `ix` locally through `lee::V03State`, with the committed binary at
@@ -309,7 +310,7 @@ impl Ctx {
 
     /// `(gas_used_exec, gas_used_stor)` of block `b`, read from its fee transaction.
     async fn block_fee_summary(&self, b: u64) -> Result<(u64, u64)> {
-        let block = self.rpc.get_block(b).await.map_err(|e| anyhow!("getBlock {b}: {e}"))?.ok_or_else(|| anyhow!("no block {b}"))?;
+        let block = retry(|| self.rpc.get_block(b)).await.map_err(|e| anyhow!("getBlock {b}: {e}"))?.ok_or_else(|| anyhow!("no block {b}"))?;
         let fee: AccountId = FEE_PROGRAM.parse().map_err(|e| anyhow!("{e:?}"))?;
         for tx in &block.body.transactions {
             if let LeeTransaction::Public(t) = tx {
@@ -325,7 +326,7 @@ impl Ctx {
     }
 
     async fn balance(&self, who: AccountId) -> Result<u128> {
-        self.rpc.get_account_balance(who).await.map_err(|e| anyhow!("balance of {who}: {e}"))
+        retry(|| self.rpc.get_account_balance(who)).await.map_err(|e| anyhow!("balance of {who}: {e}"))
     }
 
     async fn included(&self, h: HashType) -> Option<u64> {
@@ -341,7 +342,9 @@ impl Ctx {
         let payer = self.payer()?;
         let pre = self.precheck(&ix, &rows).await?;
         let (gas_limit, pre_json) = match &pre {
-            Pre::Gas(g) => ((g + g / 10).clamp(100_000, GAS_CAP), serde_json::json!({"gas": g})),
+            // Execution is deterministic: the chain charges exactly the pre-checked
+            // cycles, so 1% is margin enough (and keeps the fee reserve low).
+            Pre::Gas(g) => ((g + g / 100 + 10_000).min(GAS_CAP), serde_json::json!({"gas": g})),
             // A refused public transaction is included and charged its whole gas limit;
             // the limit is the honest instruction's, so running out of gas cannot be
             // what refused it.
@@ -354,7 +357,7 @@ impl Ctx {
             return Ok(());
         }
         let key = wallet.get_account_public_signing_key(payer).ok_or_else(|| anyhow!("the wallet holds no key for the payer {payer}"))?.clone();
-        let fees = self.rpc.get_fee_state().await.map_err(|e| anyhow!("getFeeState: {e}"))?;
+        let fees = retry(|| self.rpc.get_fee_state()).await.map_err(|e| anyhow!("getFeeState: {e}"))?;
         let data = Program::serialize_instruction(ix.clone())?;
         let sel: Vec<_> = rows.iter().map(|a| ProgramShardSelector::new(*a, p)).collect();
         let build = |nonce, max_fee| {
@@ -380,7 +383,7 @@ impl Ctx {
         let mut hashes: Vec<HashType> = vec![];
         let mut found = None;
         for attempt in 1..=3 {
-            let nonce = self.rpc.get_accounts_nonces(vec![payer]).await.map_err(|e| anyhow!("nonce: {e}"))?[0];
+            let nonce = retry(|| self.rpc.get_accounts_nonces(vec![payer])).await.map_err(|e| anyhow!("nonce: {e}"))?[0];
             match self.rpc.send_transaction(build(nonce, max_fee)).await {
                 Ok(h) => {
                     eprintln!("{op}: attempt {attempt} sent {h} (nonce {nonce:?})");
@@ -506,6 +509,7 @@ async fn main() -> Result<()> {
                         "slot": s.finalized.slot,
                         "period": lc::period(s.finalized.slot),
                         "block_number": s.finalized_block_number,
+                        "next_committee": s.next_committee.map(hex::encode),
                         "state_root": hex::encode(s.finalized_execution_state_root),
                         "receipts_root": hex::encode(s.finalized_receipts_root),
                         "digest": hex::encode(sextant_program::digest(&i)),
@@ -650,6 +654,27 @@ async fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+/// A read from the sequencer, tried up to five times: the public endpoint drops
+/// some requests.
+async fn retry<T, E: std::fmt::Display, F, Fut>(f: F) -> std::result::Result<T, E>
+where
+    F: Fn() -> Fut,
+    Fut: std::future::Future<Output = std::result::Result<T, E>>,
+{
+    let mut last = None;
+    for i in 0..5u64 {
+        match f().await {
+            Ok(v) => return Ok(v),
+            Err(e) => {
+                eprintln!("sequencer read failed (try {}): {e}", i + 1);
+                last = Some(e);
+                tokio::time::sleep(Duration::from_secs(3 * (i + 1))).await;
+            }
+        }
+    }
+    Err(last.expect("five tries"))
 }
 
 /// Polls `done` every 5 s until it holds or `limit` passes; a timeout is not an

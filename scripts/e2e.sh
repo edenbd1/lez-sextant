@@ -8,6 +8,8 @@
 #                     1884), attestations against the last header, and the
 #                     refusals that need applied steps first (a resigned
 #                     update refused at Finish, another chain's instance)
+#   RESUME=1          continue the run recorded in $OUT (same SEXTANT_PROGRAM and
+#                     INSTANCE) from update 1's Miller step, appending to it
 #   SCENARIO=testnet  what the public testnet payer can fund (a refusal is
 #                     charged its whole gas limit): Init, update 1 (period
 #                     1881), attestations against the checkpoint's header, the
@@ -53,12 +55,20 @@ fi
 : "${SEXTANT_PROGRAM:?deploy first (DEPLOY=1) or set SEXTANT_PROGRAM}"
 export SEXTANT_PROGRAM
 IMG="$("$CLI" image-id)"; IMGID="$(jget "$IMG" image_id)"
-{
+if [ "${RESUME:-0}" = 1 ]; then
+  # Continue a run whose manifest is $OUT: the final-state lines it ends with are
+  # superseded by the ones this part writes.
+  [ -f "$OUT" ] || { echo "RESUME=1 needs the manifest $OUT"; exit 2; }
+  grep -v '^# final ' "$OUT" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+  echo "# resumed ($SCENARIO) against $SEXTANT_RPC, $(date -u +%Y-%m-%dT%H:%M:%SZ), $IMGID" | tee -a "$OUT"
+else
+  {
   echo "# sextant_lc run ($SCENARIO) against $SEXTANT_RPC, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# program $SEXTANT_PROGRAM $IMGID"
   echo "# binary $IMG"
   echo "# payer $PAYER instance $INSTANCE"
-} | tee "$OUT"
+  } | tee "$OUT"
+fi
 if [ -n "${DEPLOYED:-}" ]; then
   python3 - "$DEPLOYED" >> "$OUT" <<'PY'
 import json, sys
@@ -98,8 +108,9 @@ step() {
 show() { "$CLI" show; }
 IDS="$("$CLI" ids)"
 INST="$(jget "$IDS" instance)"; CKPT="$(jget "$IDS" checkpoint_header)"; FINAL="$(jget "$IDS" final_header)"
-echo "# accounts instance $INST checkpoint_header $CKPT final_header $FINAL" >> "$OUT"
+[ "${RESUME:-0}" = 1 ] || echo "# accounts instance $INST checkpoint_header $CKPT final_header $FINAL" >> "$OUT"
 
+if [ "${RESUME:-0}" != 1 ]; then
 echo "== 1. Init from the committed mainnet bootstrap (slot 15,409,152), once"
 step init applied -- init
 check "instance at the checkpoint" "$(jget "$(show)" slot)" 15409152
@@ -120,11 +131,17 @@ if [ "$SCENARIO" = full ]; then
   step begin-header-not-finalized E7202 -- begin 1 --tamper moved
 fi
 
+fi
+
 echo "== 4. update 1 (period 1881, committee handoff): Begin, Miller, Finish"
-step u1-begin applied -- begin 1
+[ "${RESUME:-0}" = 1 ] || step u1-begin applied -- begin 1
 step u1-miller applied -- miller 1
 step u1-finish applied -- finish 1
-check "instance after update 1" "$(jget "$(show)" period)" 1882
+# Update 1's finalized header is the checkpoint's own: what it adds is the
+# verified handoff to the period-1882 committee, which update 2 needs.
+S="$(show)"
+check "after update 1: finalized slot unchanged" "$(jget "$S" slot)" 15409152
+check "after update 1: next committee recorded" "$( [ -n "$(jget "$S" next_committee)" ] && echo yes || echo no)" yes
 
 echo "== 5. the same update again: nothing is applied twice"
 if [ "$SCENARIO" = full ]; then
@@ -143,7 +160,7 @@ if [ "$SCENARIO" = full ]; then
   step u2-resigned-begin applied -- begin 2 --tamper resigned
   step u2-resigned-miller applied -- miller 2 --tamper resigned
   step u2-resigned-finish E7203 -- finish 2 --tamper resigned
-  check "instance unmoved by the forged update" "$(jget "$(show)" period)" 1882
+  check "instance unmoved by the forged update" "$(jget "$(show)" digest)" "$(jget "$S" digest)"
 
   echo "== 7. updates 2 to 4 (periods 1882, 1883 with handoffs; 1884 finality only)"
   for n in 2 3 4; do

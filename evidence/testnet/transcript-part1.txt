@@ -1,0 +1,57 @@
+{"header":"A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw","op":"deploy-plan","segments":["9E1MHcBsQvkzo9AR8YrvqCJHPc3Pp1frPhbRWyr9tAX4","GKRGG8RRpYf6QFjCb1bJDcnKEgAUm3nmmWLqW3uv6vXQ","GEhurVBmoE6r3VJuXQ8DWUDuwUJYG3ZuQv4r9ah9yah3","FSHzvSXZro7eYKX6P6Ck5CmDusMoGsKKh85HhpV4adxw","4Ep6khwwJBQd2tziXc1ixaiywujPntu9BicLRiZQixmF","3SydjQsQXkUzT3iZS5b1kKJTcjgdXPVYPJEXzwaJbhMF","HeDK2GqfTvPMQgezivTK56FHwtNM5NmuLMqyERNbgg52"]}
+segment 6: sent 4696985669407edc3a534a1fc885ef94237dbd3015f8befb0a8d64fa7d154a99 (try 1)
+segment 6: on chain
+segment 5: sent eadf6abf0a4a1442e6bce17852fc026768cbbaac4359e61274328b3f61b7e42e (try 1)
+segment 5: on chain
+segment 4: sent 493cbc535a1e803be61d5cecb87b020775824634554a8a37d9235c503e1a099f (try 1)
+segment 4: on chain
+segment 3: sent a2cf0a241e2ffd881c30b1dd4551d2bdae6527960fffab42d25605b2c8ccec1c (try 1)
+segment 3: on chain
+segment 2: sent b5006e54a7c5f55b4a63367a1ba05a0d3b013688d9bf66be4961cab9f2c5ef86 (try 1)
+segment 2: on chain
+segment 1: sent 3f8b3d81afcb051f6d191423d80c9343dcc6a695d7f623294196c68c6d6e2876 (try 1)
+segment 1: on chain
+segment 0: sent 41faafcc0cce9aac08d6ff61ca53f95a98debb0133432148d9c2f242666cf308 (try 1)
+segment 0: on chain
+header: sent cf7e066e244b0b0018f4e676a7edd852309724c79d375dfe1bd238715b6e0152 (try 1)
+{"header":"A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw","image_id":"fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8","op":"deploy","segments":["9E1MHcBsQvkzo9AR8YrvqCJHPc3Pp1frPhbRWyr9tAX4","GKRGG8RRpYf6QFjCb1bJDcnKEgAUm3nmmWLqW3uv6vXQ","GEhurVBmoE6r3VJuXQ8DWUDuwUJYG3ZuQv4r9ah9yah3","FSHzvSXZro7eYKX6P6Ck5CmDusMoGsKKh85HhpV4adxw","4Ep6khwwJBQd2tziXc1ixaiywujPntu9BicLRiZQixmF","3SydjQsQXkUzT3iZS5b1kKJTcjgdXPVYPJEXzwaJbhMF","HeDK2GqfTvPMQgezivTK56FHwtNM5NmuLMqyERNbgg52"],"sent":["segment6:4696985669407edc3a534a1fc885ef94237dbd3015f8befb0a8d64fa7d154a99","segment5:eadf6abf0a4a1442e6bce17852fc026768cbbaac4359e61274328b3f61b7e42e","segment4:493cbc535a1e803be61d5cecb87b020775824634554a8a37d9235c503e1a099f","segment3:a2cf0a241e2ffd881c30b1dd4551d2bdae6527960fffab42d25605b2c8ccec1c","segment2:b5006e54a7c5f55b4a63367a1ba05a0d3b013688d9bf66be4961cab9f2c5ef86","segment1:3f8b3d81afcb051f6d191423d80c9343dcc6a695d7f623294196c68c6d6e2876","segment0:41faafcc0cce9aac08d6ff61ca53f95a98debb0133432148d9c2f242666cf308","header:cf7e066e244b0b0018f4e676a7edd852309724c79d375dfe1bd238715b6e0152"]}
+# sextant_lc run (testnet) against https://testnet.lez.logos.co, 2026-10-15T22:39:20Z
+# program A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8
+# binary {"bytes":642168,"image_id":"fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8","sha256":"d17de1ea1457c1369319f646999baf8f29098d2014d8700f148a3f74d15e19ca"}
+# payer 9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw instance mainnet-10152211
+== 1. Init from the committed mainnet bootstrap (slot 15,409,152), once
+{"attempts":["ba6cdef7ccf956747c0ead1bdfcb91818fa6de9cd0227426b6b26ac7fc5217f2"],"block":19250,"block_gas_exec":1833662,"block_gas_stor":26229,"fee_reserve":"16346056","gas_limit":2017028,"label":"init","op":"init","payer_balance_after":"171388584","payer_balance_before":"186267712","precheck":{"gas":1833662},"state_changed":true,"tx":"ba6cdef7ccf956747c0ead1bdfcb91818fa6de9cd0227426b6b26ac7fc5217f2","tx_bytes":26229,"verdict":"applied"}
+  ok  init: applied (gas=1833662)
+  ok  instance at the checkpoint: 15409152
+{"attempts":["c4b6c79cec2fe1aeb2da775f941755250f4578d22dde3904ec0376cf483a5f8b"],"block":19251,"block_gas_exec":2017028,"block_gas_stor":26229,"fee_reserve":"16346056","gas_limit":2017028,"label":"init-again","op":"init","payer_balance_after":"155042528","payer_balance_before":"171388584","precheck":{"refused":"E7291: an instance already exists at this id; choose another id"},"state_changed":false,"tx":"c4b6c79cec2fe1aeb2da775f941755250f4578d22dde3904ec0376cf483a5f8b","tx_bytes":26229,"verdict":"reverted"}
+  ok  init-again: refused (E7291), included and charged its whole limit, nothing changed
+== 2. the consumer check, against the checkpoint's header (execution block 26,170,219)
+{"attempts":["33753c55f9985f03f9bef014b4c329c9cee34bd5741bdcebd1757415f99646a9"],"block":19252,"block_gas_exec":91173,"block_gas_stor":1680,"fee_reserve":"815760","gas_limit":100290,"label":"attest-checkpoint-transfer-log","op":"attest","payer_balance_after":"154299704","payer_balance_before":"155042528","precheck":{"gas":91173},"state_changed":false,"tx":"33753c55f9985f03f9bef014b4c329c9cee34bd5741bdcebd1757415f99646a9","tx_bytes":1680,"verdict":"applied"}
+  ok  attest-checkpoint-transfer-log: applied (gas=91173)
+{"attempts":["ffa95195ab06919c9ef33f38e7a00fef4c3ca7b5ef1d7bf4fdcf0cdfe1475fab"],"block":19253,"block_gas_exec":304267,"block_gas_stor":7276,"fee_reserve":"2735752","gas_limit":334693,"label":"attest-checkpoint-weth-balance","op":"attest","payer_balance_after":"151807360","payer_balance_before":"154299704","precheck":{"gas":304267},"state_changed":false,"tx":"ffa95195ab06919c9ef33f38e7a00fef4c3ca7b5ef1d7bf4fdcf0cdfe1475fab","tx_bytes":7276,"verdict":"applied"}
+  ok  attest-checkpoint-weth-balance: applied (gas=304267)
+{"attempts":["fcbddb6935b9b4501deadc02b9acb326600558c604d7ef0d162844f0345583db"],"block":19397,"block_gas_exec":100290,"block_gas_stor":1680,"fee_reserve":"815760","gas_limit":100290,"label":"attest-wrong-chain","op":"attest","payer_balance_after":"150991600","payer_balance_before":"151807360","precheck":{"refused":"E7209: chain-ID mismatch: the record belongs to another chain's instance"},"state_changed":false,"tx":"fcbddb6935b9b4501deadc02b9acb326600558c604d7ef0d162844f0345583db","tx_bytes":1680,"verdict":"reverted"}
+  ok  attest-wrong-chain: refused (E7209), included and charged its whole limit, nothing changed
+{"attempts":["7c12add0f6cb8f83bf61d651276791580cd5a09bce0381a72becedef27b1e15c"],"block":19534,"block_gas_exec":100290,"block_gas_stor":1680,"fee_reserve":"815760","gas_limit":100290,"label":"attest-predicate-false","op":"attest","payer_balance_after":"150175840","payer_balance_before":"150991600","precheck":{"refused":"E7208: predicate not satisfied by the attested state"},"state_changed":false,"tx":"7c12add0f6cb8f83bf61d651276791580cd5a09bce0381a72becedef27b1e15c","tx_bytes":1680,"verdict":"reverted"}
+  ok  attest-predicate-false: refused (E7208), included and charged its whole limit, nothing changed
+{"attempts":["19be290878d91691a5a720b4fa5dcfdabe21aeb3b326d70759491915f30d3bca"],"block":19721,"block_gas_exec":334693,"block_gas_stor":7276,"fee_reserve":"2735752","gas_limit":334693,"label":"attest-slot-not-covered","op":"attest","payer_balance_after":"147440088","payer_balance_before":"150175840","precheck":{"refused":"E7207: inclusion proof invalid against the recorded header's root"},"state_changed":false,"tx":"19be290878d91691a5a720b4fa5dcfdabe21aeb3b326d70759491915f30d3bca","tx_bytes":7276,"verdict":"reverted"}
+  ok  attest-slot-not-covered: refused (E7207), included and charged its whole limit, nothing changed
+{"attempts":["345fc37dd43ca7672f740e1b50444867fea5e6df033a9ff2bc433cc432854664"],"block":19736,"block_gas_exec":100290,"block_gas_stor":1680,"fee_reserve":"815760","gas_limit":100290,"label":"attest-unrecorded-header","op":"attest","payer_balance_after":"146624328","payer_balance_before":"147440088","precheck":{"refused":"E7292: no header recorded at this slot"},"state_changed":false,"tx":"345fc37dd43ca7672f740e1b50444867fea5e6df033a9ff2bc433cc432854664","tx_bytes":1680,"verdict":"reverted"}
+  ok  attest-unrecorded-header: refused (E7292), included and charged its whole limit, nothing changed
+== 4. update 1 (period 1881, committee handoff): Begin, Miller, Finish
+{"attempts":["f7bc0360db006954ca8f66a25d8a0498270f727d88eec982e9bf2a600e749cd5"],"block":19780,"block_gas_exec":5473086,"block_gas_stor":52519,"fee_reserve":"48583304","gas_limit":6020394,"label":"u1-begin","op":"begin","payer_balance_after":"102419488","payer_balance_before":"146624328","precheck":{"gas":5473086},"state_changed":true,"tx":"f7bc0360db006954ca8f66a25d8a0498270f727d88eec982e9bf2a600e749cd5","tx_bytes":52519,"verdict":"applied"}
+  ok  u1-begin: applied (gas=5473086)
+{"verdict": "error", "error": "Error: reading 7wPKmg7u7bDg4oasXLxpWbvhHdry9eT8dCxEAfuwnUXQ from the sequencer: client error (SendRequest)"}
+  FAIL u1-miller: error (), expected applied
+{"gas_limit":4145066,"label":"u1-finish","op":"finish","precheck":{"refused":"E7295: the Miller step of this job has not run: send Miller"},"verdict":"refused-precheck"}
+  FAIL u1-finish: refused-precheck (E7295), expected applied
+  ok  after update 1: finalized slot unchanged: 15409152
+  FAIL after update 1: next committee recorded: got no, want yes
+== 5. the same update again: nothing is applied twice
+{"attempts":["73de61646bcfdff137b010f6a16553a737303bfeb09e4aef82cd99d562f216bc"],"block":20011,"block_gas_exec":4145066,"block_gas_stor":1111,"fee_reserve":"33169416","gas_limit":4145066,"label":"u1-finish-again","op":"finish","payer_balance_after":"69250072","payer_balance_before":"102419488","precheck":{"refused":"E7295: the Miller step of this job has not run: send Miller"},"state_changed":false,"tx":"73de61646bcfdff137b010f6a16553a737303bfeb09e4aef82cd99d562f216bc","tx_bytes":1111,"verdict":"reverted"}
+  FAIL u1-finish-again: reverted (E7295), expected E7294
+== final state: the instance and the header records, as the run left them
+# final 3T51gKhDkckqi3XuvPdN9Wj1wckAQouDMg9CsfBXG2iZ 379 a9c6b1cf35e3d0703d01c2bb301960af6dcfd7e547b8049a5ef5250324897413
+# final H6rGJgtLU67pBchitybgTfi8UdMpH3geS1jK2bMRsdV7 120 ceca32e88b561fc3155afeffbbd06be8e7523744916142da29cfe7d9b735109f
+== FAIL: 12 transactions in evidence/testnet/run.tsv
+exit=1
