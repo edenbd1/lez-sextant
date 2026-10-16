@@ -1,0 +1,15 @@
+fetched 2026-10-16T20:26:21Z by scripts/fetch-vectors.py hoodi
+checkpoint period 505, updates 505-507, finality update period 508, execution block 3829448
+receipt proofs for tx [2, 60]
+GET  https://ethereum-hoodi-beacon-api.publicnode.com/eth/v1/beacon/genesis
+GET  https://lodestar-hoodi.chainsafe.io/eth/v1/beacon/genesis
+GET  https://lodestar-hoodi.chainsafe.io/eth/v1/config/fork_schedule
+GET  https://ethereum-hoodi-beacon-api.publicnode.com/eth/v1/beacon/light_client/finality_update
+GET  https://lodestar-hoodi.chainsafe.io/eth/v1/beacon/light_client/finality_update
+GET  https://ethereum-hoodi-beacon-api.publicnode.com/eth/v1/beacon/headers/4136960
+GET  https://ethereum-hoodi-beacon-api.publicnode.com/eth/v1/beacon/light_client/bootstrap/0x1f82c1a401392528c0c6e7183e56f60ffb1cd9bd7dc825d8a2049e3ba64566f6
+GET  https://ethereum-hoodi-beacon-api.publicnode.com/eth/v1/beacon/light_client/updates?start_period=505&count=3
+GET  https://lodestar-hoodi.chainsafe.io/eth/v1/beacon/light_client/updates?start_period=505&count=3
+RPC  https://ethereum-hoodi-rpc.publicnode.com eth_getBlockByHash ["0xf8c4c10d2eac279d6ef4e0444a21a5193b5fb1d12c92bd2bc7b8208ad8d1fc10", false]
+RPC  https://hoodi.gateway.tenderly.co eth_getProof ["0x0000F90827F1C53a10cb7A02335B175320002935", ["0x000000000000000000000000000000000000000000000000000000000000109a"], {"blockHash": "0xf8c4c10d2eac279d6ef4e0444a21a5193b5fb1d12c92bd2bc7b8208ad8d1fc10"}]
+RPC  https://ethereum-hoodi-rpc.publicnode.com eth_getBlockReceipts ["0x3a6ec8"]

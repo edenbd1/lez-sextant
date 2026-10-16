@@ -61,7 +61,7 @@ pub enum Op {
     /// (c), split: the final exponentiation (blst).
     FinalExp { f: Vec<u8> },
     /// Instance initialisation from a `LightClientBootstrap`.
-    Bootstrap { root: [u8; 32], header: LcHeader, committee: SyncCommittee, branch: Vec<[u8; 32]> },
+    Bootstrap { cfg: ChainConfig, root: [u8; 32], header: LcHeader, committee: SyncCommittee, branch: Vec<[u8; 32]> },
     /// Consumer side: an account and storage-slot proof under a state root.
     StorageProof { state_root: [u8; 32], proof: mpt::AccountStorageProof },
     /// Consumer side: a receipt (and one of its logs) under a receipts root.
@@ -150,8 +150,8 @@ pub fn run(op: &Op, clock: &dyn Fn() -> u64) -> Report {
             mark("final_exponentiation");
             if ok { Ok(vec![1]) } else { Err(Error::BadSignature) }
         }
-        Op::Bootstrap { root, header, committee, branch } => {
-            let s = lc::bootstrap(root, header, committee, branch)?;
+        Op::Bootstrap { cfg, root, header, committee, branch } => {
+            let s = lc::bootstrap(cfg, root, header, committee, branch)?;
             mark("bootstrap");
             Ok(borsh::to_vec(&s).unwrap())
         }

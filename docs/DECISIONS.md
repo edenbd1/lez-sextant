@@ -133,6 +133,29 @@ signature fail) and removes the need to re-initialise for a scheduled fork; a
 container-changing fork still requires a new program version, released before
 activation, with the consumer migration documented (Verification Security #3).
 
+**Update (branch `sepolia-vectors`, 2026-10-16).** Gloas is no longer
+ahead of us. Sepolia moved to it at epoch 353,024 (2026-10-06), and Hoodi
+follows at epoch 132,352 (2026-10-26). Both RFP-eligible testnets will
+therefore be Gloas before LEZ testnet 0.4. The program now knows both shapes:
+
+- `ChainConfig.gloas_epoch` is fixed at `Init` like the rest of the
+  configuration, and is `u64::MAX` where Gloas is unscheduled (mainnet).
+- The Electra or Gloas generalized indices are chosen by the slot of the
+  header they apply to: finality 169 or 735, committees 86/87 or 2945/2946,
+  execution 25 or 2856.
+- A Gloas light-client header proves only `execution_block_hash`. The
+  submitter adds the RLP execution header, and the program keeps
+  `stateRoot`, `receiptsRoot` and `number` only if the header's keccak is
+  that proven hash (`mpt::execution_header_roots`). This adds about 670 bytes
+  per update.
+- `Store`, `HeaderRecord`, `Attest` and the consumer path are unchanged.
+- One instance crosses the fork: `vectors/sepolia-gloas-fork` runs from a
+  Fulu checkpoint through Gloas updates.
+
+The wire format changes (`LcHeader.execution_rlp`, `ChainConfig.gloas_epoch`,
+and 8 more bytes in the instance account), so the program binary must be
+rebuilt and redeployed.
+
 ## D8. Reuse, assessed
 
 **Kept from upstream, unchanged:** the light-client algorithm of the

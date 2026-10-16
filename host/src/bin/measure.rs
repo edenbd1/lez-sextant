@@ -181,7 +181,7 @@ fn main() {
     b.row("step 3 `finish`: final exponentiation, compare to one", &Op::FinalExp { f: r.report.ok.unwrap() });
     b.row(
         "instance bootstrap from the checkpoint (committee root + branch)",
-        &Op::Bootstrap { root: m.checkpoint, header: m.boot_header.clone(), committee: m.boot_committee.clone(), branch: m.boot_branch.clone() },
+        &Op::Bootstrap { cfg: m.cfg.clone(), root: m.checkpoint, header: m.boot_header.clone(), committee: m.boot_committee.clone(), branch: m.boot_branch.clone() },
     );
 
     println!("\n## 5. The consumer side: inclusion under a finalized header\n");
