@@ -74,7 +74,7 @@ fn a_fabricated_chain_is_refused() {
     // The next-committee branch hangs off the same state root: rebuild it too
     // would need a second preimage, so drop the handoff and keep the rest.
     u.next_committee = None;
-    assert!(lc::check_execution(&u.finalized).is_ok());
+    assert!(lc::check_execution(&m.cfg, &u.finalized).is_ok());
     assert_eq!(verdict(&m, &s, &u, &c).unwrap_err(), Error::BadSignature);
 }
 
@@ -150,10 +150,10 @@ fn the_checkpoint_must_match() {
     let m = mainnet();
     let mut root = m.checkpoint;
     root[0] ^= 1;
-    assert_eq!(lc::bootstrap(&root, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap_err(), Error::CheckpointMismatch);
+    assert_eq!(lc::bootstrap(&m.cfg, &root, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap_err(), Error::CheckpointMismatch);
     let mut c = m.boot_committee.clone();
     c.pubkeys.swap(0, 1);
-    assert_eq!(lc::bootstrap(&m.checkpoint, &m.boot_header, &c, &m.boot_branch).unwrap_err(), Error::BadCommitteeBranch);
+    assert_eq!(lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &c, &m.boot_branch).unwrap_err(), Error::BadCommitteeBranch);
 }
 
 #[test]

@@ -42,7 +42,7 @@ Requires the RISC Zero toolchains (`rzup install`: rust and cpp, r0vm 3.0.5).
 ```console
 scripts/build-guests.sh                       # the two benchmark guests -> artifacts/bench/
 DOCKER=1 scripts/build-guests.sh lez          # the program, reproducibly -> artifacts/programs/v0.3/sextant_lc.bin
-cargo test --release --manifest-path host/Cargo.toml             # 17 tests, natively, on mainnet data
+cargo test --release --manifest-path host/Cargo.toml             # 27 tests, natively: mainnet, Hoodi, Sepolia (Gloas)
 cargo test --release --manifest-path executor-tests/Cargo.toml   # 8 tests, the binary through lee::V03State
 cargo run --release --manifest-path host/Cargo.toml --bin measure            # docs/raw/measure-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez  # docs/raw/measure-lez-*.txt

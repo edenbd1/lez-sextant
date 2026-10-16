@@ -148,6 +148,28 @@ fn be32(v: &[u8]) -> Result<[u8; 32], Error> {
     Ok(out)
 }
 
+/// `(stateRoot, receiptsRoot, number)` of an RLP execution block header
+/// that hashes to `block_hash`: how a Gloas light-client header, which
+/// commits to the execution block by hash only, yields the roots a consumer
+/// proves against. Field positions (3, 5, 8) are fixed since Frontier; later
+/// forks only append fields.
+pub fn execution_header_roots(block_hash: &[u8; 32], rlp: &[u8]) -> Result<([u8; 32], [u8; 32], u64), Error> {
+    if &keccak(rlp) != block_hash {
+        return Err(Error::BadExecutionBranch);
+    }
+    let f = list(rlp).map_err(|_| Error::BadExecutionBranch)?;
+    if f.len() < 15 {
+        return Err(Error::BadExecutionBranch);
+    }
+    let root = |i: usize| -> Result<[u8; 32], Error> { bytes(f[i]).ok().and_then(|b| b.try_into().ok()).ok_or(Error::BadExecutionBranch) };
+    let n = bytes(f[8]).map_err(|_| Error::BadExecutionBranch)?;
+    if n.len() > 8 {
+        return Err(Error::BadExecutionBranch);
+    }
+    let number = n.iter().fold(0u64, |a, x| (a << 8) | *x as u64);
+    Ok((root(3)?, root(5)?, number))
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct AccountStorageProof {
     pub address: [u8; 20],

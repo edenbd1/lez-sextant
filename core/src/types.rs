@@ -15,7 +15,7 @@ pub struct BeaconHeader {
 }
 
 /// `ExecutionPayloadHeader`, Deneb shape (unchanged in Electra and Fulu).
-#[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct ExecutionHeader {
     pub parent_hash: Root,
     pub fee_recipient: [u8; 20],
@@ -38,11 +38,21 @@ pub struct ExecutionHeader {
 }
 
 /// `LightClientHeader` (Capella and later).
+///
+/// From Gloas (EIP-7732) the light-client header no longer carries the
+/// payload header, only `execution_block_hash`, proven under `body_root`.
+/// A Gloas header is carried here with `execution.block_hash` set to it and
+/// every other `execution` field zero (and unread). The execution roots a
+/// store takes from it come from `execution_rlp`: the RLP block header whose
+/// keccak is that hash.
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
 pub struct LcHeader {
     pub beacon: BeaconHeader,
     pub execution: ExecutionHeader,
     pub execution_branch: Vec<Root>,
+    /// Gloas only, and only where a store reads execution roots (a bootstrap
+    /// header, an update's finalized header). Always empty before Gloas.
+    pub execution_rlp: Vec<u8>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
@@ -85,6 +95,10 @@ pub struct ChainConfig {
     pub forks: Vec<(u64, [u8; 4])>,
     /// Minimum participating committee members, out of 512 (342 = two thirds).
     pub min_participants: u16,
+    /// `GLOAS_FORK_EPOCH`: from it on, light-client headers and the state's
+    /// generalized indices take their Gloas shapes. `u64::MAX` while the
+    /// chain has not scheduled Gloas (mainnet, 2026-10).
+    pub gloas_epoch: u64,
 }
 
 /// The tracked consensus state of one instance.

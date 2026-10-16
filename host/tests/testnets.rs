@@ -97,8 +97,13 @@ fn hoodi_and_mainnet_instances_refuse_each_other() {
         lc::apply_update(cfg, s, u, c, &witness(c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {})
     };
     // A mainnet update, with its own committee and store, checked under a
-    // Hoodi instance's configuration: the signing domain differs.
-    assert_eq!(verdict(&hd.cfg, &ms[1]).unwrap_err(), Error::BadSignature);
+    // Hoodi instance's configuration. Mainnet's slots are past Hoodi's Gloas
+    // epoch, so its Fulu-shaped headers fail the Gloas checks; without the
+    // Gloas epoch, the signing domain still differs.
+    assert_eq!(verdict(&hd.cfg, &ms[1]).unwrap_err(), Error::BadExecutionBranch);
+    let mut cfg = hd.cfg.clone();
+    cfg.gloas_epoch = u64::MAX;
+    assert_eq!(verdict(&cfg, &ms[1]).unwrap_err(), Error::BadSignature);
     // And the reverse.
     assert_eq!(verdict(&mn.cfg, &hs[1]).unwrap_err(), Error::BadSignature);
     // A mainnet update submitted to a Hoodi instance's store: refused before
@@ -119,4 +124,128 @@ fn a_hoodi_statement_is_refused_by_a_mainnet_consumer() {
     };
     assert!(statement::evaluate(&r, &q(560048)).is_ok());
     assert_eq!(statement::evaluate(&r, &q(1)).unwrap_err(), Error::ChainMismatch);
+}
+
+// ---- Sepolia (Gloas): the core with Gloas light-client headers ----
+
+const SEPOLIA: &str = "vectors/sepolia";
+
+#[test]
+fn sepolia_verifies_from_the_checkpoint_through_three_handoffs() {
+    let m = sepolia();
+    assert!(lc::is_gloas(&m.cfg, m.boot_header.beacon.slot), "every header of these vectors is Gloas");
+    assert_eq!(lc::period(m.boot_header.beacon.slot), 1385);
+    let s = run(&m);
+    assert_eq!(lc::period(s.finalized.slot), 1388);
+    assert_eq!(s.current_committee, ssz::sync_committee_root(&m.updates[2].next_committee.as_ref().unwrap().0));
+    // The finalized beacon block commits to the execution block by hash;
+    // its RLP header gives the roots, and they are the block's.
+    finalized_block_matches(SEPOLIA, &s);
+    assert_eq!(m.finality.finalized.execution.block_hash, h::<32>(&json(&format!("{SEPOLIA}/block.json"))["result"]["hash"]));
+}
+
+#[test]
+fn sepolia_state_and_receipts_verify_under_the_finalized_block() {
+    let s = run(&sepolia());
+    history_slot_is_parent_hash(SEPOLIA, &s);
+    // WETH9 balanceOf[a recent depositor], as on mainnet.
+    let p = weth_proof_from(&format!("{SEPOLIA}/getproof-weth.json"));
+    let out: AccountSlot = borsh::from_slice(&mpt::verify_account_storage(&s.finalized_execution_state_root, &p).unwrap()).unwrap();
+    let j = json(&format!("{SEPOLIA}/getproof-weth.json"));
+    let want = hexv(j["result"]["storageProof"][0]["value"].as_str().unwrap());
+    assert_eq!(out.slot_value[32 - want.len()..], want[..]);
+    assert_eq!(receipts_verify(SEPOLIA, &s), 2);
+}
+
+#[test]
+fn the_gloas_fork_is_crossed_by_one_instance() {
+    // Checkpoint and first two updates in Fulu, the last two in Gloas: one
+    // store, its configuration fixed at Init, follows the chain across.
+    let m = sepolia_gloas_fork();
+    let steps = mainnet_steps(&m);
+    let forks: Vec<bool> = steps.iter().map(|(_, u, _)| lc::is_gloas(&m.cfg, u.attested.beacon.slot)).collect();
+    assert_eq!(forks, [false, false, true, true]);
+    let s = run(&m);
+    assert_eq!(lc::period(s.finalized.slot), 1380);
+}
+
+#[test]
+fn an_instance_that_does_not_know_gloas_refuses_sepolia() {
+    // The deployed program's view (no Gloas epoch in its configuration):
+    // every Gloas header shape fails its Merkle checks.
+    let mut m = sepolia();
+    m.cfg.gloas_epoch = u64::MAX;
+    m.boot_header.execution_rlp.clear();
+    assert_eq!(lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap_err(), Error::BadExecutionBranch);
+    let m = sepolia();
+    let steps = mainnet_steps(&m);
+    let (s, u, c) = &steps[1];
+    let mut cfg = m.cfg.clone();
+    cfg.gloas_epoch = u64::MAX;
+    let mut u = u.clone();
+    u.finalized.execution_rlp.clear();
+    assert_eq!(lc::apply_update(&cfg, s, &u, c, &witness(c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {}).unwrap_err(), Error::BadExecutionBranch);
+}
+
+#[test]
+fn a_gloas_header_needs_the_execution_header_that_hashes_to_it() {
+    let m = sepolia();
+    let steps = mainnet_steps(&m);
+    let (s, u, c) = &steps[1];
+    let verdict = |u: &sextant_core::Update| lc::apply_update(&m.cfg, s, u, c, &witness(c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {});
+    assert!(verdict(u).is_ok());
+    // Missing.
+    let mut v = u.clone();
+    v.finalized.execution_rlp.clear();
+    assert_eq!(verdict(&v).unwrap_err(), Error::BadExecutionBranch);
+    // Another block's header (the next update's), valid RLP, wrong hash.
+    let mut v = u.clone();
+    v.finalized.execution_rlp = steps[2].1.finalized.execution_rlp.clone();
+    assert_eq!(verdict(&v).unwrap_err(), Error::BadExecutionBranch);
+    // A state root of the submitter's choosing: the hash no longer matches.
+    let mut v = u.clone();
+    let (root, _, _) = mpt::execution_header_roots(&u.finalized.execution.block_hash, &u.finalized.execution_rlp).unwrap();
+    let pos = v.finalized.execution_rlp.windows(32).position(|w| w == root).unwrap();
+    v.finalized.execution_rlp[pos] ^= 1;
+    assert_eq!(verdict(&v).unwrap_err(), Error::BadExecutionBranch);
+    // And a block hash that is not the one the beacon block committed to.
+    let mut v = u.clone();
+    v.finalized.execution.block_hash[0] ^= 1;
+    assert_eq!(verdict(&v).unwrap_err(), Error::BadExecutionBranch);
+}
+
+#[test]
+fn sepolia_and_mainnet_instances_refuse_each_other() {
+    let (sp, mn) = (sepolia(), mainnet());
+    let (ss, ms) = (mainnet_steps(&sp), mainnet_steps(&mn));
+    let verdict = |cfg: &sextant_core::ChainConfig, (s, u, c): &(Store, sextant_core::Update, sextant_core::SyncCommittee)| {
+        lc::apply_update(cfg, s, u, c, &witness(c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {})
+    };
+    // A mainnet update under a Sepolia instance's configuration. Mainnet
+    // slots are past Sepolia's Gloas epoch, so the Electra-shaped update
+    // fails the Gloas branch checks before the signature is even looked at.
+    assert_eq!(verdict(&sp.cfg, &ms[1]).unwrap_err(), Error::BadExecutionBranch);
+    // With the shapes out of the way (Sepolia's configuration without its
+    // Gloas epoch), the signing domain still refuses it.
+    let mut cfg = sp.cfg.clone();
+    cfg.gloas_epoch = u64::MAX;
+    assert_eq!(verdict(&cfg, &ms[1]).unwrap_err(), Error::BadSignature);
+    // A Sepolia update under mainnet's configuration (no Gloas): a Gloas
+    // header is not a Fulu one.
+    assert_eq!(verdict(&mn.cfg, &ss[1]).unwrap_err(), Error::Malformed);
+    let mut u = ss[1].clone();
+    u.1.finalized.execution_rlp.clear();
+    assert_eq!(verdict(&mn.cfg, &u).unwrap_err(), Error::BadExecutionBranch);
+    // A mainnet update submitted to a Sepolia instance's store.
+    let (s, _, _) = &ss[1];
+    let (_, u, c) = &ms[1];
+    assert_eq!(lc::apply_update(&sp.cfg, s, u, c, &witness(c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {}).unwrap_err(), Error::HandoffNotVerified);
+    // And a Sepolia statement offered to a mainnet consumer.
+    let r = record(11155111, &run(&sp));
+    let q = Query {
+        chain_id: 1,
+        proof: Proof::Storage(weth_proof_from(&format!("{SEPOLIA}/getproof-weth.json"))),
+        predicates: vec![],
+    };
+    assert_eq!(statement::evaluate(&r, &q).unwrap_err(), Error::ChainMismatch);
 }

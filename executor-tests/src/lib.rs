@@ -102,7 +102,7 @@ pub const ID: [u8; 32] = *b"mainnet/test/instance/0000000001";
 
 /// `Init` from the mainnet checkpoint.
 pub fn init(c: &mut Chain, m: &Mainnet, id: [u8; 32]) -> Result<u64, String> {
-    let s = lc::bootstrap(&m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap();
+    let s = lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap();
     let ix = Instruction::Init {
         instance_id: id,
         checkpoint: m.checkpoint,

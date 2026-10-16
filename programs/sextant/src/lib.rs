@@ -208,7 +208,7 @@ pub fn plan(input: &PlanInput, ix: Instruction) -> Plan {
         Instruction::Init { instance_id, checkpoint, cfg, header, committee, branch } => {
             let [inst, hdr] = rows::<2>(input);
             expect_own(&inst, &me, instance_account(&me, &instance_id), "the first row is the instance PDA");
-            let store = lc::bootstrap(&checkpoint, &header, &committee, &branch).unwrap_or_else(|e| refuse_with(e));
+            let store = lc::bootstrap(&cfg, &checkpoint, &header, &committee, &branch).unwrap_or_else(|e| refuse_with(e));
             refuse_unless(cfg.min_participants as usize * 3 >= 512 * 2 && cfg.min_participants <= 512, E_BASE + Error::Malformed as u32, "the participation floor must be at least two thirds of 512");
             let r = record(&cfg, &store);
             expect_own(&hdr, &me, header_account(&me, &instance_id, r.slot), "the second row is the checkpoint's header PDA");
