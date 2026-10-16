@@ -22,5 +22,5 @@ sextant_lc against https://testnet.lez.logos.co, from evidence/testnet/run.tsv
   ok   u1-finish: applied, d414caa45b380502… in block 21874, charged 3768242 gas = the pre-checked gas, below its limit 3815924
   ok   final state of 3T51gKhDkckq…: 411 bytes as the run left them
   ok   final state of H6rGJgtLU67p…: 120 bytes as the run left them
-  ok   control: a random hash (464ec22ea573…) does not resolve
+  ok   control: a random hash (5dd3386c8231…) does not resolve
 24 checks pass, 0 fail (6 applied and 6 refused transactions in the manifest)

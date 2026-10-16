@@ -1,0 +1,10 @@
+# Real proving, RISC0_DEV_MODE=0, r0vm 3.0.5, Apple M4 Pro (14 cores, 24 GB), CPU, 2026-10-16
+# committed binary: ImageID fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8 (Docker r0.1.91.1)
+
+## SEGMENT_PO2=18: prove (begin miller finish attest)
+| session | user cycles | total cycles (with paging, padding) | segments | prove (s, wall) | succinct receipt (bytes) |
+|---|---:|---:|---:|---:|---:|
+| `Begin` plan, period 1882 with handoff | 5320354 | 7077888 | 27 | 690.7 | 329391 |
+| `Miller` apply | 4198745 | 5242880 | 20 | 544.4 | 226801 |
+| `Finish` job apply (final exponentiation) | 3672913 | 4456448 | 17 | 476.9 | 225815 |
+| `Attest` apply (ERC-20 Transfer log, receipt proof) | 56291 | 131072 | 1 | 48.4 | 226281 |

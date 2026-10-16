@@ -158,30 +158,31 @@ the public testnet ([`ONCHAIN.md`](ONCHAIN.md)).
 ## 3. Real proving (Performance #2, #4)
 
 `RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove`
-proves the heavy session of each instruction from the committed binary, with
-the RISC Zero prover on this machine, and reports the succinct receipt. Raw
-output: [`raw/prove-2026-10-15.txt`](raw/prove-2026-10-15.txt).
+proves the heavy session of each instruction from the committed binary (the
+reproducible build, ImageID `fa229edd…`), with the RISC Zero prover on this
+machine, and reports the succinct receipt. Raw output:
+[`raw/prove-2026-10-16.txt`](raw/prove-2026-10-16.txt).
 
 | session (committed binary) | user cycles | total cycles | segments | prove (s, wall) | succinct receipt (bytes) |
 |---|---:|---:|---:|---:|---:|
-| `Begin` plan, period 1882 with handoff (every check but the pairing) | 5,047,173 | 6,684,672 | 26 x 2^18 | 728.3 | 329,391 |
-| `Miller` apply (two Miller loops) | 4,198,571 | 5,242,880 | 20 x 2^18 | 566.5 | 226,801 |
-| `Finish` job apply (final exponentiation) | 3,672,706 | 4,456,448 | 17 x 2^18 | 610.9 | 225,815 |
-| `Attest` apply (ERC-20 `Transfer` log, receipt proof) | 55,873 | 131,072 | 1 x 2^19 | 51.9 | 226,281 |
+| `Begin` plan, period 1882 with handoff (every check but the pairing) | 5,320,354 | 7,077,888 | 27 x 2^18 | 690.7 | 329,391 |
+| `Miller` apply (two Miller loops) | 4,198,745 | 5,242,880 | 20 x 2^18 | 544.4 | 226,801 |
+| `Finish` job apply (final exponentiation) | 3,672,913 | 4,456,448 | 17 x 2^18 | 476.9 | 225,815 |
+| `Attest` apply (ERC-20 `Transfer` log, receipt proof) | 56,291 | 131,072 | 1 | 48.4 | 226,281 |
 
 `Begin`'s receipt is larger because its journal carries the plan's input,
 which includes the two 512-key committees. Each step of an update proves in
-10 to 12 minutes on this CPU; a whole update in about 32 minutes of proving,
+8 to 12 minutes on this CPU; a whole update in about 29 minutes of proving,
 wherever it is proved (public transactions are executed by the sequencer;
 these figures are the cost of proving each step, P.2).
 
-Segment size matters. With other applications open on this 24 GB
-machine, proving `Begin` at the default 2^20-cycle segments, then `Miller` at
-2^19, pushed the system 13 to 14 GB into swap; a disk watchdog stopped both
-(the stopped runs are noted in the raw file and are not results). At 2^18 the
-three update steps proved without growing swap. The client therefore chooses
-the segment size from available memory, and the peak memory of the private
-path on the declared minimum hardware is part of M2.
+Segment size matters. In an earlier run (on the build before the reproducible
+one), with other applications open on this 24 GB machine, proving `Begin` at
+the default 2^20-cycle segments, then `Miller` at 2^19, pushed the system 13 to
+14 GB into swap and a disk watchdog stopped both; at 2^18 the update steps
+proved without growing swap, and every figure above is at 2^18. The client
+therefore chooses the segment size from available memory, and the peak memory
+of the private path on the declared minimum hardware is part of M2.
 
 ## 4. The consumer side (the private path)
 
