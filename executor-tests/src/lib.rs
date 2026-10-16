@@ -24,6 +24,11 @@ pub const LC: AccountId = AccountId::new(*b"sextant_lc/test/header/000000001");
 
 pub const BIN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../artifacts/programs/v0.3/sextant_lc.bin");
 
+/// The header account the tests deploy the erc20_receiver consumer at.
+pub const RX: AccountId = AccountId::new(*b"erc20_receiver/test/header/00001");
+
+pub const RX_BIN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../artifacts/programs/v0.3/erc20_receiver.bin");
+
 /// A key with no prior relationship to anything: a fresh account each time.
 pub struct Key {
     pub sk: PrivateKey,
@@ -59,14 +64,30 @@ impl Chain {
         Self { state, block: 10, now: 1_760_000_000_000, last_cycles: 0, next_key: 1 }
     }
 
+    /// The same chain with the erc20_receiver consumer deployed at `RX`.
+    #[must_use]
+    pub fn with_receiver(mut self) -> Self {
+        let path = std::env::var("RECEIVER_BIN").unwrap_or_else(|_| RX_BIN.to_string());
+        let bin = std::fs::read(&path).expect("build and pack the consumer first: scripts/build-guests.sh receiver");
+        let program = lee::program::Program::new(bin.into()).expect("a RISC0 program binary");
+        self.state = self.state.with_named_programs([(RX, program)]);
+        self
+    }
+
     /// Send `ix` over `rows`, signed by a brand-new account (F.11: no
     /// registration, no role, no prior relationship).
     pub fn send(&mut self, ix: &Instruction, rows: Vec<AccountId>) -> Result<u64, String> {
+        let rows = rows.into_iter().map(|a| ProgramShardSelector::new(a, LC)).collect();
+        self.send_to(LC, ix, rows)
+    }
+
+    /// Send `ix` to `program` over explicit shard selectors, signed by a
+    /// brand-new account.
+    pub fn send_to<I: borsh::BorshSerialize>(&mut self, program: AccountId, ix: &I, rows: Vec<ProgramShardSelector>) -> Result<u64, String> {
         let k = Key::new(self.next_key);
         self.next_key += 1;
-        let rows = rows.into_iter().map(|a| ProgramShardSelector::new(a, LC)).collect();
         let nonces = vec![self.state.get_account_by_id(k.id).nonce];
-        let message = Message::try_new(LC, rows, nonces, ix).map_err(|e| e.to_string())?;
+        let message = Message::try_new(program, rows, nonces, ix).map_err(|e| e.to_string())?;
         let tx = PublicTransaction::new(message.clone(), WitnessSet::for_message(&message, &[&k.sk]));
         let r = ValidatedStateDiff::from_public_transaction_with_cycle_budget(&tx, &self.state, self.block, self.now, GAS_CAP);
         self.block += 1;
@@ -84,6 +105,12 @@ impl Chain {
     #[must_use]
     pub fn shard(&self, id: AccountId) -> Vec<u8> {
         self.state.get_account_by_id(id).data.shard(LC).to_vec()
+    }
+
+    /// The data `program` holds in account `id`.
+    #[must_use]
+    pub fn shard_of(&self, id: AccountId, program: AccountId) -> Vec<u8> {
+        self.state.get_account_by_id(id).data.shard(program).to_vec()
     }
 
     #[must_use]
@@ -131,5 +158,14 @@ pub fn advance(c: &mut Chain, id: [u8; 32], u: &Update, committee: &SyncCommitte
 
 pub fn refusal(e: &str) -> Option<u32> {
     let i = e.find("E72")?;
+    e[i + 1..i + 5].parse().ok()
+}
+
+/// The first typed refusal of either program: `E72xx` (sextant_lc) or
+/// `E73xx` (erc20_receiver).
+pub fn any_refusal(e: &str) -> Option<u32> {
+    let i = e.match_indices('E').map(|(i, _)| i).find(|&i| {
+        e.get(i + 1..i + 5).is_some_and(|d| d.bytes().all(|b| b.is_ascii_digit()) && (d.starts_with("72") || d.starts_with("73")))
+    })?;
     e[i + 1..i + 5].parse().ok()
 }

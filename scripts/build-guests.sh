@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Build both benchmark guests (accelerated and stock) with the RISC Zero Rust
 # toolchain installed by rzup, the same flags `cargo risczero build` uses.
-#   scripts/build-guests.sh [accelerated|stock|lez]   (default: accelerated and stock)
+#   scripts/build-guests.sh [accelerated|stock|lez|receiver]   (default: accelerated and stock)
 #   DOCKER=1 scripts/build-guests.sh lez   the program with RISC Zero's pinned builder
 #                                          (reproducible: this is the committed binary)
+#   DOCKER=1 scripts/build-guests.sh receiver   the same for the erc20_receiver consumer
 set -euo pipefail
 cd "$(dirname "$0")/.."
 FLAGS=$(printf '%s\x1f' -C passes=lower-atomic -C link-arg=-Ttext=0x00200800 -C link-arg=--fatal-warnings \
@@ -35,5 +36,14 @@ for w in ${@:-accelerated stock}; do
          build programs/sextant sextant_lc
          cargo run -q --release --manifest-path executor-tests/Cargo.toml --bin pack -- \
            programs/sextant/target/riscv32im-risc0-zkvm-elf/release/sextant_lc artifacts/programs/v0.3/sextant_lc.bin ;;
+    receiver) if [ "${DOCKER:-0}" = 1 ]; then
+           RISC0_DOCKER_CONTAINER_TAG=r0.1.91.1 cargo risczero build --manifest-path programs/erc20_receiver/Cargo.toml
+           cp programs/erc20_receiver/target/riscv32im-risc0-zkvm-elf/docker/erc20_receiver.bin artifacts/programs/v0.3/erc20_receiver.bin
+           cargo run -q --release --manifest-path executor-tests/Cargo.toml --bin image_id -- artifacts/programs/v0.3/erc20_receiver.bin
+           continue
+         fi
+         build programs/erc20_receiver erc20_receiver
+         cargo run -q --release --manifest-path executor-tests/Cargo.toml --bin pack -- \
+           programs/erc20_receiver/target/riscv32im-risc0-zkvm-elf/release/erc20_receiver artifacts/programs/v0.3/erc20_receiver.bin ;;
   esac
 done

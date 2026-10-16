@@ -17,7 +17,11 @@ against what it verified, measured on real Ethereum mainnet data.
   accelerated forks and without.
 - `host/`: decodes the beacon-API and JSON-RPC vectors, cross-checks every
   verdict natively, and counts cycles in the RISC Zero executor.
-- `executor-tests/`: the committed program binary through `lee::V03State`, the
+- `programs/erc20_receiver/`: a consumer program. `Claim` credits an ERC-20
+  `Transfer` once: it calls sextant_lc's `Attest` as a chained call in the
+  same transaction and spends a nullifier keyed by the statement identifier
+  ([`docs/CONSUMER.md`](docs/CONSUMER.md)). Not deployed on the testnet.
+- `executor-tests/`: the committed program binaries through `lee::V03State`, the
   state machine the v0.3 sequencer applies, under the 10,000,000 gas cap.
 - `cli/`: `sextant`, the client that deploys the program and drives it from the
   vectors, pre-checking every transaction through `lee::V03State` (built on the
@@ -42,10 +46,12 @@ Requires the RISC Zero toolchains (`rzup install`: rust and cpp, r0vm 3.0.5).
 ```console
 scripts/build-guests.sh                       # the two benchmark guests -> artifacts/bench/
 DOCKER=1 scripts/build-guests.sh lez          # the program, reproducibly -> artifacts/programs/v0.3/sextant_lc.bin
-cargo test --release --manifest-path host/Cargo.toml             # 17 tests, natively, on mainnet data
-cargo test --release --manifest-path executor-tests/Cargo.toml   # 8 tests, the binary through lee::V03State
+DOCKER=1 scripts/build-guests.sh receiver     # the consumer, reproducibly -> artifacts/programs/v0.3/erc20_receiver.bin
+cargo test --release --manifest-path host/Cargo.toml             # 19 tests, natively, on mainnet data
+cargo test --release --manifest-path executor-tests/Cargo.toml   # 11 tests, the binaries through lee::V03State
 cargo run --release --manifest-path host/Cargo.toml --bin measure            # docs/raw/measure-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez  # docs/raw/measure-lez-*.txt
+cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver  # docs/raw/measure-receiver-*.txt
 RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove
 python3 scripts/receipt_proof.py vectors/mainnet/receipts.json vectors/mainnet/block.json 2 /tmp/p.json
 scripts/verify-onchain.sh                     # the public testnet run, against the sequencer's RPC
@@ -74,8 +80,8 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 Updates 2 to 4 and the attestations under block 26,197,200 are not on the
 public testnet (the payer's balance covered update 1; see `docs/ONCHAIN.md`);
 no instance tracks a live chain; no Logos core module or update daemon (the
-client in `cli/` drives the committed vectors only); no reference consumer
-programs (the consumer check is the `Attest` instruction); no weak-subjectivity
+client in `cli/` drives the committed vectors only); the reference consumer
+program (`erc20_receiver`) runs in the executor tests only, not on a sequencer; no weak-subjectivity
 staleness check, no transaction proofs (native ether sender), no historical
 headers; end-to-end runs against a sequencer are not in CI. These are the
 milestones of the proposal.
