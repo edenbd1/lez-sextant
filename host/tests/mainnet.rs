@@ -194,3 +194,18 @@ fn both_libraries_agree_on_every_real_update() {
         }
     }
 }
+
+#[test]
+fn a_store_older_than_the_weak_subjectivity_bound_is_refused() {
+    // F.10: every update is checked against the store's age on the chain's own
+    // clock (signature slot vs finalized slot), with the typed code E7206.
+    for i in 0..4 {
+        let (mut m, s, u, c) = step(i);
+        let gap = lc::slot_time(&m.cfg, u.signature_slot) - lc::slot_time(&m.cfg, s.finalized.slot);
+        assert!(gap <= m.cfg.max_checkpoint_age, "the real chain is fresh at step {i}");
+        m.cfg.max_checkpoint_age = gap;
+        assert!(verdict(&m, &s, &u, &c).is_ok());
+        m.cfg.max_checkpoint_age = gap - 1;
+        assert_eq!(verdict(&m, &s, &u, &c).unwrap_err(), Error::CheckpointStale);
+    }
+}

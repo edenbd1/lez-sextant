@@ -85,6 +85,12 @@ pub struct ChainConfig {
     pub forks: Vec<(u64, [u8; 4])>,
     /// Minimum participating committee members, out of 512 (342 = two thirds).
     pub min_participants: u16,
+    /// Beacon genesis, unix seconds (slot `s` starts at `genesis_time + 12 s`).
+    pub genesis_time: u64,
+    /// The weak-subjectivity bound, in seconds: a store whose finalized
+    /// header is older than this may no longer be advanced (E7206); a fresh
+    /// instance has to be initialised from a recent checkpoint.
+    pub max_checkpoint_age: u64,
 }
 
 /// The tracked consensus state of one instance.
