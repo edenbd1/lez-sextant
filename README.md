@@ -10,14 +10,14 @@ against what it verified, measured on real Ethereum mainnet data.
 - `programs/sextant/`: `sextant_lc`, the LEZ v0.3 program (plan/apply on
   `lee_core` at v0.3.0, `db66590ab`): `Init`, `Begin`, `Miller`, `Finish`,
   `Attest`. The packed binary is `artifacts/programs/v0.3/sextant_lc.bin`
-  (on this branch, `v2`: ImageID
+  (ImageID
   `ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`,
   651,932 bytes, sha256 `58a600a4…`, with the weak-subjectivity check `E7206`
   and Gloas light-client headers): RISC Zero's pinned Docker builder
   (`r0.1.91.1`), byte-for-byte reproducible, checked in CI. The program on the
   public testnet as program `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`
-  ([`docs/ONCHAIN.md`](docs/ONCHAIN.md#the-v2-testnet-run)); `main`'s binary,
-  ImageID `fa229edd…`, is the earlier program `A89TcYmW…`.
+  ([`docs/ONCHAIN.md`](docs/ONCHAIN.md#the-v2-testnet-run)); the earlier
+  binary, ImageID `fa229edd…` (before `E7206` and Gloas), is program `A89TcYmW…`.
 - `guest/`, `guest-stock/`: one benchmark guest, built twice: with RISC Zero's
   accelerated forks and without.
 - `host/`: decodes the beacon-API and JSON-RPC vectors, cross-checks every
@@ -75,7 +75,7 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 
 ## On chain today
 
-- **Public LEZ testnet** (v0.3.1), this branch's binary: program header
+- **Public LEZ testnet** (v0.3.1), the current binary: program header
   `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB` (ImageID `ad6fbedb…`,
   `E7206` and Gloas). The full chain to period 1884: `Init` from the mainnet
   checkpoint, the attestations against the checkpoint's header, updates 1 to
@@ -84,9 +84,9 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
   transactions, 17 applied and 6 refused, each charged its pre-checked gas or
   its whole limit. Verifier 36 checks, 0 fail; mutation test 7 of 7.
   [`evidence/testnet-v2/run.tsv`](evidence/testnet-v2/run.tsv).
-- **Public LEZ testnet** (v0.3.1), `main`'s binary: program header
-  `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, `main`'s reproducible binary
-  (ImageID `fa229edd…`).
+- **Public LEZ testnet** (v0.3.1), the earlier binary: program header
+  `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, its reproducible binary
+  (ImageID `fa229edd…`, before `E7206` and Gloas).
   The full chain to period 1884: `Init` from the mainnet checkpoint, updates 1
   to 4 (`Begin`, `Miller`, `Finish` each; handoffs at periods 1881 to 1883) to
   the finalized execution block 26,197,200, attestations accepted against the
@@ -104,7 +104,7 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-this branch's binary (`E7206`, Gloas) runs a mainnet instance only, no
+the current binary (`E7206`, Gloas) runs a mainnet instance only on chain, no
 Sepolia or Hoodi instance; no transaction proofs
 (native ether sender), no historical headers; end-to-end runs against a
 sequencer are not in CI. These are the
