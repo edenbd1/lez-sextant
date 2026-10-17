@@ -9,7 +9,13 @@ committed mainnet vectors by the client in `cli/` and `scripts/e2e.sh`:
   `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`, the full chain to period
   1884 ([The v2 testnet run](#the-v2-testnet-run)):
   [`evidence/testnet-v2/run.tsv`](../evidence/testnet-v2/run.tsv), 23
-  transactions (17 applied, 6 refused);
+  transactions (17 applied, 6 refused); on the same program, a **Sepolia**
+  instance (`Init`, update 1, attestations;
+  [`evidence/testnet-v2-sepolia/run.tsv`](../evidence/testnet-v2-sepolia/run.tsv),
+  7 transactions, 5 applied and 2 refused) and a **Hoodi** instance (`Init`,
+  attestations; [`evidence/testnet-v2-hoodi/run.tsv`](../evidence/testnet-v2-hoodi/run.tsv),
+  4 transactions, 2 applied and 2 refused)
+  ([Sepolia and Hoodi on the v2 program](#sepolia-and-hoodi-on-the-v2-program));
 - the earlier binary, before `E7206` and Gloas (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`),
   program `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, on the **public LEZ
   testnet** (sequencer v0.3.1 `1a003bfb`), the full chain to period 1884:
@@ -24,6 +30,8 @@ Re-check either from a clean clone, with nothing but python3:
 ```console
 scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run (36 checks)
 scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier fails on each of 7 corruptions
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia/run.tsv  # the Sepolia instance (11 checks)
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-hoodi/run.tsv    # the Hoodi instance (8 checks)
 scripts/verify-onchain.sh                         # the first run (main's binary), against https://testnet.lez.logos.co
 scripts/mutation-test-verifier.sh                 # the same over the first run's manifest
 ```
@@ -184,6 +192,94 @@ INSTANCE=mainnet-v2-10171005 RESUME=1 SCENARIO=testnet-rest UPDATES=4 UPDATE_MIN
 BASE_FEE_MAX=8 OUT=evidence/testnet-v2/run.tsv scripts/e2e.sh
 ```
 
+## Sepolia and Hoodi on the v2 program
+
+The same program, `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB` (ImageID
+`ad6fbedb…`), nothing redeployed: two more instances, from the committed
+vectors of the two public Ethereum testnets, run on 2026-10-17 with
+`SCENARIO=chain` (`scripts/e2e.sh`; the client's `--chain` picks the vector
+directory, the chain configuration and the proofs). Each instance's chain
+configuration is its own (chain id, genesis validators root, fork schedule),
+so the attestations under it are statements about that chain only: the same
+receipt proof asked as a mainnet statement (`--chain-id 1`) is refused with
+`E7209`. The attestations are against the checkpoint's own execution block,
+whose receipts were fetched for this run (`scripts/fetch-vectors.py <chain>
+vectors/<chain> --checkpoint-block`; the free endpoints' `eth_getProof` window
+is long past those blocks, so there is no storage proof under them).
+
+**Sepolia** (Gloas since epoch 353,024): instance id `sepolia-v2-10172031`,
+instance account `Pi3R6DjZpELFNYJk453aVDtwquGzxcjK8AYPkcA74Sx`, checkpoint
+header record `HDoq6X7AyDu5zFXJwSqNQzEqN6YYdwvxgQYkA2BkpjFK`; blocks 32,489
+to 32,518. Verifier 11 checks, 0 fail
+([`verify.txt`](../evidence/testnet-v2-sepolia/verify.txt)); mutation test 6
+of 6 caught ([`mutation-test.txt`](../evidence/testnet-v2-sepolia/mutation-test.txt);
+the manifest has no deployment lines, so the seventh does not apply);
+transcript [`transcript.txt`](../evidence/testnet-v2-sepolia/transcript.txt).
+
+| step | expected | verdict | block | transaction | pre-check | charged gas / limit | cost |
+|---|---|---|---:|---|---|---:|---:|
+| init | applied | applied | 32489 | [`86d8dcc37e7b669f…`](https://explorer.testnet.lez.logos.co/transaction/86d8dcc37e7b669f3d159ef24f05dda620c65b1186e614692220b00e416a1ee4) | gas=1829341 | 1829341 / 1857634 | 14,851,088 |
+| attest-checkpoint-log | applied | applied | 32491 | [`55377b0ed16b6a6a…`](https://explorer.testnet.lez.logos.co/transaction/55377b0ed16b6a6aa27fef738b65a24389e750a3bbb5bad1d2b08a135e784748) | gas=95791 | 95791 / 106748 | 780,944 |
+| attest-checkpoint-as-mainnet | refused | reverted | 32506 | [`e1b3d2dff137b5be…`](https://explorer.testnet.lez.logos.co/transaction/e1b3d2dff137b5be7e2390514e998f2a5b251fd111a6d5911a22b26aff97d0c0) | E7209 | 100290 / 100290 | 816,936 |
+| attest-checkpoint-predicate-false | refused | reverted | 32509 | [`94446db87628f4a0…`](https://explorer.testnet.lez.logos.co/transaction/94446db87628f4a0c181cc49b78752602a7da847f4874f9fc93ca87b3b674f78) | E7208 | 100290 / 100290 | 816,936 |
+| u1-begin | applied | applied | 32511 | [`ebae8189ff52fb26…`](https://explorer.testnet.lez.logos.co/transaction/ebae8189ff52fb26f7317ea1806051c6e8c6e029e64482a1a310699bc87d1f17) | gas=5478912 | 5478912 / 5543701 | 44,257,368 |
+| u1-miller | applied | applied | 32514 | [`f6f7bee409648397…`](https://explorer.testnet.lez.logos.co/transaction/f6f7bee409648397af7922c240ecbc05b1484f609f1405e09a06d13305aa2d8e) | gas=4217768 | 4217768 / 4269945 | 33,744,984 |
+| u1-finish | applied | applied | 32518 | [`6d44d1a9a4feb14a…`](https://explorer.testnet.lez.logos.co/transaction/6d44d1a9a4feb14a52fb4a1294e8ed011a5b48ee9755c8aaab44ea43e75f2c37) | gas=3770380 | 3770380 / 3818083 | 30,172,216 |
+
+What it shows: `Init` from the Gloas checkpoint (slot 11,345,920, period
+1385; the light-client header commits to its execution block by hash only, and
+the RLP header in `execution-headers.json` supplies the roots); a log of
+transaction 0 of execution block 11,905,253 (an ERC-20 `Transfer`) attested
+against it; the same query refused as a mainnet statement (`E7209`) and with
+the predicate negated (`E7208`); update 1, whose sync-committee signature is
+over a Gloas attested header (slot 11,346,000, fork version `0x90000076`),
+verified across `Begin`, `Miller` and `Finish`, which records the period-1386
+committee (instance 447 bytes, digest in the manifest's `# final` line). Its
+finalized header is the checkpoint's own, so the instance stays at slot
+11,345,920. Each step was charged exactly the gas the executor tests report
+for it ([`raw/testnets-executor-2026-10-17.txt`](raw/testnets-executor-2026-10-17.txt)).
+
+**Hoodi** (Fulu): instance id `hoodi-v2-10172039`, instance account
+`7LxJDWx4ycNiTD79NjVmwV137BvW2eXtyfau9s9Sy1K6`, checkpoint header record
+`EUhe1JgbV5HJyLsNTiMrZzcGCDag7hgcpgKUixAEr4ZC`; blocks 32,537 to 32,561.
+Verifier 8 checks, 0 fail ([`verify.txt`](../evidence/testnet-v2-hoodi/verify.txt));
+mutation test 6 of 6 ([`mutation-test.txt`](../evidence/testnet-v2-hoodi/mutation-test.txt));
+transcript [`transcript.txt`](../evidence/testnet-v2-hoodi/transcript.txt).
+
+| step | expected | verdict | block | transaction | pre-check | charged gas / limit | cost |
+|---|---|---|---:|---|---|---:|---:|
+| init | applied | applied | 32537 | [`342a267a9743c6c4…`](https://explorer.testnet.lez.logos.co/transaction/342a267a9743c6c43067a06001637a283397e5796065f982927e83e99cb66119) | gas=1839906 | 1839906 / 1868305 | 14,929,360 |
+| attest-checkpoint-log | applied | applied | 32545 | [`8835df9a7f7f21a3…`](https://explorer.testnet.lez.logos.co/transaction/8835df9a7f7f21a3bf3dc910267e83e8944369f95fc51be5013a85398f359715) | gas=78786 | 78786 / 89573 | 640,664 |
+| attest-checkpoint-as-mainnet | refused | reverted | 32560 | [`0ea1b78839c5aeb9…`](https://explorer.testnet.lez.logos.co/transaction/0ea1b78839c5aeb98f02a01e592acde18aece22bdb5c4c1b96327646efdf059f) | E7209 | 100290 / 100290 | 812,696 |
+| attest-checkpoint-predicate-false | refused | reverted | 32561 | [`aacdf2476bd0fbb6…`](https://explorer.testnet.lez.logos.co/transaction/aacdf2476bd0fbb6d048f2324b85200690ebd4222ebb4dd115370543d9b7bc26) | E7208 | 100290 / 100290 | 812,696 |
+
+Hoodi's checkpoint block (3,805,646) holds no ERC-20 transfer, so the
+attested log is the first log of its transaction 23, with a predicate on that
+log's own topic 0 (the client reads it from the block's `receipts.json`).
+
+Cost: 125,440,472 (Sepolia) and 17,195,416 (Hoodi), 142,635,888 in all, every
+send at an execution base fee of 8 (`BASE_FEE_MAX=8`); the payer held
+294,451,612 before and 151,815,724 after. What was not sent, to stay within
+that budget: the rest of both chains (updates 2 to 4 of Sepolia, 1 to 4 of
+Hoodi, then attestations against the last headers: about 108M per update with
+a handoff, 93M for the finality one), refusals charged a `Begin` or `Finish`
+limit (a mainnet update offered to these instances: 33M to 48M each), and the
+Sepolia instance from the Fulu checkpoint across the Gloas fork: three updates
+to cross it (about 340M), and its checkpoint leaves the timestamp window at
+2026-10-18 07:16 UTC. That instance, and both chains to their last headers
+with the attestations under them, ran on the local v0.3.1 sequencer with the
+same scenario (below).
+
+The runs:
+
+```console
+LEE_WALLET_HOME_DIR=~/logos-bedrock/lez-wallet-home PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
+RPC=https://testnet.lez.logos.co SEXTANT_PROGRAM=Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB \
+SCENARIO=chain CHAIN=sepolia INSTANCE=sepolia-v2-10172031 UPDATES=1 UPDATE_MIN=110000000 BASE_FEE_MAX=8 \
+OUT=evidence/testnet-v2-sepolia/run.tsv scripts/e2e.sh
+# the same with CHAIN=hoodi INSTANCE=hoodi-v2-10172039, no UPDATES, OUT=evidence/testnet-v2-hoodi/run.tsv
+```
+
 ## The public testnet run (main's binary)
 
 Payer `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id
@@ -311,6 +407,33 @@ transcript [`transcript.txt`](../evidence/local/transcript.txt). It mirrors
 charged on chain exactly the gas `measure_lez` reports for them
 ([`raw/measure-lez-2026-10-15.txt`](raw/measure-lez-2026-10-15.txt)).
 
+On 2026-10-17 the v2 binary (deployed locally as `C9BTBDEF…`, the same
+v0.3.1 build, port 3047) ran `SCENARIO=chain` over every testnet vector set,
+each in full, the verifier passing on each against the local RPC:
+
+- Sepolia (Gloas), [`chain-sepolia.tsv`](../evidence/local/chain-sepolia.tsv):
+  `Init`, the checkpoint attestation and its two refusals, updates 1 to 4 to
+  period 1388 (slot 11,370,656, execution block 11,929,520), then a `Transfer`
+  log (90,919 gas) and a WETH balance (280,143 gas) attested against the last
+  header and the same log refused as a mainnet statement (`E7209`); 19
+  transactions, 16 applied, 3 refused; verifier 24 checks, 0 fail
+  ([`chain-sepolia-verify.txt`](../evidence/local/chain-sepolia-verify.txt)).
+- Hoodi, [`chain-hoodi.tsv`](../evidence/local/chain-hoodi.tsv): the same
+  shape to period 508 (slot 4,164,000, execution block 3,829,448), the last
+  attestations a log (81,814 gas) and the EIP-2935 history slot (249,435
+  gas); 19 transactions, 16 applied, 3 refused; verifier 24 checks, 0 fail
+  ([`chain-hoodi-verify.txt`](../evidence/local/chain-hoodi-verify.txt)).
+- Sepolia across the Gloas fork,
+  [`chain-sepolia-gloas-fork.tsv`](../evidence/local/chain-sepolia-gloas-fork.tsv):
+  `Init` from the Fulu checkpoint (slot 11,280,384, period 1377), then updates
+  1 to 4: periods 1377 and 1378 finalized in Fulu, 1379 (slot 11,297,184) the
+  first Gloas finalized header, 1380 (slot 11,304,960); 13 transactions, all
+  applied; verifier 18 checks, 0 fail
+  ([`chain-sepolia-gloas-fork-verify.txt`](../evidence/local/chain-sepolia-gloas-fork-verify.txt)).
+  These vectors hold no execution proofs, so no attestation.
+
+Transcripts: `evidence/local/chain-*-transcript.txt`.
+
 ## Redeploying v2
 
 Branch `v2`'s binary (ImageID
@@ -325,8 +448,11 @@ attestable. The plan, and where it stands:
    attestations against the last header, with `verify-onchain.sh` and the
    mutation test over the new manifest
    ([The v2 testnet run](#the-v2-testnet-run)).
-3. Not started: a Sepolia instance (Gloas) and a Hoodi instance from their
-   vectors, with attestations against their last headers.
+3. Begun: a Sepolia instance (Gloas) to update 1 and a Hoodi instance at its
+   checkpoint, each with an attestation and the chain-binding refusal
+   ([Sepolia and Hoodi on the v2 program](#sepolia-and-hoodi-on-the-v2-program));
+   their remaining updates and the attestations against their last headers
+   wait for funding, and ran in full on the local sequencer.
 
 One deadline: `Init`, `Begin` and `Finish` now declare a timestamp window that
 closes two weeks after the store's finalized header, so the committed

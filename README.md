@@ -29,7 +29,7 @@ against what it verified, measured on real Ethereum mainnet data.
 - `executor-tests/`: the committed program binaries through `lee::V03State`, the
   state machine the v0.3 sequencer applies, under the 10,000,000 gas cap.
 - `cli/`: `sextant`, the client that deploys the program and drives it from the
-  vectors, pre-checking every transaction through `lee::V03State` (built on the
+  vectors (`--chain mainnet|hoodi|sepolia|sepolia-gloas-fork`), pre-checking every transaction through `lee::V03State` (built on the
   v0.3.0 wallet crate, with `common` from v0.3.1 for the testnet's block format);
   `scripts/e2e.sh` runs the lifecycle, `scripts/verify-onchain.sh` re-checks a
   recorded run against a sequencer's RPC.
@@ -47,7 +47,9 @@ against what it verified, measured on real Ethereum mainnet data.
   shape for the two public Ethereum testnets, fetched 2026-10-16
   (`scripts/fetch-vectors.py`): Hoodi periods 505 to 508 (Fulu), Sepolia
   periods 1385 to 1388 (Gloas since epoch 353,024), and one Sepolia instance
-  from a Fulu checkpoint across the Gloas fork.
+  from a Fulu checkpoint across the Gloas fork; for Hoodi and Sepolia, a
+  receipt proof against the checkpoint's own execution block
+  (`block-3805646/`, `block-11905253/`, fetched 2026-10-17).
 
 ## Reproduce
 
@@ -66,6 +68,8 @@ RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tes
 python3 scripts/receipt_proof.py vectors/mainnet/receipts.json vectors/mainnet/block.json 2 /tmp/p.json
 scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run, against the sequencer's RPC
 scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier catches each corruption of the manifest
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia/run.tsv  # the Sepolia instance
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-hoodi/run.tsv    # the Hoodi instance
 scripts/verify-onchain.sh                     # the first run (main's binary)
 ```
 
@@ -84,6 +88,19 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
   transactions, 17 applied and 6 refused, each charged its pre-checked gas or
   its whole limit. Verifier 36 checks, 0 fail; mutation test 7 of 7.
   [`evidence/testnet-v2/run.tsv`](evidence/testnet-v2/run.tsv).
+- **Public LEZ testnet**, the same program, a **Sepolia** instance (Gloas):
+  `Init` from the period-1385 checkpoint, a log attested against its header
+  (execution block 11,905,253), the same query refused as a mainnet statement
+  (`E7209`) and a false predicate (`E7208`), then update 1 (`Begin`,
+  `Miller`, `Finish`: a Gloas sync-committee signature verified on chain, the
+  handoff to the period-1386 committee); 7 transactions, 5 applied and 2
+  refused. Verifier 11 checks, 0 fail; mutation test 6 of 6.
+  [`evidence/testnet-v2-sepolia/run.tsv`](evidence/testnet-v2-sepolia/run.tsv).
+- **Public LEZ testnet**, the same program, a **Hoodi** instance: `Init` from
+  the period-505 checkpoint, a log attested against its header (execution
+  block 3,805,646), the same two refusals; 4 transactions, 2 applied and 2
+  refused. Verifier 8 checks, 0 fail; mutation test 6 of 6.
+  [`evidence/testnet-v2-hoodi/run.tsv`](evidence/testnet-v2-hoodi/run.tsv).
 - **Public LEZ testnet** (v0.3.1), the earlier binary: program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, its reproducible binary
   (ImageID `fa229edd…`, before `E7206` and Gloas).
@@ -98,14 +115,18 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 - **Local v0.3.1 standalone sequencer**: the whole chain in the vectors, four
   updates to block 26,197,200, the attestations under it, and every refusal of
   the executor tests: 36 transactions. [`evidence/local/e2e.tsv`](evidence/local/e2e.tsv).
+  The current binary there runs the Sepolia and Hoodi vectors in full, to
+  their last headers with the attestations under them, and the Sepolia
+  instance across the Gloas fork ([`evidence/local/chain-*.tsv`](docs/ONCHAIN.md#the-local-v031-sequencer-run)).
 
 ## What this prototype is not yet
 
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-the current binary (`E7206`, Gloas) runs a mainnet instance only on chain, no
-Sepolia or Hoodi instance; no transaction proofs
+the Sepolia and Hoodi instances on chain stop at update 1 and at `Init`
+(an update costs about 108M of the testnet token), and the Sepolia instance
+that crosses the Gloas fork runs only on a local sequencer; no transaction proofs
 (native ether sender), no historical headers; end-to-end runs against a
 sequencer are not in CI. These are the
 milestones of the proposal.

@@ -1,0 +1,4 @@
+fetched 2026-10-17T20:22:56Z by scripts/fetch-vectors.py sepolia vectors/sepolia --checkpoint-block
+checkpoint execution block 11905253 (0x1c4de1be7bc015b7895e7adaddc3228c0af4ee75e7210034b52c72e500a516db), receipt proof for tx 0, no eth_getProof: the proof endpoint's window is past this block
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x1c4de1be7bc015b7895e7adaddc3228c0af4ee75e7210034b52c72e500a516db", false]
+RPC  https://sepolia.gateway.tenderly.co eth_getBlockReceipts ["0xb5a8e5"]

@@ -1,0 +1,20 @@
+sextant_lc against http://127.0.0.1:3047, from evidence/local/chain-sepolia-gloas-fork.tsv
+  ok   program header C9BTBDEFoMU8… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, e946917fff27d239… in block 135, charged 1796668 gas = the pre-checked gas, below its limit 1824634
+  ok   u1-begin: applied, 318fbf63efc53541… in block 136, charged 5827490 gas = the pre-checked gas, below its limit 5895764
+  ok   u1-miller: applied, 1b734f2f9dca8e00… in block 137, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, 0cc8ec39c4cce3aa… in block 138, charged 3768958 gas = the pre-checked gas, below its limit 3816647
+  ok   u2-begin: applied, 9441710c03453e6a… in block 139, charged 5463462 gas = the pre-checked gas, below its limit 5528096
+  ok   u2-miller: applied, 35e16be731a630b6… in block 140, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, fef4b991ac6380ca… in block 141, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u3-begin: applied, 1dd63d7084943c94… in block 142, charged 5472690 gas = the pre-checked gas, below its limit 5537416
+  ok   u3-miller: applied, f54147be88214314… in block 143, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, cea13e2efa55ea9a… in block 144, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u4-begin: applied, 5fc41aa6dcb53cc2… in block 145, charged 5477454 gas = the pre-checked gas, below its limit 5542228
+  ok   u4-miller: applied, 2f0680858eda88cc… in block 146, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u4-finish: applied, e36977f360b08690… in block 147, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   final state of Fzft5FxD9mgC…: 447 bytes as the run left them
+  ok   final state of 88iKWGsiZJeh…: 120 bytes as the run left them
+  ok   final state of 7bg5rdRnH6Dg…: 120 bytes as the run left them
+  ok   control: a random hash (9fd128298cc0…) does not resolve
+18 checks pass, 0 fail (13 applied and 0 refused transactions in the manifest)

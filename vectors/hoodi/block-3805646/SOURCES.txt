@@ -1,0 +1,4 @@
+fetched 2026-10-17T20:23:35Z by scripts/fetch-vectors.py hoodi vectors/hoodi --checkpoint-block
+checkpoint execution block 3805646 (0x5eb2ac797cff98e127ec2f843c8872067eef03bab932c43c0906830655890a09), receipt proof for tx 23, no eth_getProof: the proof endpoint's window is past this block
+RPC  https://ethereum-hoodi-rpc.publicnode.com eth_getBlockByHash ["0x5eb2ac797cff98e127ec2f843c8872067eef03bab932c43c0906830655890a09", false]
+RPC  https://ethereum-hoodi-rpc.publicnode.com eth_getBlockReceipts ["0x3a11ce"]

@@ -6,11 +6,18 @@ public endpoints, and check it for internal consistency before writing it.
     python3 scripts/fetch-vectors.py hoodi   vectors/hoodi
     python3 scripts/fetch-vectors.py sepolia vectors/sepolia --headers
     python3 scripts/fetch-vectors.py sepolia vectors/sepolia-gloas-fork --range 1377 4
+    python3 scripts/fetch-vectors.py hoodi   vectors/hoodi --checkpoint-block
 
 `--headers` only (re)builds execution-headers.json for the light-client files
 already in the directory. `--range START COUNT` writes a bootstrap at period
 START and the best updates of COUNT periods (no finality update, no proofs):
 Sepolia 1377-1380 crosses the Gloas fork (epoch 353,024, period 1379).
+`--checkpoint-block` writes `block-<n>/` for the execution block the
+directory's bootstrap commits to, the proofs a consumer attests with as soon
+as `Init` has run (the layout of vectors/mainnet/block-26170219/): block.json,
+receipts.json, the receipt proof of the first transaction whose first log is
+an ERC-20 `Transfer` (else of the first with a log), and the EIP-2935 history slot's eth_getProof if the
+proof endpoint still serves the block.
 
 What it writes (the layout of vectors/mainnet/, plus the execution header):
 
@@ -63,6 +70,8 @@ NETWORKS = {
         # A free endpoint with an eth_getProof window that reaches the
         # finalized block (publicnode's does not).
         "proof": "https://sepolia.gateway.tenderly.co",
+        # publicnode has pruned the receipts of blocks a few days old.
+        "receipts": "https://sepolia.gateway.tenderly.co",
         "weth": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
     },
     "hoodi": {
@@ -246,6 +255,48 @@ def execution_headers(net, out):
     return len(rlps)
 
 
+TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+
+def checkpoint_block(net, out):
+    """Proofs against the execution block of the directory's checkpoint."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    boot = [n for n in os.listdir(out) if n.startswith("bootstrap-") and n.endswith(".json")]
+    assert len(boot) == 1, "exactly one bootstrap in %s" % out
+    bh = lc_block_hash(json.load(open(os.path.join(out, boot[0])))["data"]["header"])
+    E = net["exec"]
+    block = rpc(E, "eth_getBlockByHash", [bh, False])
+    b = block["result"]
+    raw = header_rlp(b)
+    assert "0x" + k256(raw).hex() == b["hash"] == bh, "header RLP does not hash to the block hash"
+    n = int(b["number"], 16)
+    d = os.path.join(out, "block-%d" % n)
+    os.makedirs(d, exist_ok=True)
+    dump(d, "block.json", block)
+    # Receipts first: free endpoints serve them for any block, while their
+    # eth_getProof window (a few dozen blocks) is usually long past here.
+    receipts = rpc(net.get("receipts", E), "eth_getBlockReceipts", [b["number"]])
+    assert receipts["result"] and receipts["result"][0]["blockHash"] == bh, "receipts of another block"
+    dump(d, "receipts.json", receipts)
+    rs = receipts["result"]
+    i = next((i for i, r in enumerate(rs) if r["logs"] and r["logs"][0]["topics"][:1] == [TRANSFER]), None)
+    if i is None:
+        i = next(i for i, r in enumerate(rs) if r["logs"] and r["logs"][0]["topics"])
+    subprocess.run([sys.executable, os.path.join(here, "receipt_proof.py"), os.path.join(d, "receipts.json"),
+                    os.path.join(d, "block.json"), str(i), os.path.join(d, "receipt-proof-tx%d.json" % i)], check=True)
+    hslot = "0x%064x" % ((n - 1) % HISTORY_WINDOW)
+    try:
+        gp = rpc(net["proof"], "eth_getProof", [HISTORY, [hslot], {"blockHash": bh}], tries=2)
+        assert gp["result"]["storageProof"][0]["value"].lower().lstrip("0x").rjust(64, "0") == b["parentHash"][2:].lower(), "EIP-2935 slot is not the parent hash"
+        assert "0x" + k256(hb(gp["result"]["accountProof"][0])).hex() == b["stateRoot"], "proof is not under the block's state root"
+        dump(d, "getproof-history.json", gp)
+        name = "getproof-history.json"
+    except SystemExit as e:
+        name = "no eth_getProof: %s" % ("the proof endpoint's window is past this block" if "proof window" in str(e) else str(e)[-120:])
+    sources(d, ["checkpoint execution block %d (%s), receipt proof for tx %d, %s" % (n, bh, i, name)])
+    print("ok: %s checkpoint block %d, receipt tx %d, %s" % (sys.argv[1], n, i, name))
+
+
 def sources(out, lines):
     with open(os.path.join(out, "SOURCES.txt"), "a") as f:
         f.write("fetched %s by scripts/fetch-vectors.py %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), " ".join(sys.argv[1:])))
@@ -263,6 +314,9 @@ def main():
         n = execution_headers(net, out)
         sources(out, ["execution headers: %d" % n])
         print("ok: %d execution headers" % n)
+        return
+    if args[2:3] == ["--checkpoint-block"]:
+        checkpoint_block(net, out)
         return
     if args[2:3] == ["--range"]:
         first, count = int(args[3]), int(args[4])

@@ -24,6 +24,14 @@
 #                     base fee of 8 plus 6%), so none is left half done; the
 #                     checks and attestations against the last header run
 #                     once update 4 is applied
+#   SCENARIO=chain    CHAIN=hoodi|sepolia|sepolia-gloas-fork: an instance of a
+#                     public Ethereum testnet from its committed vectors: Init,
+#                     a log attested against the checkpoint's header
+#                     (vectors/<chain>/block-<n>/), the same query refused as a
+#                     mainnet statement (E7209), then the updates in UPDATES
+#                     (default none; each only if the payer holds UPDATE_MIN)
+#                     and, once the last is applied, attestations against the
+#                     last header; with RESUME=1, the updates only
 #   SKIP_STEPS="init-again ..."  labels not sent (recorded as skipped), to
 #                     fit a payer's balance
 #   BASE_FEE_MAX=8    before each send, wait (up to BASE_FEE_WAIT s) until the
@@ -50,7 +58,10 @@ export SEXTANT_RPC="${RPC:-http://127.0.0.1:3040}" SEXTANT_PAYER="$PAYER"
 CLI="${CLI:-cli/target/release/sextant}"
 OUT="${OUT:-evidence/local/e2e.tsv}"
 SCENARIO="${SCENARIO:-full}"
-INSTANCE="${INSTANCE:-mainnet-$(date -u +%m%d%H%M)}"
+CHAIN="${CHAIN:-mainnet}"
+export SEXTANT_CHAIN="$CHAIN"
+[ "$SCENARIO" = chain ] || [ "$CHAIN" = mainnet ] || { echo "CHAIN=$CHAIN needs SCENARIO=chain"; exit 2; }
+INSTANCE="${INSTANCE:-$CHAIN-$(date -u +%m%d%H%M)}"
 WAIT_APPLY="${WAIT_APPLY:-240}"
 WAIT_REFUSE="${WAIT_REFUSE:-60}"
 export SEXTANT_INSTANCE="$INSTANCE"
@@ -77,7 +88,7 @@ if [ "${RESUME:-0}" = 1 ]; then
   echo "# resumed ($SCENARIO) against $SEXTANT_RPC, $(date -u +%Y-%m-%dT%H:%M:%SZ), $IMGID" | tee -a "$OUT"
 else
   {
-  echo "# sextant_lc run ($SCENARIO) against $SEXTANT_RPC, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "# sextant_lc run ($SCENARIO, $CHAIN vectors) against $SEXTANT_RPC, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   echo "# program $SEXTANT_PROGRAM $IMGID"
   echo "# binary $IMG"
   echo "# payer $PAYER instance $INSTANCE"
@@ -141,6 +152,46 @@ show() { "$CLI" show; }
 IDS="$("$CLI" ids)"
 INST="$(jget "$IDS" instance)"; CKPT="$(jget "$IDS" checkpoint_header)"; FINAL="$(jget "$IDS" final_header)"
 [ "${RESUME:-0}" = 1 ] || echo "# accounts instance $INST checkpoint_header $CKPT final_header $FINAL" >> "$OUT"
+
+if [ "$SCENARIO" = chain ]; then
+  CSLOT="$(jget "$IDS" checkpoint_slot)"; FSLOT="$(jget "$IDS" final_slot)"
+  if [ "${RESUME:-0}" != 1 ]; then
+    echo "== 1. Init from the committed $CHAIN bootstrap (slot $CSLOT)"
+    step init applied -- init
+    check "instance at the checkpoint" "$(jget "$(show)" slot)" "$CSLOT"
+    if ls -d "vectors/$CHAIN"/block-* > /dev/null 2>&1; then
+      echo "== 2. the consumer check against the checkpoint's header ($(ls -d "vectors/$CHAIN"/block-* | sed 's/.*block-/execution block /'))"
+      step attest-checkpoint-log applied -- attest --at checkpoint --kind log
+      step attest-checkpoint-as-mainnet E7209 -- attest --at checkpoint --kind log --chain-id 1
+      step attest-checkpoint-predicate-false E7208 -- attest --at checkpoint --kind log --negate
+    else
+      echo "== 2. (no proofs against the checkpoint's execution block in vectors/$CHAIN)"
+    fi
+  fi
+  echo "== 3. updates ${UPDATES:-(none)}: Begin, Miller, Finish"
+  for n in ${UPDATES:-}; do
+    if [ "$("$CLI" balance)" -le "${UPDATE_MIN:-115000000}" ]; then
+      echo "  (stopped before update $n: the payer cannot fund a whole update)"
+      echo "# skipped u$n and after: payer balance $("$CLI" balance), below UPDATE_MIN ${UPDATE_MIN:-115000000}" >> "$OUT"
+      break
+    fi
+    step "u$n-begin" applied -- begin $n
+    step "u$n-miller" applied -- miller $n
+    step "u$n-finish" applied -- finish $n
+    S="$(show)"
+    echo "# after update $n: slot $(jget "$S" slot), period $(jget "$S" period), execution block $(jget "$S" block_number)" >> "$OUT"
+    # The last update of a chain's vectors is a finality update: no committee to hand off.
+    [ "$(jget "$S" slot)" = "$FSLOT" ] || check "after update $n: next committee recorded" "$( [ -n "$(jget "$S" next_committee)" ] && echo yes || echo no)" yes
+  done
+  if [ "$(jget "$(show)" slot)" = "$FSLOT" ] && [ -f "vectors/$CHAIN/receipt-proof-tx2.json" ]; then
+    echo "== 4. the consumer check against the last header (slot $FSLOT)"
+    step attest-final-log applied -- attest --at final --kind log
+    step attest-final-storage applied -- attest --at final --kind storage
+    step attest-final-as-mainnet E7209 -- attest --at final --kind log --chain-id 1
+  fi
+fi
+
+if [ "$SCENARIO" != chain ]; then
 
 if [ "${RESUME:-0}" != 1 ]; then
 echo "== 1. Init from the committed mainnet bootstrap (slot 15,409,152), once"
@@ -245,6 +296,7 @@ if [ "$SCENARIO" = full ]; then
   SEXTANT_INSTANCE="$WRONG" step wrong-chain-u1-miller applied -- --wrong-chain miller 1
   SEXTANT_INSTANCE="$WRONG" step wrong-chain-u1-finish E7203 -- --wrong-chain finish 1
   check "wrong-chain instance unmoved" "$(jget "$(SEXTANT_INSTANCE="$WRONG" "$CLI" show)" slot)" 15409152
+fi
 fi
 
 echo "== final state: the instance and the header records, as the run left them"

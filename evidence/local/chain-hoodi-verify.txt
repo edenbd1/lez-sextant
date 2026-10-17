@@ -1,0 +1,26 @@
+sextant_lc against http://127.0.0.1:3047, from evidence/local/chain-hoodi.tsv
+  ok   program header C9BTBDEFoMU8… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, 00984a37c2e4ac9a… in block 102, charged 1839906 gas = the pre-checked gas, below its limit 1868305
+  ok   attest-checkpoint-log: applied, 71620a833fd07e60… in block 103, charged 78786 gas = the pre-checked gas, below its limit 89573
+  ok   attest-checkpoint-as-mainnet: refused (E7209), 7b35301a4db6d549… in block 104, charged its whole limit 100290
+  ok   attest-checkpoint-predicate-false: refused (E7208), e58fea913c4dfabc… in block 105, charged its whole limit 100290
+  ok   u1-begin: applied, 334ce69856bed60a… in block 106, charged 5949207 gas = the pre-checked gas, below its limit 6018699
+  ok   u1-miller: applied, 09f853e68806fd29… in block 107, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, e64a9cde6f69d5c3… in block 108, charged 3768958 gas = the pre-checked gas, below its limit 3816647
+  ok   u2-begin: applied, 9e8c97841c5b74e7… in block 109, charged 5867478 gas = the pre-checked gas, below its limit 5936152
+  ok   u2-miller: applied, ebf8e2c5b3edc4bf… in block 110, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, faa08082ca7e0155… in block 111, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u3-begin: applied, 0827d7320b0bff8a… in block 112, charged 5900228 gas = the pre-checked gas, below its limit 5969230
+  ok   u3-miller: applied, a574635ef4431484… in block 113, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, b1e645bf08f15421… in block 114, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u4-begin: applied, 998f7ab1d1e27c32… in block 115, charged 4609690 gas = the pre-checked gas, below its limit 4665786
+  ok   u4-miller: applied, b253d6bfe9435339… in block 116, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u4-finish: applied, 1c27a08f0f9835e3… in block 117, charged 3768451 gas = the pre-checked gas, below its limit 3816135
+  ok   attest-final-log: applied, 2fe9fd28e12e76bc… in block 118, charged 81814 gas = the pre-checked gas, below its limit 92632
+  ok   attest-final-storage: applied, 14f0915a9a6e37de… in block 119, charged 249435 gas = the pre-checked gas, below its limit 261929
+  ok   attest-final-as-mainnet: refused (E7209), 62bc35b4adfd03aa… in block 120, charged its whole limit 100290
+  ok   final state of 5BaVmmicZrB5…: 415 bytes as the run left them
+  ok   final state of 2VJvVsfA7SwN…: 120 bytes as the run left them
+  ok   final state of 5oX8FyNwqBDY…: 120 bytes as the run left them
+  ok   control: a random hash (346bbae22a9b…) does not resolve
+24 checks pass, 0 fail (16 applied and 3 refused transactions in the manifest)

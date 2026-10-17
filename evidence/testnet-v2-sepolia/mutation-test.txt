@@ -1,0 +1,7 @@
+  ok   the recorded manifest verifies (11 checks pass, 0 fail (5 applied and 2 refused transactions in the manifest))
+  ok   mutation fake-hash caught: init: 8addadf9397d796d… NOT FOUND on chain
+  ok   mutation refusal-as-applied caught: attest-checkpoint-as-mainnet: expected applied, charged 100290 gas (pre-checked 100290, limit 100290)
+  ok   mutation applied-as-refused caught: init: expected refused, charged 1829341 gas against a limit of 1857634
+  ok   mutation wrong-gas caught: init: expected applied, charged 1829341 gas (pre-checked 1829342, limit 1857634)
+  ok   mutation final-state caught: final state of Pi3R6DjZpELF…: 447 bytes as the run left them
+  ok   mutation image-id caught: program header Ebe8rifvjyvw… names ImageID 0000000000000000… (chain has ad6fbedb983da6b6d75b287da354ce3041905d

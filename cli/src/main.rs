@@ -1,5 +1,5 @@
 //! `sextant`: deploy sextant_lc on a LEZ v0.3 sequencer and drive it from the
-//! committed mainnet vectors.
+//! committed vectors of a chain (`--chain`: mainnet, Hoodi, Sepolia).
 //!
 //! Every transaction is first executed locally, through `lee::V03State` with
 //! the committed binary and the accounts the instruction touches as the chain
@@ -38,7 +38,7 @@ use sequencer_service_rpc::{RpcClient as _, SequencerClient, SequencerClientBuil
 use sextant_core::lc::{self, AggMode};
 use sextant_core::statement::{Cmp, Field, Predicate, Proof, Query};
 use sextant_core::{ChainConfig, Store, SyncCommittee, Update};
-use sextant_host::{mainnet, mainnet_steps, receipt_proof, receipt_proof_from, weth_proof, weth_proof_from, witness, Mainnet};
+use sextant_host::{hoodi, mainnet, mainnet_steps, receipt_proof_from, sepolia, sepolia_gloas_fork, weth_proof_from, witness, Mainnet};
 use sextant_program::{header_account, instance_account, job_account, job_id, Instance, Instruction};
 use sha2::{Digest as _, Sha256};
 use wallet::{program_facades::program_loader::ProgramLoader, WalletCore};
@@ -46,11 +46,6 @@ use wallet::{program_facades::program_loader::ProgramLoader, WalletCore};
 const LOCAL_RPC: &str = "http://127.0.0.1:3040";
 /// `MAX_GAS_EXEC`: the most execution gas one transaction may declare.
 const GAS_CAP: u64 = 10_000_000;
-/// The checkpoint's execution block, for which `vectors/mainnet/block-26170219/` holds proofs.
-const CHECKPOINT_BLOCK_DIR: &str = "vectors/mainnet/block-26170219";
-const CHECKPOINT_TX: u64 = 16;
-/// The keccak of `Transfer(address,address,uint256)`: topic 0 of an ERC-20 transfer log.
-const TRANSFER: &str = "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 /// The gas limit a refused instruction is sent with: the largest gas the honest
 /// instruction of that kind uses (docs/raw/measure-lez-*.txt), plus 10%.
 const HONEST_INIT: u64 = 2_017_028;
@@ -65,8 +60,11 @@ const FEE_PROGRAM: &str = "2TsGdKDWTY92X4vSBZzjzemZpThhyqNEdZJj3xBrQ9AZ";
 const SEPOLIA_GVR: &str = "d8ea171f3c94aea21ebc42a1ed61052acf3f9209c00e4efbaaddac09ed9b8078";
 
 #[derive(Parser)]
-#[command(name = "sextant", version, about = "sextant_lc on LEZ v0.3, driven from the mainnet vectors")]
+#[command(name = "sextant", version, about = "sextant_lc on LEZ v0.3, driven from a chain's committed vectors")]
 struct Cli {
+    /// Which chain's vectors the instance follows.
+    #[arg(long, env = "SEXTANT_CHAIN", global = true, value_enum, default_value = "mainnet")]
+    chain: Chain,
     /// The program's header account (base58).
     #[arg(long, env = "SEXTANT_PROGRAM", global = true)]
     program: Option<AccountId>,
@@ -99,6 +97,85 @@ struct Cli {
 }
 
 #[derive(Clone, Copy, ValueEnum, PartialEq, Eq)]
+enum Chain {
+    /// vectors/mainnet: periods 1881 to 1884.
+    Mainnet,
+    /// vectors/hoodi: periods 505 to 508.
+    Hoodi,
+    /// vectors/sepolia: periods 1385 to 1388 (Gloas).
+    Sepolia,
+    /// vectors/sepolia-gloas-fork: a Fulu checkpoint (period 1377) across the Gloas fork.
+    SepoliaGloasFork,
+}
+
+impl Chain {
+    fn dir(self) -> &'static str {
+        match self {
+            Chain::Mainnet => "vectors/mainnet",
+            Chain::Hoodi => "vectors/hoodi",
+            Chain::Sepolia => "vectors/sepolia",
+            Chain::SepoliaGloasFork => "vectors/sepolia-gloas-fork",
+        }
+    }
+    fn vectors(self) -> Mainnet {
+        match self {
+            Chain::Mainnet => mainnet(),
+            Chain::Hoodi => hoodi(),
+            Chain::Sepolia => sepolia(),
+            Chain::SepoliaGloasFork => sepolia_gloas_fork(),
+        }
+    }
+}
+
+/// The one file in `dir` named `<prefix>*<suffix>`, relative to the repository.
+fn one_file(dir: &str, prefix: &str, suffix: &str) -> Result<String> {
+    let found: Vec<String> = std::fs::read_dir(dir)
+        .with_context(|| format!("reading {dir}"))?
+        .filter_map(|e| e.ok()?.file_name().into_string().ok())
+        .filter(|f| f.starts_with(prefix) && f.ends_with(suffix))
+        .collect();
+    ensure!(found.len() == 1, "{dir} holds {} files {prefix}*{suffix}, not one", found.len());
+    Ok(format!("{dir}/{}", found[0]))
+}
+
+/// Where the proofs against a recorded header are: the checkpoint's execution
+/// block in `<dir>/block-<n>/`, the last header's in `<dir>/`.
+fn proofs_dir(chain: Chain, at: At) -> Result<String> {
+    Ok(match at {
+        At::Checkpoint => one_file(chain.dir(), "block-", "")?,
+        At::Final => chain.dir().to_string(),
+    })
+}
+
+/// The receipt proof of a transaction's first log (`receipt-proof-tx<i>.json`;
+/// transaction 2 under the last header), and that log's topic 0 as the
+/// block's `receipts.json` holds it.
+fn log_proof(chain: Chain, at: At) -> Result<(sextant_core::mpt::ReceiptProof, [u8; 32])> {
+    let dir = proofs_dir(chain, at)?;
+    let f = match at {
+        At::Checkpoint => one_file(&dir, "receipt-proof-tx", ".json")?,
+        At::Final => format!("{dir}/receipt-proof-tx2.json"),
+    };
+    let tx: usize = f.rsplit("-tx").next().and_then(|t| t.strip_suffix(".json")).and_then(|t| t.parse().ok()).ok_or_else(|| anyhow!("no index in {f}"))?;
+    let receipts: serde_json::Value = serde_json::from_slice(&std::fs::read(format!("{dir}/receipts.json"))?)?;
+    let topic = receipts["result"][tx]["logs"][0]["topics"][0].as_str().ok_or_else(|| anyhow!("transaction {tx} of {dir}/receipts.json has no log with a topic"))?;
+    Ok((receipt_proof_from(&f, tx as u64), hex32(topic.trim_start_matches("0x"))))
+}
+
+/// The `eth_getProof` of a storage slot under a recorded header's state root:
+/// WETH's `balanceOf` (mainnet, Sepolia), else the EIP-2935 history slot (Hoodi).
+fn storage_proof(chain: Chain, at: At) -> Result<sextant_core::mpt::AccountStorageProof> {
+    let dir = proofs_dir(chain, at)?;
+    for f in ["getproof-weth.json", "getproof-history.json"] {
+        let path = format!("{dir}/{f}");
+        if std::path::Path::new(&path).exists() {
+            return Ok(weth_proof_from(&path));
+        }
+    }
+    Err(anyhow!("{dir} holds no eth_getProof"))
+}
+
+#[derive(Clone, Copy, ValueEnum, PartialEq, Eq)]
 enum Tamper {
     /// Another real signature (the next update's): a valid point, refused at `Finish`.
     Resigned,
@@ -112,17 +189,17 @@ enum Tamper {
 
 #[derive(Clone, Copy, ValueEnum, PartialEq, Eq)]
 enum At {
-    /// The checkpoint's header, recorded by `Init` (execution block 26,170,219).
+    /// The checkpoint's header, recorded by `Init` (mainnet: execution block 26,170,219).
     Checkpoint,
-    /// The header recorded by the last update (execution block 26,197,200).
+    /// The header recorded by the last update (mainnet: execution block 26,197,200).
     Final,
 }
 
 #[derive(Clone, Copy, ValueEnum, PartialEq, Eq)]
 enum Kind {
-    /// An ERC-20 `Transfer` log, through a receipt proof.
+    /// A log's topic 0, through a receipt proof (mainnet and Sepolia: an ERC-20 `Transfer`).
     Log,
-    /// WETH `balanceOf` the Uniswap v3 USDC/WETH pool ≥ 1 wei, through `eth_getProof`.
+    /// A storage slot ≥ 1, through `eth_getProof` (mainnet: WETH `balanceOf` the Uniswap v3 USDC/WETH pool).
     Storage,
 }
 
@@ -170,9 +247,9 @@ enum Cmd {
         at: At,
         #[arg(long, value_enum)]
         kind: Kind,
-        /// The chain the consumer expects (1 = mainnet).
-        #[arg(long, default_value_t = 1)]
-        chain_id: u64,
+        /// The chain the consumer expects (default: the instance's chain; 1 = mainnet).
+        #[arg(long)]
+        chain_id: Option<u64>,
         /// Ask for the opposite of what holds.
         #[arg(long)]
         negate: bool,
@@ -211,6 +288,7 @@ struct Ctx {
     force: bool,
     wait: u64,
     label: String,
+    chain: Chain,
     m: Mainnet,
 }
 
@@ -462,7 +540,8 @@ async fn main() -> Result<()> {
         force: cli.force,
         wait: cli.wait,
         label: cli.label.clone(),
-        m: mainnet(),
+        chain: cli.chain,
+        m: cli.chain.vectors(),
     };
     let signs = matches!(cli.cmd, Cmd::Deploy { .. } | Cmd::Init | Cmd::Begin { .. } | Cmd::Miller { .. } | Cmd::Finish { .. } | Cmd::Attest { .. });
     let wallet = if signs {
@@ -627,18 +706,12 @@ async fn main() -> Result<()> {
             } + slot_offset;
             let (proof, predicate) = match kind {
                 Kind::Log => {
-                    let rp = match at {
-                        At::Checkpoint => receipt_proof_from(&format!("{CHECKPOINT_BLOCK_DIR}/receipt-proof-tx{CHECKPOINT_TX}.json"), CHECKPOINT_TX),
-                        At::Final => receipt_proof(2),
-                    };
+                    let (rp, topic) = log_proof(ctx.chain, at)?;
                     let cmp = if negate { Cmp::Ne } else { Cmp::Eq };
-                    (Proof::Log(rp), Predicate { field: Field::LogTopic(0), cmp, value: hex32(TRANSFER) })
+                    (Proof::Log(rp), Predicate { field: Field::LogTopic(0), cmp, value: topic })
                 }
                 Kind::Storage => {
-                    let mut wp = match at {
-                        At::Checkpoint => weth_proof_from(&format!("{CHECKPOINT_BLOCK_DIR}/getproof-weth.json")),
-                        At::Final => weth_proof(),
-                    };
+                    let mut wp = storage_proof(ctx.chain, at)?;
                     if wrong_slot {
                         wp.slot[0] ^= 1;
                     }
@@ -648,6 +721,7 @@ async fn main() -> Result<()> {
                     (Proof::Storage(wp), Predicate { field: Field::SlotValue, cmp, value: one })
                 }
             };
+            let chain_id = chain_id.unwrap_or(m.cfg.chain_id);
             let honest = if kind == Kind::Log { HONEST_ATTEST_LOG } else { HONEST_ATTEST_STORAGE };
             let ix = Instruction::Attest { instance_id: id, slot, query: Query { chain_id, proof, predicates: vec![predicate] } };
             ctx.run(wallet.as_ref().unwrap(), "attest", ix, vec![header_account(&p, &id, slot)], honest).await?;

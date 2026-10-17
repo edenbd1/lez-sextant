@@ -1,0 +1,27 @@
+# sextant_lc run (chain, sepolia vectors) against https://testnet.lez.logos.co, 2026-10-17T20:31:01Z
+# program Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928
+# binary {"bytes":651932,"image_id":"ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928","sha256":"58a600a4c9e1d608b27bd16f59aef53587ee4fcbd4152c575f754a96604b3dbd"}
+# payer 9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw instance sepolia-v2-10172031
+== 1. Init from the committed sepolia bootstrap (slot 11345920)
+{"attempts":["86d8dcc37e7b669f3d159ef24f05dda620c65b1186e614692220b00e416a1ee4"],"block":32489,"block_gas_exec":1829341,"block_gas_stor":27045,"fee_reserve":"15077432","gas_limit":1857634,"label":"init","op":"init","payer_balance_after":"279600524","payer_balance_before":"294451612","precheck":{"gas":1829341},"state_changed":true,"tx":"86d8dcc37e7b669f3d159ef24f05dda620c65b1186e614692220b00e416a1ee4","tx_bytes":27045,"verdict":"applied"}
+  ok  init: applied (gas=1829341)
+  ok  instance at the checkpoint: 11345920
+== 2. the consumer check against the checkpoint's header (execution block 11905253)
+{"attempts":["55377b0ed16b6a6aa27fef738b65a24389e750a3bbb5bad1d2b08a135e784748"],"block":32491,"block_gas_exec":95791,"block_gas_stor":1827,"fee_reserve":"868600","gas_limit":106748,"label":"attest-checkpoint-log","op":"attest","payer_balance_after":"278819580","payer_balance_before":"279600524","precheck":{"gas":95791},"state_changed":false,"tx":"55377b0ed16b6a6aa27fef738b65a24389e750a3bbb5bad1d2b08a135e784748","tx_bytes":1827,"verdict":"applied"}
+  ok  attest-checkpoint-log: applied (gas=95791)
+{"attempts":["e1b3d2dff137b5be7e2390514e998f2a5b251fd111a6d5911a22b26aff97d0c0"],"block":32506,"block_gas_exec":100290,"block_gas_stor":1827,"fee_reserve":"816936","gas_limit":100290,"label":"attest-checkpoint-as-mainnet","op":"attest","payer_balance_after":"278002644","payer_balance_before":"278819580","precheck":{"refused":"E7209: chain-ID mismatch: the record belongs to another chain's instance"},"state_changed":false,"tx":"e1b3d2dff137b5be7e2390514e998f2a5b251fd111a6d5911a22b26aff97d0c0","tx_bytes":1827,"verdict":"reverted"}
+  ok  attest-checkpoint-as-mainnet: refused (E7209), included and charged its whole limit, nothing changed
+{"attempts":["94446db87628f4a0c181cc49b78752602a7da847f4874f9fc93ca87b3b674f78"],"block":32509,"block_gas_exec":100290,"block_gas_stor":1827,"fee_reserve":"816936","gas_limit":100290,"label":"attest-checkpoint-predicate-false","op":"attest","payer_balance_after":"277185708","payer_balance_before":"278002644","precheck":{"refused":"E7208: predicate not satisfied by the attested state"},"state_changed":false,"tx":"94446db87628f4a0c181cc49b78752602a7da847f4874f9fc93ca87b3b674f78","tx_bytes":1827,"verdict":"reverted"}
+  ok  attest-checkpoint-predicate-false: refused (E7208), included and charged its whole limit, nothing changed
+== 3. updates 1: Begin, Miller, Finish
+{"attempts":["ebae8189ff52fb26f7317ea1806051c6e8c6e029e64482a1a310699bc87d1f17"],"block":32511,"block_gas_exec":5478912,"block_gas_stor":53259,"fee_reserve":"44775680","gas_limit":5543701,"label":"u1-begin","op":"begin","payer_balance_after":"232928340","payer_balance_before":"277185708","precheck":{"gas":5478912},"state_changed":true,"tx":"ebae8189ff52fb26f7317ea1806051c6e8c6e029e64482a1a310699bc87d1f17","tx_bytes":53259,"verdict":"applied"}
+  ok  u1-begin: applied (gas=5478912)
+{"attempts":["f6f7bee409648397af7922c240ecbc05b1484f609f1405e09a06d13305aa2d8e"],"block":32514,"block_gas_exec":4217768,"block_gas_stor":355,"fee_reserve":"34162400","gas_limit":4269945,"label":"u1-miller","op":"miller","payer_balance_after":"199183356","payer_balance_before":"232928340","precheck":{"gas":4217768},"state_changed":true,"tx":"f6f7bee409648397af7922c240ecbc05b1484f609f1405e09a06d13305aa2d8e","tx_bytes":355,"verdict":"applied"}
+  ok  u1-miller: applied (gas=4217768)
+{"attempts":["6d44d1a9a4feb14a52fb4a1294e8ed011a5b48ee9755c8aaab44ea43e75f2c37"],"block":32518,"block_gas_exec":3770380,"block_gas_stor":1147,"fee_reserve":"30553840","gas_limit":3818083,"label":"u1-finish","op":"finish","payer_balance_after":"169011140","payer_balance_before":"199183356","precheck":{"gas":3770380},"state_changed":true,"tx":"6d44d1a9a4feb14a52fb4a1294e8ed011a5b48ee9755c8aaab44ea43e75f2c37","tx_bytes":1147,"verdict":"applied"}
+  ok  u1-finish: applied (gas=3770380)
+  ok  after update 1: next committee recorded: yes
+== final state: the instance and the header records, as the run left them
+# final Pi3R6DjZpELFNYJk453aVDtwquGzxcjK8AYPkcA74Sx 447 71b6538253ace102442c4def05aff4d78532e9de49bcaf1db05e9ee8c7444c69
+# final HDoq6X7AyDu5zFXJwSqNQzEqN6YYdwvxgQYkA2BkpjFK 120 bfba0b7a09ff891cdc6fb5cca3129b62ab69acbab7248e980047ce8eb0444b7c
+== PASS: 7 transactions in evidence/testnet-v2-sepolia/run.tsv
