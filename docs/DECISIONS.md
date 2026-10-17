@@ -201,8 +201,10 @@ Gloas shapes of D7 (Docker, `r0.1.91.1`), has ImageID
 `ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`: `Begin`
 of update 1 costs 5,474,785 gas
 ([`raw/measure-lez-2026-10-17-v2.txt`](raw/measure-lez-2026-10-17-v2.txt)).
-It is not deployed, and the testnet instance keeps running `fa229edd…`
-([`ONCHAIN.md`](ONCHAIN.md#redeploying-v2)).
+It is deployed on the public testnet as a new program,
+`Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`, where `Begin` of update 1 was
+charged exactly that; the first instance keeps running `fa229edd…`
+([`ONCHAIN.md`](ONCHAIN.md#the-v2-testnet-run)).
 
 The bound also applies to a mismatched store: a mainnet update offered to a
 Hoodi or Sepolia instance is refused with `E7206` first (its signature slot,

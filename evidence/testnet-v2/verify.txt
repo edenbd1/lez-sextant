@@ -1,0 +1,30 @@
+sextant_lc against https://testnet.lez.logos.co, from evidence/testnet-v2/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   deploy segment6: 3952262f74bdb5a8… in block 29268
+  ok   deploy segment5: 917101817b51979a… in block 29275
+  ok   deploy segment4: 57241caf369270ab… in block 29275
+  ok   deploy segment3: c7d4fc4ca0fa8373… in block 29275
+  ok   deploy segment2: 0891a911a1b0cbaf… in block 29275
+  ok   deploy segment1: 8c944729fdcf7fac… in block 29275
+  ok   deploy segment0: 8b4d0d0260423ebf… in block 29275
+  ok   deploy header: 3eefcfc6805a8764… in block 29275
+  ok   init: applied, e841867d66a7f27a… in block 29281 (recorded in 29280: moved by a block rewrite), charged 1835474 gas = the pre-checked gas, below its limit 1863828
+  ok   attest-checkpoint-transfer-log: applied, included in block 29290 (recorded in 29281: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   attest-checkpoint-weth-balance: applied, included in block 29290 (recorded in 29282: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   attest-wrong-chain: refused, included in block 29290; block shared with other charged transactions, charge not separable
+  ok   attest-predicate-false: refused (E7208), b7968fa6ed23a9ae… in block 29291, charged its whole limit 100290
+  ok   attest-slot-not-covered: refused (E7207), 372b61d363f75687… in block 29292, charged its whole limit 334693
+  ok   attest-unrecorded-header: refused (E7292), 24a52ad5c32072a1… in block 29293, charged its whole limit 100290
+  ok   u1-begin: applied, 54c7c8c9c103f07f… in block 29294, charged 5474785 gas = the pre-checked gas, below its limit 5539532
+  ok   u1-miller: applied, 50c01142a83b11cb… in block 29296, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, b8432ed7777200a9… in block 29297, charged 3769621 gas = the pre-checked gas, below its limit 3817317
+  ok   u2-begin: applied, 552d0dd84b64b04e… in block 29301, charged 5346523 gas = the pre-checked gas, below its limit 5409988
+  ok   u2-miller: applied, 77ff35f926a82d7e… in block 29303, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, e17bfe494757d504… in block 29304, charged 3769208 gas = the pre-checked gas, below its limit 3816900
+  ok   u3-begin: applied, 0d7569188d3f712e… in block 29305, charged 5390598 gas = the pre-checked gas, below its limit 5454503
+  ok   u3-miller: applied, 2ce5fe9311262113… in block 29307, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, ea82c407a48500a3… in block 29308, charged 3769208 gas = the pre-checked gas, below its limit 3816900
+  ok   final state of FyVTHTU4Repn…: 435 bytes as the run left them
+  ok   final state of Sgad8d8XmzNk…: 120 bytes as the run left them
+  ok   control: a random hash (f5095ccb0ab3…) does not resolve
+28 checks pass, 0 fail (12 applied and 4 refused transactions in the manifest; 3 in blocks shared with other charged transactions; 3 moved by a block rewrite since the run)

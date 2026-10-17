@@ -15,8 +15,9 @@ against what it verified, measured on real Ethereum mainnet data.
   651,932 bytes, sha256 `58a600a4…`, with the weak-subjectivity check `E7206`
   and Gloas light-client headers): RISC Zero's pinned Docker builder
   (`r0.1.91.1`), byte-for-byte reproducible, checked in CI. The program on the
-  public testnet is `main`'s binary, ImageID `fa229edd…`; `v2` is not deployed
-  yet ([`docs/ONCHAIN.md`](docs/ONCHAIN.md#redeploying-v2)).
+  public testnet as program `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`
+  ([`docs/ONCHAIN.md`](docs/ONCHAIN.md#the-v2-testnet-run)); `main`'s binary,
+  ImageID `fa229edd…`, is the earlier program `A89TcYmW…`.
 - `guest/`, `guest-stock/`: one benchmark guest, built twice: with RISC Zero's
   accelerated forks and without.
 - `host/`: decodes the beacon-API and JSON-RPC vectors, cross-checks every
@@ -63,8 +64,9 @@ cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez 
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver  # docs/raw/measure-receiver-*.txt
 RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove
 python3 scripts/receipt_proof.py vectors/mainnet/receipts.json vectors/mainnet/block.json 2 /tmp/p.json
-scripts/verify-onchain.sh                     # the public testnet run, against the sequencer's RPC
-scripts/mutation-test-verifier.sh             # the verifier catches 15 corruptions of the manifest
+scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run, against the sequencer's RPC
+scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier catches each corruption of the manifest
+scripts/verify-onchain.sh                     # the first run (main's binary)
 ```
 
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
@@ -73,7 +75,16 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 
 ## On chain today
 
-- **Public LEZ testnet** (v0.3.1): program header
+- **Public LEZ testnet** (v0.3.1), this branch's binary: program header
+  `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB` (ImageID `ad6fbedb…`,
+  `E7206` and Gloas). `Init` from the mainnet checkpoint, the attestations
+  against the checkpoint's header, four refusals, and updates 1 to 3 to period
+  1883: 16 transactions, 12 applied and 4 refused, each charged its
+  pre-checked gas or its whole limit. Verifier 28 checks, 0 fail; mutation
+  test 7 of 7. Update 4 and the attestations against the last header remain
+  (about 97.5M of the testnet token).
+  [`evidence/testnet-v2/run.tsv`](evidence/testnet-v2/run.tsv).
+- **Public LEZ testnet** (v0.3.1), `main`'s binary: program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, `main`'s reproducible binary
   (ImageID `fa229edd…`).
   The full chain to period 1884: `Init` from the mainnet checkpoint, updates 1
@@ -93,7 +104,8 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-this branch's binary (`E7206`, Gloas) is not deployed; no transaction proofs
+this branch's binary (`E7206`, Gloas) is deployed but its instance is at
+period 1883, not yet 1884, and no Sepolia or Hoodi instance is; no transaction proofs
 (native ether sender), no historical headers; end-to-end runs against a
 sequencer are not in CI. These are the
 milestones of the proposal.
