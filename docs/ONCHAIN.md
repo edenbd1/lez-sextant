@@ -10,7 +10,7 @@ committed mainnet vectors by the client in `cli/` and `scripts/e2e.sh`:
   1884 ([The v2 testnet run](#the-v2-testnet-run)):
   [`evidence/testnet-v2/run.tsv`](../evidence/testnet-v2/run.tsv), 23
   transactions (17 applied, 6 refused);
-- `main`'s binary (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`),
+- the earlier binary, before `E7206` and Gloas (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`),
   program `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, on the **public LEZ
   testnet** (sequencer v0.3.1 `1a003bfb`), the full chain to period 1884:
   [`evidence/testnet/run.tsv`](../evidence/testnet/run.tsv), 24 transactions
