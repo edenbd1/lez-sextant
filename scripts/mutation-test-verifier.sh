@@ -7,6 +7,10 @@
 # fail that transaction's own line, not only some other check: its hash
 # replaced, its verdict claimed as refused, the instance's final state
 # altered, and the final header's.
+# The mutations of a verdict or a charge are applied to a transaction the clean
+# run found charged alone in its block: in a block shared with other charged
+# transactions the charge is not separable, and the verifier reports only that
+# such a transaction is included.
 #
 #   scripts/mutation-test-verifier.sh [--manifest FILE] [--rpc URL]
 set -uo pipefail
@@ -22,12 +26,15 @@ done
 T="$(mktemp -d)"
 fake="$(python3 -c 'import secrets;print(secrets.token_hex(32))')"
 mutate() { # mutation name [label]
-  python3 - "$MANIFEST" "$T/$1.tsv" "$1" "$fake" "${2:-}" <<'PY'
+  python3 - "$MANIFEST" "$T/$1.tsv" "$1" "$fake" "${2:-}" "${SHARED:-}" <<'PY'
 import sys
-src, dst, how, fake, label = sys.argv[1:6]
+src, dst, how, fake, label, shared = sys.argv[1:7]
+shared = set(shared.split())
 lines = open(src).read().splitlines()
-rows = [i for i, l in enumerate(lines) if l and not l.startswith("#")]
 def cols(i): return lines[i].split("\t")
+rows = [i for i, l in enumerate(lines) if l and not l.startswith("#")]
+if how in ("refusal-as-applied", "applied-as-refused", "wrong-gas"):
+    rows = [i for i in rows if cols(i)[0] not in shared]
 def put(i, c): lines[i] = "\t".join(c)
 if how == "fake-hash":            # an applied transaction's hash replaced by one never sent
     i = next(i for i in rows if cols(i)[1] == "applied"); c = cols(i); c[4] = fake; c[5] = fake; put(i, c)
@@ -57,6 +64,7 @@ PY
 fail=0
 ./scripts/verify-onchain.sh --manifest "$MANIFEST" --rpc "$RPC" > "$T/clean.out" 2>&1 \
   && echo "  ok   the recorded manifest verifies ($(tail -1 "$T/clean.out"))" || { echo "  FAIL the recorded manifest does not verify"; fail=1; }
+SHARED="$(sed -n 's/^  ok   \([^:]*\): .*block shared with other charged transactions.*/\1/p' "$T/clean.out" | tr '\n' ' ')"
 for m in fake-hash refusal-as-applied applied-as-refused wrong-gas final-state image-id deploy-hash; do
   if [ "$m" = deploy-hash ] && ! grep -q '^# deploy ' "$MANIFEST"; then continue; fi
   mutate "$m"

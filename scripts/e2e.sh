@@ -18,6 +18,17 @@
 #   SCENARIO=testnet-rest  with RESUME=1, after a testnet run whose update 1 is
 #                     applied: updates 2 to 4, attestations against the last
 #                     header, and the duplicate Finish if the balance covers it
+#   UPDATES="2 3"     (testnet-rest) which of updates 2 to 4 to run, in order
+#                     (default "2 3 4"); an update starts only if the payer
+#                     holds UPDATE_MIN (default 115M, the dearest update at a
+#                     base fee of 8 plus 6%), so none is left half done; the
+#                     checks and attestations against the last header run
+#                     once update 4 is applied
+#   SKIP_STEPS="init-again ..."  labels not sent (recorded as skipped), to
+#                     fit a payer's balance
+#   BASE_FEE_MAX=8    before each send, wait (up to BASE_FEE_WAIT s) until the
+#                     sequencer's execution base fee is at most this, so a step
+#                     sent right after a heavy block is not charged a raised fee
 #
 # Needs: cli/target/release/sextant, LEE_WALLET_HOME_DIR holding PAYER's key,
 # and DEPLOY=1 or SEXTANT_PROGRAM. Writes $OUT, one line per transaction:
@@ -88,9 +99,27 @@ check() { # label got want
   else echo "  FAIL $1: got $2, want $3"; echo "# check FAIL: $1: $2 != $3" >> "$OUT"; fail=1; fi
 }
 attempts_of() { python3 -c 'import json,sys;print(",".join(json.loads(sys.argv[1]).get("attempts") or []) or "-")' "$1"; }
+fee_now() { curl -s -m 20 -X POST "$SEXTANT_RPC" -H 'content-type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"getFeeState","params":[]}' | python3 -c 'import json,sys
+try: print(json.load(sys.stdin)["result"]["base_fee_exec"])
+except Exception: print("")'; }
+wait_base_fee() {
+  [ -n "${BASE_FEE_MAX:-}" ] || return 0
+  local t=0 f
+  while :; do
+    f="$(fee_now)"
+    [ -n "$f" ] && [ "$f" -le "$BASE_FEE_MAX" ] && return 0
+    [ "$t" -ge "${BASE_FEE_WAIT:-900}" ] && { echo "  (base fee ${f:-unknown} after ${t}s, sending anyway)"; return 0; }
+    sleep 10; t=$((t + 10))
+  done
+}
 # step label expected(applied|E72xx) -- cli args...
 step() {
   local label="$1" expect="$2"; shift 3
+  case " ${SKIP_STEPS:-} " in
+    (*" $label "*) echo "  (skipped $label: SKIP_STEPS)"; echo "# skipped $label: not sent (SKIP_STEPS, to fit the payer's balance)" >> "$OUT"; return 0 ;;
+  esac
+  wait_base_fee
   local line verdict pre want wait="$WAIT_APPLY" force=()
   if [ "$expect" != applied ]; then wait="$WAIT_REFUSE"; force=(--force); fi
   line="$("$CLI" --label "$label" --wait "$wait" ${force[@]+"${force[@]}"} "$@" 2>/tmp/sextant-e2e.err | grep '^{' | tail -1)"
@@ -171,11 +200,22 @@ fi
 
 if [ "$SCENARIO" = full ] || [ "$SCENARIO" = testnet-rest ]; then
   echo "== 7. updates 2 to 4 (periods 1882, 1883 with handoffs; 1884 finality only)"
-  for n in 2 3 4; do
+  last=1
+  for n in ${UPDATES:-2 3 4}; do
+    if [ "$SCENARIO" = testnet-rest ] && [ "$("$CLI" balance)" -le "${UPDATE_MIN:-115000000}" ]; then
+      echo "  (stopped before update $n: the payer cannot fund a whole update)"
+      echo "# skipped u$n and after: payer balance $("$CLI" balance), below UPDATE_MIN ${UPDATE_MIN:-115000000}" >> "$OUT"
+      break
+    fi
     step "u$n-begin" applied -- begin $n
     step "u$n-miller" applied -- miller $n
     step "u$n-finish" applied -- finish $n
+    last=$n
   done
+  S="$(show)"
+  echo "# after update $last: period $(jget "$S" period), execution block $(jget "$S" block_number)" >> "$OUT"
+fi
+if { [ "$SCENARIO" = full ] || [ "$SCENARIO" = testnet-rest ]; } && [ "$(jget "$(show)" period)" = 1884 ]; then
   S="$(show)"
   check "final period" "$(jget "$S" period)" 1884
   check "final execution block" "$(jget "$S" block_number)" 26197200
@@ -186,7 +226,7 @@ if [ "$SCENARIO" = full ] || [ "$SCENARIO" = testnet-rest ]; then
   step attest-final-wrong-chain E7209 -- attest --at final --kind log --chain-id 11155111
 fi
 
-if [ "$SCENARIO" = testnet-rest ]; then
+if [ "$SCENARIO" = testnet-rest ] && [ "$(jget "$(show)" period)" = 1884 ]; then
   echo "== 5b. the last update again: nothing is applied twice"
   if [ "$("$CLI" balance)" -gt "${FINISH_AGAIN_MIN:-45000000}" ]; then
     step u4-finish-again E7294 -- finish 4
