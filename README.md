@@ -77,12 +77,12 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 
 - **Public LEZ testnet** (v0.3.1), this branch's binary: program header
   `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB` (ImageID `ad6fbedb…`,
-  `E7206` and Gloas). `Init` from the mainnet checkpoint, the attestations
-  against the checkpoint's header, four refusals, and updates 1 to 3 to period
-  1883: 16 transactions, 12 applied and 4 refused, each charged its
-  pre-checked gas or its whole limit. Verifier 28 checks, 0 fail; mutation
-  test 7 of 7. Update 4 and the attestations against the last header remain
-  (about 97.5M of the testnet token).
+  `E7206` and Gloas). The full chain to period 1884: `Init` from the mainnet
+  checkpoint, the attestations against the checkpoint's header, updates 1 to
+  4 to the finalized execution block 26,197,200, the attestations against the
+  last header (a `Transfer` log and a WETH balance slot), six refusals; 23
+  transactions, 17 applied and 6 refused, each charged its pre-checked gas or
+  its whole limit. Verifier 36 checks, 0 fail; mutation test 7 of 7.
   [`evidence/testnet-v2/run.tsv`](evidence/testnet-v2/run.tsv).
 - **Public LEZ testnet** (v0.3.1), `main`'s binary: program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, `main`'s reproducible binary
@@ -104,8 +104,8 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-this branch's binary (`E7206`, Gloas) is deployed but its instance is at
-period 1883, not yet 1884, and no Sepolia or Hoodi instance is; no transaction proofs
+this branch's binary (`E7206`, Gloas) runs a mainnet instance only, no
+Sepolia or Hoodi instance; no transaction proofs
 (native ether sender), no historical headers; end-to-end runs against a
 sequencer are not in CI. These are the
 milestones of the proposal.

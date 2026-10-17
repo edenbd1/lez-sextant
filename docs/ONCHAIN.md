@@ -6,10 +6,10 @@ committed mainnet vectors by the client in `cli/` and `scripts/e2e.sh`:
 - **v2** (ImageID `ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`,
   `E7206` and Gloas) on the **public LEZ testnet** (https://testnet.lez.logos.co,
   sequencer v0.3.1), program
-  `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`: `Init` and updates 1 to 3
-  to period 1883 ([The v2 testnet run](#the-v2-testnet-run)):
-  [`evidence/testnet-v2/run.tsv`](../evidence/testnet-v2/run.tsv), 16
-  transactions (12 applied, 4 refused);
+  `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`, the full chain to period
+  1884 ([The v2 testnet run](#the-v2-testnet-run)):
+  [`evidence/testnet-v2/run.tsv`](../evidence/testnet-v2/run.tsv), 23
+  transactions (17 applied, 6 refused);
 - `main`'s binary (ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`),
   program `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, on the **public LEZ
   testnet** (sequencer v0.3.1 `1a003bfb`), the full chain to period 1884:
@@ -22,7 +22,7 @@ committed mainnet vectors by the client in `cli/` and `scripts/e2e.sh`:
 Re-check either from a clean clone, with nothing but python3:
 
 ```console
-scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run (28 checks)
+scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run (36 checks)
 scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier fails on each of 7 corruptions
 scripts/verify-onchain.sh                         # the first run (main's binary), against https://testnet.lez.logos.co
 scripts/mutation-test-verifier.sh                 # the same over the first run's manifest
@@ -78,15 +78,19 @@ ImageID `ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`
 `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id
 `mainnet-v2-10171005` (instance account
 `FyVTHTU4RepnCm8QbP7BUSm6Z9M9VPkMmMGM4W128UCH`, checkpoint header record
-`Sgad8d8XmzNkYp9PxBoAJma66sYfwnboEaVofucPE3Y`). Run on 2026-10-17, blocks
-29,280 to 29,308. Verifier output:
-[`evidence/testnet-v2/verify.txt`](../evidence/testnet-v2/verify.txt) (28
+`Sgad8d8XmzNkYp9PxBoAJma66sYfwnboEaVofucPE3Y`, final header record
+`En6hFJ5yr1yTmfQec7SbXCXUXvBiuwyBygqtj4AyJFo8`). Run on 2026-10-17, blocks
+29,280 to 29,308, then, resumed at 19:44 UTC, blocks 32,290 to 32,296.
+Verifier output:
+[`evidence/testnet-v2/verify.txt`](../evidence/testnet-v2/verify.txt) (36
 checks, 0 fail); mutation test (7 of 7 caught):
 [`evidence/testnet-v2/mutation-test.txt`](../evidence/testnet-v2/mutation-test.txt).
 Transcripts: [`transcript-part1.txt`](../evidence/testnet-v2/transcript-part1.txt)
 (deploy, `SCENARIO=testnet`),
 [`transcript-part2.txt`](../evidence/testnet-v2/transcript-part2.txt)
-(`RESUME=1 SCENARIO=testnet-rest UPDATES="2 3"`).
+(`RESUME=1 SCENARIO=testnet-rest UPDATES="2 3"`),
+[`transcript-part3.txt`](../evidence/testnet-v2/transcript-part3.txt)
+(`RESUME=1 SCENARIO=testnet-rest UPDATES=4`).
 
 | deployment | transaction |
 |---|---|
@@ -117,19 +121,32 @@ Transcripts: [`transcript-part1.txt`](../evidence/testnet-v2/transcript-part1.tx
 | u3-begin | applied | applied | 29305 | [`0d7569188d3f712e…`](https://explorer.testnet.lez.logos.co/transaction/0d7569188d3f712e3333bbf17bc1a181287cba7854eba6938a4bf3f8d831ae57) | gas=5390598 | 5390598 / 5454503 |
 | u3-miller | applied | applied | 29307 | [`2ce5fe9311262113…`](https://explorer.testnet.lez.logos.co/transaction/2ce5fe93112621138ae0320ed3cda4f264255030cbab6b0e7c31252db4bebebd) | gas=4217768 | 4217768 / 4269945 |
 | u3-finish | applied | applied | 29308 | [`ea82c407a48500a3…`](https://explorer.testnet.lez.logos.co/transaction/ea82c407a48500a3f2d8c0269802a702d9ca2ade3fc7bc40f016b574ed00478b) | gas=3769208 | 3769208 / 3816900 |
+| u4-begin | applied | applied | 32290 | [`7937b2d71b993167…`](https://explorer.testnet.lez.logos.co/transaction/7937b2d71b993167fec2e6ff5d6ec91e7895d51035a46e1bc613e4c2e0e18fe9) | gas=3664393 | 3664393 / 3711036 |
+| u4-miller | applied | applied | 32291 | [`7a336425cd196139…`](https://explorer.testnet.lez.logos.co/transaction/7a336425cd1961390ed431f845670d1e418886d7c8ab1f346e9de0c8a806a5a2) | gas=4217768 | 4217768 / 4269945 |
+| u4-finish | applied | applied | 32292 | [`c016b5b23ed83571…`](https://explorer.testnet.lez.logos.co/transaction/c016b5b23ed83571d28ec8a17e6059458672ba9582ba8cbec179d6569f72f0e8) | gas=3767505 | 3767505 / 3815180 |
+| attest-final-transfer-log | applied | applied | 32293 | [`55dd4b133af9164a…`](https://explorer.testnet.lez.logos.co/transaction/55dd4b133af9164a915e4ccf350ea2c4bb20b37c6e74fd27b66999548da29e1b) | gas=90919 | 90919 / 101828 |
+| attest-final-weth-balance | applied | applied | 32294 | [`5523506f140a3f91…`](https://explorer.testnet.lez.logos.co/transaction/5523506f140a3f91be1e7b763932828efcbd866d825e986afe3c45f2a13e88b8) | gas=304478 | 304478 / 317522 |
+| attest-final-wrong-chain | refused | reverted | 32295 | [`f5c372d223125d6e…`](https://explorer.testnet.lez.logos.co/transaction/f5c372d223125d6eb221f3147a2af4bd7de39812e8d8b1d22514a4606ad0fe37) | E7209 | 100290 / 100290 |
+| u4-finish-again | refused | reverted | 32296 | [`074f11fa49c7addd…`](https://explorer.testnet.lez.logos.co/transaction/074f11fa49c7addd7680c369c7b306ee8e7f5e6cd4b0adb1c98a4a0fcd80e91b) | E7294 | 4145066 / 4145066 |
 
 What it shows: the v2 binary deployed (seven segments and a header, 4,990,592
 of the testnet token, storage only); `Init` from the mainnet checkpoint with
 the timestamp window `E7206` declares; the two consumer attestations against
 the checkpoint's header accepted; four refusals: another chain's query
 (`E7209`), a false predicate (`E7208`), a slot the proof does not cover
-(`E7207`), a header never recorded (`E7292`); updates 1, 2 and 3 (periods
-1881 to 1883, each with its committee handoff), each across `Begin`,
-`Miller`, `Finish`, to period 1883, execution block 26,186,587 (instance 435
-bytes, digest `c8b56efa…`). Every applied step was charged on chain exactly
-the gas `measure_lez` reports for v2, which is within 2,000 gas of the first
-deployment's step by step. Every send waited for an execution base fee of 8
-(`BASE_FEE_MAX=8`), so no step paid a raised fee.
+(`E7207`), a header never recorded (`E7292`); updates 1 to 4 (periods 1881,
+1882 and 1883 with committee handoffs, 1884 finality only), each across
+`Begin`, `Miller`, `Finish`, to period 1884, the finalized execution block
+26,197,200 (instance 403 bytes, digest `5a9dffc3…`; final header record
+`En6h…`, 120 bytes); the two attestations against that last header (the
+`Transfer` log, 90,919 gas, and the WETH balance, 304,478 gas) and another
+chain's query refused (`E7209`); the duplicate `Finish` of update 4 refused
+(`E7294`, the job is spent): six refusals in all. Every applied step was
+charged on chain exactly the gas `measure_lez` reports for v2
+([`raw/measure-lez-2026-10-17-v2.txt`](raw/measure-lez-2026-10-17-v2.txt)),
+which is within 2,000 gas of the first deployment's step by step. Every
+send waited for an execution base fee of 8 (`BASE_FEE_MAX=8`), so no step
+paid a raised fee.
 
 A block rewrite after the run moved the two checkpoint attestations into block
 29,290, with `attest-wrong-chain`, which the client had already recorded as
@@ -142,19 +159,23 @@ whole limit, 100,290; and its storage gas, 10,636, is their three sizes
 corruptions to transactions charged alone in their block, where the verifier
 checks the charge.
 
-Not sent, to fit the payer's balance (376,092,084 before the run;
-350,988,528 spent; 25,103,556 left): `init-again` (`E7291`, 16.4M as a
-refusal charged its whole limit), `u1-finish-again` (`E7294`, 33.2M), and
-the rest of the chain. Each skip is recorded in the manifest. What remains,
-at a base fee of 8, all of it before 2026-10-25 15:50 UTC (the checkpoint's
-timestamp window):
+Not sent, to fit the payer's balance in parts 1 and 2 (376,092,084 before
+the run; 350,988,528 spent; 25,103,556 left): `init-again` (`E7291`, 16.4M as
+a refusal charged its whole limit) and `u1-finish-again` (`E7294`, 33.2M).
+Each skip is recorded in the manifest. The payer was then topped up to
+425,103,556, and part 3 sent the rest of the chain at a base fee of 8, on
+2026-10-17, before the checkpoint's timestamp window closed (2026-10-25 15:50
+UTC):
 
 | step | cost (testnet token) |
 |---|---:|
-| update 4 (period 1884, finality only): `Begin`, `Miller`, `Finish` | 93,431,800 |
+| update 4 (period 1884, finality only): `Begin`, `Miller`, `Finish` | 93,432,248 |
 | attestations against the last header (log, storage) and another chain's query refused | 4,050,088 |
-| to period 1884, with the attestations | 97,481,888 |
-| optional: `init-again` and `u4-finish-again` refusals | 16,362,280 + 33,169,416 |
+| `u4-finish-again` refused (`E7294`), charged its whole limit | 33,169,608 |
+| part 3 | 130,651,944 |
+| the whole run, deployment included | 481,640,472 |
+
+The payer holds 294,451,612 after it. Part 3 was run with:
 
 ```console
 LEE_WALLET_HOME_DIR=~/logos-bedrock/lez-wallet-home PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
@@ -302,17 +323,18 @@ attestable. The plan, and where it stands:
 
 1. Done: the `DOCKER=1` build, after `cmp` against the committed binary,
    deployed as `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`.
-2. Done to period 1883: a mainnet instance, `Init` and updates 1 to 3, with
-   `verify-onchain.sh` and the mutation test over the new manifest
-   ([The v2 testnet run](#the-v2-testnet-run)). Update 4 and the
-   attestations against the last header remain.
+2. Done to period 1884: a mainnet instance, `Init`, updates 1 to 4 and the
+   attestations against the last header, with `verify-onchain.sh` and the
+   mutation test over the new manifest
+   ([The v2 testnet run](#the-v2-testnet-run)).
 3. Not started: a Sepolia instance (Gloas) and a Hoodi instance from their
    vectors, with attestations against their last headers.
 
 One deadline: `Init`, `Begin` and `Finish` now declare a timestamp window that
 closes two weeks after the store's finalized header, so the committed
 checkpoints stop being usable on a sequencer at 2026-10-25 15:50 UTC
-(mainnet, slot 15,409,152), 2026-10-27 02:02 UTC (Hoodi) and 2026-10-27
+(mainnet, slot 15,409,152; the mainnet instance reached period 1884 before
+it, on 2026-10-17), 2026-10-27 02:02 UTC (Hoodi) and 2026-10-27
 09:44 UTC (Sepolia). After those, fresh checkpoints have to be fetched
 (`scripts/fetch-vectors.py` for Hoodi and Sepolia; it has no mainnet
 endpoints yet). The budget per instance, at a base fee of 8 and counting each
