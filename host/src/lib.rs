@@ -68,8 +68,26 @@ fn branch(j: &Value) -> Vec<[u8; 32]> {
     j.as_array().unwrap().iter().map(h).collect()
 }
 
+/// A `LightClientHeader` in either shape: Capella to Fulu (`execution`, the
+/// payload header) or Gloas (`execution_block_hash` only; see `LcHeader`).
 pub fn lc_header(j: &Value) -> LcHeader {
-    LcHeader { beacon: beacon(&j["beacon"]), execution: execution(&j["execution"]), execution_branch: branch(&j["execution_branch"]) }
+    let execution = match j.get("execution_block_hash") {
+        Some(bh) => ExecutionHeader { block_hash: h(bh), ..Default::default() },
+        None => execution(&j["execution"]),
+    };
+    LcHeader { beacon: beacon(&j["beacon"]), execution, execution_branch: branch(&j["execution_branch"]), execution_rlp: vec![] }
+}
+
+/// Attach the RLP block header a Gloas header's store roots come from
+/// (`execution-headers.json`, by block hash). Pre-Gloas headers are left as
+/// they are.
+pub fn with_rlp(mut hd: LcHeader, j: &Value, rlps: &Value) -> LcHeader {
+    if let Some(bh) = j.get("execution_block_hash").and_then(Value::as_str) {
+        if let Some(r) = rlps.get(bh).and_then(Value::as_str) {
+            hd.execution_rlp = hexv(r);
+        }
+    }
+    hd
 }
 
 pub fn committee(j: &Value) -> SyncCommittee {
@@ -77,10 +95,15 @@ pub fn committee(j: &Value) -> SyncCommittee {
 }
 
 pub fn update(d: &Value) -> Update {
+    update_with(d, &Value::Null)
+}
+
+/// An update whose finalized header carries its RLP execution header (Gloas).
+pub fn update_with(d: &Value, rlps: &Value) -> Update {
     Update {
         attested: lc_header(&d["attested_header"]),
         next_committee: d.get("next_sync_committee").map(|c| (committee(c), branch(&d["next_sync_committee_branch"]))),
-        finalized: lc_header(&d["finalized_header"]),
+        finalized: with_rlp(lc_header(&d["finalized_header"]), &d["finalized_header"], rlps),
         finality_branch: branch(&d["finality_branch"]),
         bits: h(&d["sync_aggregate"]["sync_committee_bits"]),
         signature: h(&d["sync_aggregate"]["sync_committee_signature"]),
@@ -88,9 +111,14 @@ pub fn update(d: &Value) -> Update {
     }
 }
 
-pub fn mainnet_config() -> ChainConfig {
-    let g = json("vectors/mainnet/genesis.json");
-    let f = json("vectors/mainnet/fork_schedule.json");
+/// A chain's configuration from the beacon-API `genesis.json` and
+/// `fork_schedule.json` in its vector directory. Unscheduled forks
+/// (`FAR_FUTURE_EPOCH`) are left out. The schedule lists forks in order,
+/// phase0 to Fulu then Gloas, so Gloas is its eighth entry.
+pub fn chain_config(dir: &str, chain_id: u64) -> ChainConfig {
+    let g = json(&format!("{dir}/genesis.json"));
+    let f = json(&format!("{dir}/fork_schedule.json"));
+    let gloas_epoch = f["data"].get(7).map(|x| n(&x["epoch"])).unwrap_or(u64::MAX);
     let forks = f["data"]
         .as_array()
         .unwrap()
@@ -98,12 +126,27 @@ pub fn mainnet_config() -> ChainConfig {
         .map(|x| (n(&x["epoch"]), h(&x["current_version"])))
         .filter(|(e, _)| *e != u64::MAX)
         .collect();
-    ChainConfig { chain_id: 1, genesis_validators_root: h(&g["data"]["genesis_validators_root"]), forks, min_participants: 342 }
+    ChainConfig {
+        chain_id,
+        genesis_validators_root: h(&g["data"]["genesis_validators_root"]),
+        forks,
+        min_participants: 342,
+        genesis_time: g["data"]["genesis_time"].as_str().unwrap().parse().unwrap(),
+        // Two weeks: the checkpoint age light clients accept on mainnet, well
+        // inside its computed weak-subjectivity period.
+        max_checkpoint_age: 14 * 24 * 3600,
+        gloas_epoch,
+    }
 }
 
-/// The real mainnet chain in `vectors/mainnet`: a bootstrap at the first
-/// slot of period 1881, the best update of periods 1881-1883, and a recent
-/// finality update in period 1884.
+pub fn mainnet_config() -> ChainConfig {
+    chain_config("vectors/mainnet", 1)
+}
+
+/// A real chain from a vector directory: a bootstrap at the first slot of a
+/// sync-committee period, the best update of that period and the next two,
+/// and a finality update in the period after (`scripts/fetch-vectors.py`).
+/// Mainnet: periods 1881-1884; Hoodi: 505-508; Sepolia: 1385-1388.
 pub struct Mainnet {
     pub cfg: ChainConfig,
     pub checkpoint: [u8; 32],
@@ -114,26 +157,71 @@ pub struct Mainnet {
     pub finality: Update,
 }
 
-pub fn mainnet() -> Mainnet {
-    let b = json("vectors/mainnet/bootstrap-15409152.json");
-    let root = std::fs::read_to_string(root_dir().join("vectors/mainnet/bootstrap-15409152.root")).unwrap();
-    let u = json("vectors/mainnet/updates-1881-1883.json");
-    let f = json("vectors/mainnet/finality_update.json");
+/// Any chain's vectors; the type kept its first name.
+pub type Vectors = Mainnet;
+
+/// The one file in `dir` named `<prefix>*<suffix>`.
+fn one(dir: &str, prefix: &str, suffix: &str) -> String {
+    let mut found: Vec<String> = std::fs::read_dir(root_dir().join(dir))
+        .unwrap()
+        .filter_map(|e| e.ok()?.file_name().into_string().ok())
+        .filter(|f| f.starts_with(prefix) && f.ends_with(suffix))
+        .collect();
+    assert_eq!(found.len(), 1, "exactly one {prefix}*{suffix} in {dir}");
+    format!("{dir}/{}", found.pop().unwrap())
+}
+
+/// Without a `finality_update.json` (a range of updates only, e.g. the Gloas
+/// fork crossing), the last update plays the finality update's part.
+pub fn load_chain(dir: &str, chain_id: u64) -> Vectors {
+    let boot = one(dir, "bootstrap-", ".json");
+    let b = json(&boot);
+    let root = std::fs::read_to_string(root_dir().join(boot.replace(".json", ".root"))).unwrap();
+    let rlps = if root_dir().join(dir).join("execution-headers.json").exists() { json(&format!("{dir}/execution-headers.json")) } else { Value::Null };
+    let u = json(&one(dir, "updates-", ".json"));
+    let mut updates: Vec<Update> = u.as_array().unwrap().iter().map(|x| update_with(&x["data"], &rlps)).collect();
+    let finality = if root_dir().join(dir).join("finality_update.json").exists() {
+        update_with(&json(&format!("{dir}/finality_update.json"))["data"], &rlps)
+    } else {
+        updates.pop().unwrap()
+    };
+    let bh = &b["data"]["header"];
     Mainnet {
-        cfg: mainnet_config(),
+        cfg: chain_config(dir, chain_id),
         checkpoint: hexv(root.trim()).try_into().unwrap(),
-        boot_header: lc_header(&b["data"]["header"]),
+        boot_header: with_rlp(lc_header(bh), bh, &rlps),
         boot_committee: committee(&b["data"]["current_sync_committee"]),
         boot_branch: branch(&b["data"]["current_sync_committee_branch"]),
-        updates: u.as_array().unwrap().iter().map(|x| update(&x["data"])).collect(),
-        finality: update(&f["data"]),
+        updates,
+        finality,
     }
+}
+
+pub fn mainnet() -> Mainnet {
+    load_chain("vectors/mainnet", 1)
+}
+
+/// Hoodi (chain 560048), fetched 2026-10-16: Fulu, the same light-client
+/// containers as mainnet.
+pub fn hoodi() -> Vectors {
+    load_chain("vectors/hoodi", 560048)
+}
+
+/// Sepolia (chain 11155111), fetched 2026-10-16: Gloas since epoch 353,024.
+pub fn sepolia() -> Vectors {
+    load_chain("vectors/sepolia", 11155111)
+}
+
+/// Sepolia across the Gloas fork: a Fulu checkpoint (period 1377), a Fulu
+/// update, then Gloas updates of periods 1379 and 1380.
+pub fn sepolia_gloas_fork() -> Vectors {
+    load_chain("vectors/sepolia-gloas-fork", 11155111)
 }
 
 /// The signing committee for each step of the real chain, and the store
 /// before it, obtained by running the native verifier forward.
 pub fn mainnet_steps(m: &Mainnet) -> Vec<(Store, Update, SyncCommittee)> {
-    let mut store = lc::bootstrap(&m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).expect("bootstrap");
+    let mut store = lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).expect("bootstrap");
     let mut current = m.boot_committee.clone();
     let mut next: Option<SyncCommittee> = None;
     let mut out = vec![];
@@ -142,7 +230,7 @@ pub fn mainnet_steps(m: &Mainnet) -> Vec<(Store, Update, SyncCommittee)> {
         let signer = if lc::period(u.signature_slot) == sp { current.clone() } else { next.clone().expect("next known") };
         let w = witness(&signer, &u.bits, AggMode::Subtract);
         let s2 = lc::apply_update(&m.cfg, &store, u, &signer, &w, lc::FAST, &mut |_| {})
-            .expect("a real mainnet update verifies");
+            .expect("a real update verifies");
         out.push((store.clone(), u.clone(), signer));
         if lc::period(s2.finalized.slot) == sp + 1 {
             current = next.take().unwrap();

@@ -74,7 +74,7 @@ fn a_fabricated_chain_is_refused() {
     // The next-committee branch hangs off the same state root: rebuild it too
     // would need a second preimage, so drop the handoff and keep the rest.
     u.next_committee = None;
-    assert!(lc::check_execution(&u.finalized).is_ok());
+    assert!(lc::check_execution(&m.cfg, &u.finalized).is_ok());
     assert_eq!(verdict(&m, &s, &u, &c).unwrap_err(), Error::BadSignature);
 }
 
@@ -150,10 +150,10 @@ fn the_checkpoint_must_match() {
     let m = mainnet();
     let mut root = m.checkpoint;
     root[0] ^= 1;
-    assert_eq!(lc::bootstrap(&root, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap_err(), Error::CheckpointMismatch);
+    assert_eq!(lc::bootstrap(&m.cfg, &root, &m.boot_header, &m.boot_committee, &m.boot_branch).unwrap_err(), Error::CheckpointMismatch);
     let mut c = m.boot_committee.clone();
     c.pubkeys.swap(0, 1);
-    assert_eq!(lc::bootstrap(&m.checkpoint, &m.boot_header, &c, &m.boot_branch).unwrap_err(), Error::BadCommitteeBranch);
+    assert_eq!(lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &c, &m.boot_branch).unwrap_err(), Error::BadCommitteeBranch);
 }
 
 #[test]
@@ -192,5 +192,20 @@ fn both_libraries_agree_on_every_real_update() {
             let f = sextant_core::bl::miller(p.pk.as_slice().try_into().unwrap(), p.hm.as_slice().try_into().unwrap(), p.sig.as_slice().try_into().unwrap()).unwrap();
             assert!(!sextant_core::bl::final_is_one(&f));
         }
+    }
+}
+
+#[test]
+fn a_store_older_than_the_weak_subjectivity_bound_is_refused() {
+    // F.10: every update is checked against the store's age on the chain's own
+    // clock (signature slot vs finalized slot), with the typed code E7206.
+    for i in 0..4 {
+        let (mut m, s, u, c) = step(i);
+        let gap = lc::slot_time(&m.cfg, u.signature_slot) - lc::slot_time(&m.cfg, s.finalized.slot);
+        assert!(gap <= m.cfg.max_checkpoint_age, "the real chain is fresh at step {i}");
+        m.cfg.max_checkpoint_age = gap;
+        assert!(verdict(&m, &s, &u, &c).is_ok());
+        m.cfg.max_checkpoint_age = gap - 1;
+        assert_eq!(verdict(&m, &s, &u, &c).unwrap_err(), Error::CheckpointStale);
     }
 }

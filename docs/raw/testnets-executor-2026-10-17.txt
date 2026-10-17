@@ -1,0 +1,13 @@
+# executor-tests/tests/testnets.rs: the committed sextant_lc (ImageID ad6fbedb…) through lee::V03State, gas cap 10000000
+hoodi/test/instance/000000000001: period 505 update, Begin/Miller/Finish gas [5949207, 4217768, 3768958]
+hoodi/test/instance/000000000001: period 506 update, Begin/Miller/Finish gas [5867478, 4217768, 3770278]
+hoodi/test/instance/000000000001: period 507 update, Begin/Miller/Finish gas [5900228, 4217768, 3770278]
+hoodi/test/instance/000000000001: period 508 update, Begin/Miller/Finish gas [4609690, 4217768, 3768451]
+sepolia/gloas/fork/instance/0001: period 1377 update, Begin/Miller/Finish gas [5827490, 4217768, 3768958]
+sepolia/gloas/fork/instance/0001: period 1378 update, Begin/Miller/Finish gas [5463462, 4217768, 3770278]
+sepolia/gloas/fork/instance/0001: period 1379 update, Begin/Miller/Finish gas [5472690, 4217768, 3770278]
+sepolia/gloas/fork/instance/0001: period 1380 update, Begin/Miller/Finish gas [5477454, 4217768, 3770278]
+sepolia/test/instance/0000000001: period 1385 update, Begin/Miller/Finish gas [5478912, 4217768, 3770380]
+sepolia/test/instance/0000000001: period 1386 update, Begin/Miller/Finish gas [5498751, 4217768, 3770278]
+sepolia/test/instance/0000000001: period 1387 update, Begin/Miller/Finish gas [5471263, 4217768, 3770278]
+sepolia/test/instance/0000000001: period 1388 update, Begin/Miller/Finish gas [3647314, 4217768, 3768451]

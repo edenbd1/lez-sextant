@@ -479,7 +479,7 @@ async fn main() -> Result<()> {
         Cmd::Balance => println!("{}", ctx.balance(ctx.payer()?).await?),
         Cmd::Ids => {
             let p = ctx.program()?;
-            let boot = lc::bootstrap(&ctx.m.checkpoint, &ctx.m.boot_header, &ctx.m.boot_committee, &ctx.m.boot_branch).map_err(|e| anyhow!("{e:?}"))?;
+            let boot = lc::bootstrap(&ctx.m.cfg, &ctx.m.checkpoint, &ctx.m.boot_header, &ctx.m.boot_committee, &ctx.m.boot_branch).map_err(|e| anyhow!("{e:?}"))?;
             let last = mainnet_steps(&ctx.m).len();
             let fin = ctx.next(last)?;
             println!(
@@ -581,7 +581,7 @@ async fn main() -> Result<()> {
         Cmd::Init => {
             let p = ctx.program()?;
             let m = &ctx.m;
-            let boot = lc::bootstrap(&m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).map_err(|e| anyhow!("{e:?}"))?;
+            let boot = lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).map_err(|e| anyhow!("{e:?}"))?;
             let ix = Instruction::Init {
                 instance_id: id,
                 checkpoint: m.checkpoint,
@@ -622,7 +622,7 @@ async fn main() -> Result<()> {
             let p = ctx.program()?;
             let m = &ctx.m;
             let slot = match at {
-                At::Checkpoint => lc::bootstrap(&m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).map_err(|e| anyhow!("{e:?}"))?.finalized.slot,
+                At::Checkpoint => lc::bootstrap(&m.cfg, &m.checkpoint, &m.boot_header, &m.boot_committee, &m.boot_branch).map_err(|e| anyhow!("{e:?}"))?.finalized.slot,
                 At::Final => ctx.next(mainnet_steps(m).len())?.finalized.slot,
             } + slot_offset;
             let (proof, predicate) = match kind {

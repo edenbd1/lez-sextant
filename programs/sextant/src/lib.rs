@@ -208,8 +208,11 @@ pub fn plan(input: &PlanInput, ix: Instruction) -> Plan {
         Instruction::Init { instance_id, checkpoint, cfg, header, committee, branch } => {
             let [inst, hdr] = rows::<2>(input);
             expect_own(&inst, &me, instance_account(&me, &instance_id), "the first row is the instance PDA");
-            let store = lc::bootstrap(&checkpoint, &header, &committee, &branch).unwrap_or_else(|e| refuse_with(e));
+            let store = lc::bootstrap(&cfg, &checkpoint, &header, &committee, &branch).unwrap_or_else(|e| refuse_with(e));
             refuse_unless(cfg.min_participants as usize * 3 >= 512 * 2 && cfg.min_participants <= 512, E_BASE + Error::Malformed as u32, "the participation floor must be at least two thirds of 512");
+            refuse_unless(cfg.max_checkpoint_age > 0, E_BASE + Error::Malformed as u32, "the weak-subjectivity bound must be positive");
+            // A checkpoint already older than the bound is refused by the sequencer's clock.
+            plan.timestamp_window(..lc::stale_from_ms(&cfg, store.finalized.slot));
             let r = record(&cfg, &store);
             expect_own(&hdr, &me, header_account(&me, &instance_id, r.slot), "the second row is the checkpoint's header PDA");
             plan.effect(&inst, &Effect::Create(Instance { checkpoint, cfg, store }));
@@ -222,6 +225,7 @@ pub fn plan(input: &PlanInput, ix: Instruction) -> Plan {
             expect_own(&job, &me, job_account(&me, &instance_id, &id), "the second row is this update's job PDA");
             let p: Prepared = lc::prepare(&current.cfg, &current.store, &update, &committee, &witness, lc::FAST, &mut |_| {}).unwrap_or_else(|e| refuse_with(e));
             let next = Instance { store: p.next, ..current.clone() };
+            plan.timestamp_window(..lc::stale_from_ms(&current.cfg, current.store.finalized.slot));
             plan.effect(&inst, &Effect::Expect(digest(&current)));
             plan.effect(&job, &Effect::Open(Job { prev: digest(&current), next: digest(&next), pk: p.pk, hm: p.hm, sig: p.sig, f: None }));
             plan.event(event("JobStep", &JobStep { instance_id, job_id: id, step: 1 }));
@@ -237,6 +241,7 @@ pub fn plan(input: &PlanInput, ix: Instruction) -> Plan {
             expect_own(&inst, &me, instance_account(&me, &instance_id), "the first row is the instance PDA");
             expect_own(&job, &me, job_account(&me, &instance_id, &job_id), "the second row is the job PDA");
             let next = Instance { store: next, ..current.clone() };
+            plan.timestamp_window(..lc::stale_from_ms(&current.cfg, current.store.finalized.slot));
             let r = record(&next.cfg, &next.store);
             expect_own(&hdr, &me, header_account(&me, &instance_id, r.slot), "the third row is the new header's PDA");
             plan.effect(&job, &Effect::Close { prev: digest(&current), next: digest(&next) });

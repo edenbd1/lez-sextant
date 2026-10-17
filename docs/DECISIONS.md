@@ -133,6 +133,29 @@ signature fail) and removes the need to re-initialise for a scheduled fork; a
 container-changing fork still requires a new program version, released before
 activation, with the consumer migration documented (Verification Security #3).
 
+**Update (branch `v2`, 2026-10-16).** Gloas is no longer
+ahead of us. Sepolia moved to it at epoch 353,024 (2026-10-06), and Hoodi
+follows at epoch 132,352 (2026-10-26). Both RFP-eligible testnets will
+therefore be Gloas before LEZ testnet 0.4. The program now knows both shapes:
+
+- `ChainConfig.gloas_epoch` is fixed at `Init` like the rest of the
+  configuration, and is `u64::MAX` where Gloas is unscheduled (mainnet).
+- The Electra or Gloas generalized indices are chosen by the slot of the
+  header they apply to: finality 169 or 735, committees 86/87 or 2945/2946,
+  execution 25 or 2856.
+- A Gloas light-client header proves only `execution_block_hash`. The
+  submitter adds the RLP execution header, and the program keeps
+  `stateRoot`, `receiptsRoot` and `number` only if the header's keccak is
+  that proven hash (`mpt::execution_header_roots`). This adds about 670 bytes
+  per update.
+- `Store`, `HeaderRecord`, `Attest` and the consumer path are unchanged.
+- One instance crosses the fork: `vectors/sepolia-gloas-fork` runs from a
+  Fulu checkpoint through Gloas updates.
+
+The wire format changes (`LcHeader.execution_rlp`, `ChainConfig.gloas_epoch`,
+and 8 more bytes in the instance account), so the program binary must be
+rebuilt and redeployed.
+
 ## D8. Reuse, assessed
 
 **Kept from upstream, unchanged:** the light-client algorithm of the
@@ -144,3 +167,46 @@ their types bring an Ethereum client's dependency tree into a LEZ program; the
 logic we need from them is the spec's, about 360 lines in `core/src/lc.rs` and
 `core/src/ssz.rs`, tested against real mainnet data. The audit surface is therefore: our light-client and inclusion code,
 the program shell, and the accelerated layer of the blst fork.
+
+## D9. Weak-subjectivity staleness (E7206): a new program version, not deployed
+
+**Context.** F.10: an instance whose finalized header is older than the
+weak-subjectivity period must stop advancing, and a checkpoint that old must
+not initialise one. The deployed sextant_lc (ImageID `fa229edd…`) defines
+`E7206` but never emits it. The check reads the instance's configuration and
+runs in the light client's own `Init`, `Begin` and `Finish`, so it cannot be
+added around the deployed program: anyone can call those instructions
+directly. It is guest code and changes the ImageID.
+
+**Chosen (branch `v2`, milestone M1).** Two fields in `ChainConfig`, fixed at
+`Init`: `genesis_time` and `max_checkpoint_age` (seconds; two weeks for the
+mainnet vectors). Two checks:
+
+1. **Against the chain itself, typed.** `lc::prepare` refuses an update signed
+   more than `max_checkpoint_age` after the store's finalized header with
+   `E7206` (`lc::check_fresh`), before any job is opened.
+2. **Against LEZ time.** v0.3 gives a plan no clock, but a plan can declare a
+   timestamp validity window. `Init`, `Begin` and `Finish` declare
+   `..(genesis_time + 12 · finalized_slot + max_checkpoint_age) · 1000` ms, so
+   the sequencer refuses them once that time has passed
+   ("outside of the validity window").
+
+`Attest` declares no window: header records stay valid after the instance goes
+stale (R.3). Tests: `a_store_past_the_weak_subjectivity_bound_refuses_updates_with_e7206`,
+`the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable`
+(executor) and `a_store_older_than_the_weak_subjectivity_bound_is_refused`
+(host). Cost: about 1,000 cycles per transaction (`Begin` 5,473,903 against
+5,473,086 with this check alone). The `v2` binary, with this check and the
+Gloas shapes of D7 (Docker, `r0.1.91.1`), has ImageID
+`ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928`: `Begin`
+of update 1 costs 5,474,785 gas
+([`raw/measure-lez-2026-10-17-v2.txt`](raw/measure-lez-2026-10-17-v2.txt)).
+It is deployed on the public testnet as a new program,
+`Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`, where `Begin` of update 1 was
+charged exactly that; the first instance keeps running `fa229edd…`
+([`ONCHAIN.md`](ONCHAIN.md#the-v2-testnet-run)).
+
+The bound also applies to a mismatched store: a mainnet update offered to a
+Hoodi or Sepolia instance is refused with `E7206` first (its signature slot,
+on that chain's clock, lies years after the store), and with the bound lifted
+it is still refused (`HandoffNotVerified`).

@@ -1,0 +1,13 @@
+fetched 2026-10-16T20:31:04Z by scripts/fetch-vectors.py sepolia vectors/sepolia-gloas-fork --range 1377 4
+checkpoint period 1377, updates 1377-1380, execution headers 4
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/config/fork_schedule
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/headers/11280384
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/bootstrap/0x19fceb2dbeec7739c48f2b1d1ad5961a1a98f9054cd1e9d9ad5ec7af15beb00b
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/updates?start_period=1377&count=4
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/light_client/updates?start_period=1377&count=4
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x0a216d96ea5d1f8e4c4e7e309d9a2a032be6a1235548c9e18f18237d0519ee53", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x1167b753ff33ef0b0cda09f8e5119e2677b6004f5083204d42c93a92abb79541", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x9a8acc058dffdb10c5a143b937608aff8eb8d61ae94771a95b319529dbe7543d", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0xc3bc0fef2deac61b84bfe5d3c92bc771c2fc4d6843ee70fdf0c4339594c75af5", false]

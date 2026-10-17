@@ -1,0 +1,27 @@
+fetched 2026-10-16T20:25:49Z by scripts/fetch-vectors.py sepolia
+checkpoint period 1385, updates 1385-1387, finality update period 1388, execution block 11929520
+receipt proofs for tx [2, 15]
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/config/fork_schedule
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/finality_update
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/light_client/finality_update
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/headers/11345920
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/bootstrap/0x13456d9d44feb688c58330efa9722c39063c80e63fcb0b2c2221d23c9fc63f36
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/updates?start_period=1385&count=3
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/light_client/updates?start_period=1385&count=3
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0xb6693ed8d947a44b6e11b9705d43ad5262e77c988f747d892685ff9d0f495fe1", false]
+RPC  https://sepolia.gateway.tenderly.co eth_getProof ["0x0000F90827F1C53a10cb7A02335B175320002935", ["0x0000000000000000000000000000000000000000000000000000000000000d5f"], {"blockHash": "0xb6693ed8d947a44b6e11b9705d43ad5262e77c988f747d892685ff9d0f495fe1"}]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getLogs [{"address": "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", "fromBlock": "0xb605bc", "toBlock": "0xb607b0", "topics": ["0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c"]}]
+RPC  https://sepolia.gateway.tenderly.co eth_getProof ["0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14", ["0x6ea7045a9645a11613005e487a3168c4c9e80d862f3dc2bfdf87d9e7b91e6cd7"], {"blockHash": "0xb6693ed8d947a44b6e11b9705d43ad5262e77c988f747d892685ff9d0f495fe1"}]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockReceipts ["0xb607b0"]
+fetched 2026-10-16T20:31:01Z by scripts/fetch-vectors.py sepolia vectors/sepolia --headers
+execution headers: 8
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x10d73c75f344a3c0235ffac356f8588923fd26dc7bc5b56140811743c4350d6d", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x10ec625ef8023d0248d4e66e04eeefba74b1eb8166b3645f55fd2f6a9d2b4057", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x1c4de1be7bc015b7895e7adaddc3228c0af4ee75e7210034b52c72e500a516db", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x1eb79b773afb1ace94e400054b4f36680cc6f1e2f3195a5a76fda1bae862d1f9", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x2d3c597698548c84929809ff9d782c060a2d7bd8958143596cb4161c066333a2", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0xb082000bbd0c86dc39ad3fac8d4f5ef5fc184467d3297273e6545f1e76a6ae5a", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0xb6693ed8d947a44b6e11b9705d43ad5262e77c988f747d892685ff9d0f495fe1", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0xe7de2735d38bd30641c38e9bd02d51c8349e7e7c0e993b532e8d2b624d976332", false]
