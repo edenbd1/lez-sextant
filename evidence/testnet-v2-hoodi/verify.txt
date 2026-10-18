@@ -4,7 +4,10 @@ sextant_lc against https://testnet.lez.logos.co, from evidence/testnet-v2-hoodi/
   ok   attest-checkpoint-log: applied, 8835df9a7f7f21a3… in block 32545, charged 78786 gas = the pre-checked gas, below its limit 89573
   ok   attest-checkpoint-as-mainnet: refused (E7209), 0ea1b78839c5aeb9… in block 32560, charged its whole limit 100290
   ok   attest-checkpoint-predicate-false: refused (E7208), aacdf2476bd0fbb6… in block 32561, charged its whole limit 100290
-  ok   final state of 7LxJDWx4ycNi…: 415 bytes as the run left them
+  ok   u1-begin: applied, 3e955f222ba3faef… in block 36135, charged 5949207 gas = the pre-checked gas, below its limit 6018699
+  ok   u1-miller: applied, c88df82be0716f44… in block 36137, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, 35c74651e1748607… in block 36138, charged 3768958 gas = the pre-checked gas, below its limit 3816647
+  ok   final state of 7LxJDWx4ycNi…: 447 bytes as the run left them
   ok   final state of EUhe1JgbV5HJ…: 120 bytes as the run left them
-  ok   control: a random hash (631c11c290c7…) does not resolve
-8 checks pass, 0 fail (2 applied and 2 refused transactions in the manifest)
+  ok   control: a random hash (7c60fd3b74ba…) does not resolve
+11 checks pass, 0 fail (5 applied and 2 refused transactions in the manifest)

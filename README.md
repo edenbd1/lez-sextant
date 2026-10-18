@@ -88,18 +88,24 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
   transactions, 17 applied and 6 refused, each charged its pre-checked gas or
   its whole limit. Verifier 36 checks, 0 fail; mutation test 7 of 7.
   [`evidence/testnet-v2/run.tsv`](evidence/testnet-v2/run.tsv).
-- **Public LEZ testnet**, the same program, a **Sepolia** instance (Gloas):
-  `Init` from the period-1385 checkpoint, a log attested against its header
-  (execution block 11,905,253), the same query refused as a mainnet statement
-  (`E7209`) and a false predicate (`E7208`), then update 1 (`Begin`,
-  `Miller`, `Finish`: a Gloas sync-committee signature verified on chain, the
-  handoff to the period-1386 committee); 7 transactions, 5 applied and 2
-  refused. Verifier 11 checks, 0 fail; mutation test 6 of 6.
+- **Public LEZ testnet**, the same program, a **Sepolia** instance (Gloas),
+  the full committed vector chain: `Init` from the period-1385 checkpoint, a
+  log attested against its header (execution block 11,905,253), the same
+  query refused as a mainnet statement (`E7209`) and a false predicate
+  (`E7208`), updates 1 to 4 (`Begin`, `Miller`, `Finish` each: Gloas
+  sync-committee signatures verified on chain, handoffs to the period-1386 to
+  1388 committees) to period 1388, slot 11,370,656, the finalized execution
+  block 11,929,520, then a `Transfer` log and a WETH balance slot attested
+  against that last header and the log refused as a mainnet statement
+  (`E7209`); 19 transactions, 16 applied and 3 refused. Verifier 24 checks, 0
+  fail; mutation test 6 of 6.
   [`evidence/testnet-v2-sepolia/run.tsv`](evidence/testnet-v2-sepolia/run.tsv).
 - **Public LEZ testnet**, the same program, a **Hoodi** instance: `Init` from
   the period-505 checkpoint, a log attested against its header (execution
-  block 3,805,646), the same two refusals; 4 transactions, 2 applied and 2
-  refused. Verifier 8 checks, 0 fail; mutation test 6 of 6.
+  block 3,805,646), the same two refusals, then update 1 (slot 4,142,752,
+  execution block 3,810,766, the period-506 committee recorded); 7
+  transactions, 5 applied and 2 refused. Verifier 11 checks, 0 fail; mutation
+  test 6 of 6. Updates 2 to 4 are not sent yet.
   [`evidence/testnet-v2-hoodi/run.tsv`](evidence/testnet-v2-hoodi/run.tsv).
 - **Public LEZ testnet** (v0.3.1), the earlier binary: program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, its reproducible binary
@@ -124,11 +130,12 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-the Sepolia and Hoodi instances on chain stop at update 1 and at `Init`
-(an update costs about 108M of the testnet token), and the Sepolia instance
-that crosses the Gloas fork runs only on a local sequencer; no transaction proofs
-(native ether sender), no historical headers; end-to-end runs against a
-sequencer are not in CI. These are the
+the Hoodi instance on chain stops at update 1 (updates 2 to 4 and the
+attestations under its last header, about 330M of the testnet token, must
+land before its checkpoint's window closes on 2026-10-27 02:02 UTC), and the
+Sepolia instance that crosses the Gloas fork runs only on a local sequencer;
+no transaction proofs (native ether sender), no historical headers;
+end-to-end runs against a sequencer are not in CI. These are the
 milestones of the proposal.
 
 MIT OR Apache-2.0.

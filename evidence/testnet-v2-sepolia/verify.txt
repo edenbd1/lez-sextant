@@ -7,7 +7,20 @@ sextant_lc against https://testnet.lez.logos.co, from evidence/testnet-v2-sepoli
   ok   u1-begin: applied, ebae8189ff52fb26… in block 32511, charged 5478912 gas = the pre-checked gas, below its limit 5543701
   ok   u1-miller: applied, f6f7bee409648397… in block 32514, charged 4217768 gas = the pre-checked gas, below its limit 4269945
   ok   u1-finish: applied, 6d44d1a9a4feb14a… in block 32518, charged 3770380 gas = the pre-checked gas, below its limit 3818083
-  ok   final state of Pi3R6DjZpELF…: 447 bytes as the run left them
+  ok   u2-begin: applied, 0280bf7d72deb909… in block 35619, charged 5498751 gas = the pre-checked gas, below its limit 5563738
+  ok   u2-miller: applied, b1750386fd4ef8c6… in block 35939, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, 6840f694c7c979fe… in block 35942, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u3-begin: applied, 0953f3dd1395df45… in block 36114, charged 5471263 gas = the pre-checked gas, below its limit 5535975
+  ok   u3-miller: applied, 8b2a77d41bed87f1… in block 36117, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, af21803eb8d2d0aa… in block 36118, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u4-begin: applied, d83bf0ab886a1f10… in block 36119, charged 3647314 gas = the pre-checked gas, below its limit 3693787
+  ok   u4-miller: applied, c0bc7cd0febc9034… in block 36120, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u4-finish: applied, c72f9411a93c70f2… in block 36121, charged 3768451 gas = the pre-checked gas, below its limit 3816135
+  ok   attest-final-log: applied, 40f389ffdd61b221… in block 36122, charged 90919 gas = the pre-checked gas, below its limit 101828
+  ok   attest-final-storage: applied, d22a175ece92fcba… in block 36123, charged 280143 gas = the pre-checked gas, below its limit 292944
+  ok   attest-final-as-mainnet: refused (E7209), ba26cf3df674b717… in block 36124, charged its whole limit 100290
+  ok   final state of Pi3R6DjZpELF…: 415 bytes as the run left them
   ok   final state of HDoq6X7AyDu5…: 120 bytes as the run left them
-  ok   control: a random hash (f335c229eea3…) does not resolve
-11 checks pass, 0 fail (5 applied and 2 refused transactions in the manifest)
+  ok   final state of DgRrh4mxmK8A…: 120 bytes as the run left them
+  ok   control: a random hash (f765682aa351…) does not resolve
+24 checks pass, 0 fail (16 applied and 3 refused transactions in the manifest)

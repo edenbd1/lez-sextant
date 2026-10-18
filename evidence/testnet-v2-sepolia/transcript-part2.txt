@@ -1,0 +1,34 @@
+# resumed (chain) against https://testnet.lez.logos.co, 2026-10-18T07:00:31Z, ad6fbedb983da6b6d75b287da354ce3041905d152d4e576ec318871eddfaa928
+== 3. updates 2 3 4: Begin, Miller, Finish
+{"attempts":["0280bf7d72deb909282f94e21cd8fc5f0cebf6ca0c5a1b1538e103aac03f8a50"],"block":35619,"block_gas_exec":5498751,"block_gas_stor":53393,"fee_reserve":"44937048","gas_limit":5563738,"label":"u2-begin","op":"begin","payer_balance_after":"447398572","payer_balance_before":"491815724","precheck":{"gas":5498751},"state_changed":true,"tx":"0280bf7d72deb909282f94e21cd8fc5f0cebf6ca0c5a1b1538e103aac03f8a50","tx_bytes":53393,"verdict":"applied"}
+  ok  u2-begin: applied (gas=5498751)
+{"attempts":["b1750386fd4ef8c6ba83e0cc1645c91a5f40627dccb90eba5796d2f3b2420e01"],"block":35939,"block_gas_exec":4217768,"block_gas_stor":355,"fee_reserve":"34162400","gas_limit":4269945,"label":"u2-miller","op":"miller","payer_balance_after":"413653588","payer_balance_before":"447398572","precheck":{"gas":4217768},"state_changed":true,"tx":"b1750386fd4ef8c6ba83e0cc1645c91a5f40627dccb90eba5796d2f3b2420e01","tx_bytes":355,"verdict":"applied"}
+  ok  u2-miller: applied (gas=4217768)
+{"attempts":["6840f694c7c979fe6d3a7baab563eaae7285d20fd16dc89654e81a073555de19"],"block":35942,"block_gas_exec":3770278,"block_gas_stor":1179,"fee_reserve":"30553272","gas_limit":3817980,"label":"u2-finish","op":"finish","payer_balance_after":"383481932","payer_balance_before":"413653588","precheck":{"gas":3770278},"state_changed":true,"tx":"6840f694c7c979fe6d3a7baab563eaae7285d20fd16dc89654e81a073555de19","tx_bytes":1179,"verdict":"applied"}
+  ok  u2-finish: applied (gas=3770278)
+  ok  after update 2: next committee recorded: yes
+{"attempts":["0953f3dd1395df45e29160cb99804a5aff1ac32bdf1d5b4d8867e5ca50f8c967"],"block":36114,"block_gas_exec":5471263,"block_gas_stor":53285,"fee_reserve":"44714080","gas_limit":5535975,"label":"u3-begin","op":"begin","payer_balance_after":"339285548","payer_balance_before":"383481932","precheck":{"gas":5471263},"state_changed":true,"tx":"0953f3dd1395df45e29160cb99804a5aff1ac32bdf1d5b4d8867e5ca50f8c967","tx_bytes":53285,"verdict":"applied"}
+  ok  u3-begin: applied (gas=5471263)
+{"attempts":["8b2a77d41bed87f1a882a11cd0a4150aa6083a718e1e5453e04a08f1cc15805c"],"block":36117,"block_gas_exec":4217768,"block_gas_stor":355,"fee_reserve":"34162400","gas_limit":4269945,"label":"u3-miller","op":"miller","payer_balance_after":"305540564","payer_balance_before":"339285548","precheck":{"gas":4217768},"state_changed":true,"tx":"8b2a77d41bed87f1a882a11cd0a4150aa6083a718e1e5453e04a08f1cc15805c","tx_bytes":355,"verdict":"applied"}
+  ok  u3-miller: applied (gas=4217768)
+{"attempts":["af21803eb8d2d0aab15cd56a0a9f617cd602f0c113b9510fa0fbec363b0471fc"],"block":36118,"block_gas_exec":3770278,"block_gas_stor":1179,"fee_reserve":"30553272","gas_limit":3817980,"label":"u3-finish","op":"finish","payer_balance_after":"275368908","payer_balance_before":"305540564","precheck":{"gas":3770278},"state_changed":true,"tx":"af21803eb8d2d0aab15cd56a0a9f617cd602f0c113b9510fa0fbec363b0471fc","tx_bytes":1179,"verdict":"applied"}
+  ok  u3-finish: applied (gas=3770278)
+  ok  after update 3: next committee recorded: yes
+{"attempts":["d83bf0ab886a1f1075417edda439dfc6475efb490e46fef913fef5923d71a657"],"block":36119,"block_gas_exec":3647314,"block_gas_stor":28393,"fee_reserve":"29777440","gas_limit":3693787,"label":"u4-begin","op":"begin","payer_balance_after":"245963252","payer_balance_before":"275368908","precheck":{"gas":3647314},"state_changed":true,"tx":"d83bf0ab886a1f1075417edda439dfc6475efb490e46fef913fef5923d71a657","tx_bytes":28393,"verdict":"applied"}
+  ok  u4-begin: applied (gas=3647314)
+{"attempts":["c0bc7cd0febc9034bb2f3fc6ff73e8338d633d9edf6dea4a9854d6a9664290cd"],"block":36120,"block_gas_exec":4217768,"block_gas_stor":355,"fee_reserve":"34162400","gas_limit":4269945,"label":"u4-miller","op":"miller","payer_balance_after":"212218268","payer_balance_before":"245963252","precheck":{"gas":4217768},"state_changed":true,"tx":"c0bc7cd0febc9034bb2f3fc6ff73e8338d633d9edf6dea4a9854d6a9664290cd","tx_bytes":355,"verdict":"applied"}
+  ok  u4-miller: applied (gas=4217768)
+{"attempts":["c72f9411a93c70f265c753f3f1012624df8c9d34eb0a673dda90524c68d138f8"],"block":36121,"block_gas_exec":3768451,"block_gas_stor":1147,"fee_reserve":"30538256","gas_limit":3816135,"label":"u4-finish","op":"finish","payer_balance_after":"182061484","payer_balance_before":"212218268","precheck":{"gas":3768451},"state_changed":true,"tx":"c72f9411a93c70f265c753f3f1012624df8c9d34eb0a673dda90524c68d138f8","tx_bytes":1147,"verdict":"applied"}
+  ok  u4-finish: applied (gas=3768451)
+== 4. the consumer check against the last header (slot 11370656)
+{"attempts":["40f389ffdd61b2213f1137eed6976ba77a51a7efb6d8b4019219b59c2ad50671"],"block":36122,"block_gas_exec":90919,"block_gas_stor":1649,"fee_reserve":"827816","gas_limit":101828,"label":"attest-final-log","op":"attest","payer_balance_after":"181320940","payer_balance_before":"182061484","precheck":{"gas":90919},"state_changed":false,"tx":"40f389ffdd61b2213f1137eed6976ba77a51a7efb6d8b4019219b59c2ad50671","tx_bytes":1649,"verdict":"applied"}
+  ok  attest-final-log: applied (gas=90919)
+{"attempts":["d22a175ece92fcbab56a68292eb837b89427b77e6683f294f36ce39ce204829f"],"block":36123,"block_gas_exec":280143,"block_gas_stor":6350,"fee_reserve":"2394352","gas_limit":292944,"label":"attest-final-storage","op":"attest","payer_balance_after":"179028996","payer_balance_before":"181320940","precheck":{"gas":280143},"state_changed":false,"tx":"d22a175ece92fcbab56a68292eb837b89427b77e6683f294f36ce39ce204829f","tx_bytes":6350,"verdict":"applied"}
+  ok  attest-final-storage: applied (gas=280143)
+{"attempts":["ba26cf3df674b7173e9f39bd8d2b1c9801efa43730ff4c87ce95fd7445b787cb"],"block":36124,"block_gas_exec":100290,"block_gas_stor":1649,"fee_reserve":"815512","gas_limit":100290,"label":"attest-final-as-mainnet","op":"attest","payer_balance_after":"178213484","payer_balance_before":"179028996","precheck":{"refused":"E7209: chain-ID mismatch: the record belongs to another chain's instance"},"state_changed":false,"tx":"ba26cf3df674b7173e9f39bd8d2b1c9801efa43730ff4c87ce95fd7445b787cb","tx_bytes":1649,"verdict":"reverted"}
+  ok  attest-final-as-mainnet: refused (E7209), included and charged its whole limit, nothing changed
+== final state: the instance and the header records, as the run left them
+# final Pi3R6DjZpELFNYJk453aVDtwquGzxcjK8AYPkcA74Sx 415 11f4b3dca4e5552eb097240f663677ae9c0340ef744c3d9f5b2379f436f1b134
+# final HDoq6X7AyDu5zFXJwSqNQzEqN6YYdwvxgQYkA2BkpjFK 120 bfba0b7a09ff891cdc6fb5cca3129b62ab69acbab7248e980047ce8eb0444b7c
+# final DgRrh4mxmK8A5rS753Twb8Srd6r9na6V8dqdQYqF2UdK 120 351c9d19017a31aabc768d253dd6f02aa69e9983cf28efd1f0814230bb61d323
+== PASS: 19 transactions in evidence/testnet-v2-sepolia/run.tsv
