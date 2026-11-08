@@ -38,7 +38,7 @@ use sequencer_service_rpc::{RpcClient as _, SequencerClient, SequencerClientBuil
 use sextant_core::lc::{self, AggMode};
 use sextant_core::statement::{Cmp, Field, Predicate, Proof, Query};
 use sextant_core::{ChainConfig, Store, SyncCommittee, Update};
-use sextant_host::{hoodi, mainnet, mainnet_steps, receipt_proof_from, sepolia, sepolia_gloas_fork, weth_proof_from, witness, Mainnet};
+use sextant_host::{hoodi, mainnet, mainnet_steps, receipt_proof_from, sepolia, sepolia_gloas_fork, sepolia_portage, weth_proof_from, witness, Mainnet};
 use sextant_program::{header_account, instance_account, job_account, job_id, Instance, Instruction};
 use sha2::{Digest as _, Sha256};
 use wallet::{program_facades::program_loader::ProgramLoader, WalletCore};
@@ -106,6 +106,9 @@ enum Chain {
     Sepolia,
     /// vectors/sepolia-gloas-fork: a Fulu checkpoint (period 1377) across the Gloas fork.
     SepoliaGloasFork,
+    /// vectors/sepolia-portage: a Sepolia checkpoint finalized after a Portage
+    /// (RFP-022) vault deposit, the header its claims are attested against.
+    SepoliaPortage,
 }
 
 impl Chain {
@@ -115,6 +118,7 @@ impl Chain {
             Chain::Hoodi => "vectors/hoodi",
             Chain::Sepolia => "vectors/sepolia",
             Chain::SepoliaGloasFork => "vectors/sepolia-gloas-fork",
+            Chain::SepoliaPortage => "vectors/sepolia-portage",
         }
     }
     fn vectors(self) -> Mainnet {
@@ -123,6 +127,7 @@ impl Chain {
             Chain::Hoodi => hoodi(),
             Chain::Sepolia => sepolia(),
             Chain::SepoliaGloasFork => sepolia_gloas_fork(),
+            Chain::SepoliaPortage => sepolia_portage(),
         }
     }
 }
@@ -559,8 +564,12 @@ async fn main() -> Result<()> {
         Cmd::Ids => {
             let p = ctx.program()?;
             let boot = lc::bootstrap(&ctx.m.cfg, &ctx.m.checkpoint, &ctx.m.boot_header, &ctx.m.boot_committee, &ctx.m.boot_branch).map_err(|e| anyhow!("{e:?}"))?;
-            let last = mainnet_steps(&ctx.m).len();
-            let fin = ctx.next(last)?;
+            // A checkpoint-only chain (sepolia-portage) has no update to apply: its last header is the checkpoint's.
+            let fin = if ctx.m.updates.is_empty() && ctx.m.finality.finalized.beacon.slot == boot.finalized.slot {
+                boot.clone()
+            } else {
+                ctx.next(mainnet_steps(&ctx.m).len())?
+            };
             println!(
                 "{}",
                 serde_json::json!({

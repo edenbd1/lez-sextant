@@ -107,6 +107,12 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
   transactions, 5 applied and 2 refused. Verifier 11 checks, 0 fail; mutation
   test 6 of 6. Updates 2 to 4 are not sent yet.
   [`evidence/testnet-v2-hoodi/run.tsv`](evidence/testnet-v2-hoodi/run.tsv).
+- **Public LEZ testnet**, the same program, a **Sepolia instance for a bridge
+  deposit** (2026-11-08): `Init` from a checkpoint finalized after two deposits
+  into a Portage vault (slot 11,536,448, execution block 12,092,950), a log
+  attested, the mainnet statement refused (`E7209`); the bridge's two claims
+  were attested against its header record. Verifier 8 checks, 0 fail.
+  [`docs/ONCHAIN.md`](docs/ONCHAIN.md#a-sepolia-checkpoint-for-a-bridge-deposit-2026-11-08).
 - **Public LEZ testnet** (v0.3.1), the earlier binary: program header
   `A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`, its reproducible binary
   (ImageID `fa229edd…`, before `E7206` and Gloas).

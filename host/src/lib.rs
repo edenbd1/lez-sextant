@@ -178,7 +178,9 @@ pub fn load_chain(dir: &str, chain_id: u64) -> Vectors {
     let b = json(&boot);
     let root = std::fs::read_to_string(root_dir().join(boot.replace(".json", ".root"))).unwrap();
     let rlps = if root_dir().join(dir).join("execution-headers.json").exists() { json(&format!("{dir}/execution-headers.json")) } else { Value::Null };
-    let u = json(&one(dir, "updates-", ".json"));
+    // A checkpoint-only directory (vectors/sepolia-portage) holds no updates.
+    let has_updates = std::fs::read_dir(root_dir().join(dir)).unwrap().filter_map(|e| e.ok()?.file_name().into_string().ok()).any(|f| f.starts_with("updates-"));
+    let u = if has_updates { json(&one(dir, "updates-", ".json")) } else { Value::Array(vec![]) };
     let mut updates: Vec<Update> = u.as_array().unwrap().iter().map(|x| update_with(&x["data"], &rlps)).collect();
     let finality = if root_dir().join(dir).join("finality_update.json").exists() {
         update_with(&json(&format!("{dir}/finality_update.json"))["data"], &rlps)
@@ -216,6 +218,14 @@ pub fn sepolia() -> Vectors {
 /// update, then Gloas updates of periods 1379 and 1380.
 pub fn sepolia_gloas_fork() -> Vectors {
     load_chain("vectors/sepolia-gloas-fork", 11155111)
+}
+
+/// Sepolia from a checkpoint finalized after a deposit into a Portage
+/// (RFP-022) vault: `scripts/fetch-vectors.py sepolia vectors/sepolia-portage
+/// --finalized-after <block>`. A checkpoint only: its finality update is the
+/// one whose finalized header the bootstrap is, and there are no updates.
+pub fn sepolia_portage() -> Vectors {
+    load_chain("vectors/sepolia-portage", 11155111)
 }
 
 /// The signing committee for each step of the real chain, and the store

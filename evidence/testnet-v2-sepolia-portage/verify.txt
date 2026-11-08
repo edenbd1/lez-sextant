@@ -1,0 +1,10 @@
+sextant_lc against https://testnet.lez.logos.co, from evidence/testnet-v2-sepolia-portage/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, a229935353b74089… in block 79184, charged 1834893 gas = the pre-checked gas, below its limit 1863241
+  ok   attest-checkpoint-log: applied, 7cbd9d7bdc7c2ff8… in block 79185, charged 95791 gas = the pre-checked gas, below its limit 106748
+  ok   attest-checkpoint-as-mainnet: refused (E7209), 76a47309ba9625e0… in block 79186, charged its whole limit 100290
+  ok   final state of 8if4JHY17qPN…: 415 bytes as the run left them
+  ok   final state of 9Vs169NnZZP6…: 120 bytes as the run left them
+  ok   final state of 9Vs169NnZZP6…: 120 bytes as the run left them
+  ok   control: a random hash (27baebd83abd…) does not resolve
+8 checks pass, 0 fail (2 applied and 1 refused transactions in the manifest)

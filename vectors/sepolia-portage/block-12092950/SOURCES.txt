@@ -1,0 +1,16 @@
+fetched 2026-11-08T21:02:53Z by scripts/fetch-vectors.py sepolia vectors/sepolia-portage --finalized-after 12092950
+checkpoint execution block 12092950 (0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23), receipt proof for tx 0, getproof-history.json
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/genesis
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/config/fork_schedule
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/finality_update
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/light_client/finality_update
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23", false]
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/headers/11536448
+GET  http://unstable.sepolia.beacon-api.nimbus.team/eth/v1/beacon/light_client/bootstrap/0x88b6bcebfb9549547bab26c64b7142543f03c69ec066e277472b85dafeedcf02
+GET  https://lodestar-sepolia.chainsafe.io/eth/v1/beacon/light_client/bootstrap/0x88b6bcebfb9549547bab26c64b7142543f03c69ec066e277472b85dafeedcf02
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x79b6ffb85fee887ac2a3a4fae1e2a9fd2e26d081857e3d32e5c4522f574f8837", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23", false]
+RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23", false]
+RPC  https://sepolia.gateway.tenderly.co eth_getBlockReceipts ["0xb88616"]
+RPC  https://sepolia.gateway.tenderly.co eth_getProof ["0x0000F90827F1C53a10cb7A02335B175320002935", ["0x0000000000000000000000000000000000000000000000000000000000000bd9"], {"blockHash": "0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23"}]

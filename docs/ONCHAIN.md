@@ -356,6 +356,38 @@ BASE_FEE_MAX=8 OUT=evidence/testnet-v2-sepolia/run.tsv scripts/e2e.sh
 # then the same with CHAIN=hoodi INSTANCE=hoodi-v2-10172039 UPDATES=1, OUT=evidence/testnet-v2-hoodi/run.tsv
 ```
 
+## A Sepolia checkpoint for a bridge deposit (2026-11-08)
+
+The same program, `Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB`, a fourth
+instance: `sepolia-portage-1108` (instance account `8if4JHY17qPNatBnisn4ULPvayu3ckQn9tMeqZiV7vXc`,
+header record `9Vs169NnZZP6uYazAtudgpJXEtR5ZkCMvB85uHgzq8i9`). It serves a
+consumer rather than a chain: two deposits were made into a Portage (RFP-022)
+vault on Sepolia, and the instance was initialised from a checkpoint finalized
+after them. Its execution block, 12,092,950, is the block of the second
+deposit. `scripts/fetch-vectors.py sepolia vectors/sepolia-portage
+--finalized-after 12092950` takes the finalized header of the latest
+light-client finality update, the bootstrap at it (identical from Nimbus and
+Lodestar), the RLP of its execution block, and that block's proofs. The
+directory holds no updates (`--chain sepolia-portage`): the instance is used
+at its checkpoint, so one `Init` (1,834,893 gas) replaces the three
+transactions of each update (about 13M gas) that would carry an older
+instance forward.
+
+| step | verdict | transaction | block | gas |
+|---|---|---|---:|---:|
+| `Init` from slot 11,536,448 | applied | [`a229935353b74089…`](https://explorer.testnet.lez.logos.co/transaction/a229935353b740896e3916c505dd7167de3d7251d38a54642b69d8cd7b839ccc) | 79,184 | 1,834,893 |
+| a log of the checkpoint's block attested | applied | [`7cbd9d7bdc7c2ff8…`](https://explorer.testnet.lez.logos.co/transaction/7cbd9d7bdc7c2ff8897fb8c44ee3c687332e57d668194ebcab0ec0aece6c177f) | 79,185 | 95,791 |
+| the same query as a mainnet statement | refused `E7209` | [`76a47309ba9625e0…`](https://explorer.testnet.lez.logos.co/transaction/76a47309ba9625e087df62980f29eff16803075ad0af468709549c31185db886) | 79,186 | 100,290 |
+
+The testnet stalled during the run, and the client stopped waiting for the
+refusal before it was included. The manifest records the block it was found
+in (`# late`). Verifier 8 checks, 0 fail; mutation test 6 of 6
+([`evidence/testnet-v2-sepolia-portage/`](../evidence/testnet-v2-sepolia-portage/)).
+Portage's claims against this header record, a public one and a
+privacy-preserving one, each a chained `Attest` of the vault's
+`knownRoot[root]` slot, are recorded in
+[edenbd1/lez-portage](https://github.com/edenbd1/lez-portage/blob/main/docs/TESTNET.md).
+
 ## The public testnet run (main's binary)
 
 Payer `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id

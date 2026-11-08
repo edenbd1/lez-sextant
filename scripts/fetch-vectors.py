@@ -7,6 +7,7 @@ public endpoints, and check it for internal consistency before writing it.
     python3 scripts/fetch-vectors.py sepolia vectors/sepolia --headers
     python3 scripts/fetch-vectors.py sepolia vectors/sepolia-gloas-fork --range 1377 4
     python3 scripts/fetch-vectors.py hoodi   vectors/hoodi --checkpoint-block
+    python3 scripts/fetch-vectors.py sepolia vectors/sepolia-portage --finalized-after 12092600
 
 `--headers` only (re)builds execution-headers.json for the light-client files
 already in the directory. `--range START COUNT` writes a bootstrap at period
@@ -297,6 +298,36 @@ def checkpoint_block(net, out):
     print("ok: %s checkpoint block %d, receipt tx %d, %s" % (sys.argv[1], n, i, name))
 
 
+def finalized_after(net, out, block):
+    """A checkpoint at the finalized header of the latest finality update,
+    once its execution block is at or after `block` (a deposit a consumer will
+    prove against it): its bootstrap (identical from both beacon nodes), the
+    finality update itself, the execution headers, and `--checkpoint-block`'s
+    proofs. No updates: the instance is used at its checkpoint."""
+    B, B2 = net["beacon"], net["beacon2"]
+    chain_config(net, out)
+    fins = [get(x + "/eth/v1/beacon/light_client/finality_update") for x in (B, B2)]
+    fin = max(fins, key=lambda f: int(f["data"]["finalized_header"]["beacon"]["slot"]))
+    fh = fin["data"]["finalized_header"]
+    n = int(rpc(net["exec"], "eth_getBlockByHash", [lc_block_hash(fh), False])["result"]["number"], 16)
+    if n < block:
+        raise SystemExit("not yet: the finalized execution block is %d, below %d" % (n, block))
+    slot = int(fh["beacon"]["slot"])
+    root = get("%s/eth/v1/beacon/headers/%d" % (B, slot))["data"]["root"]
+    boot = get("%s/eth/v1/beacon/light_client/bootstrap/%s" % (B, root))
+    boot2 = get("%s/eth/v1/beacon/light_client/bootstrap/%s" % (B2, root))
+    assert json.dumps(boot["data"]).lower() == json.dumps(boot2["data"]).lower(), "the two beacon nodes disagree on the bootstrap"
+    assert int(boot["data"]["header"]["beacon"]["slot"]) == slot
+    dump(out, "bootstrap-%d.json" % slot, boot)
+    with open(os.path.join(out, "bootstrap-%d.root" % slot), "w") as f:
+        f.write(root + "\n")
+    dump(out, "finality_update.json", fin)
+    nh = execution_headers(net, out)
+    sources(out, ["checkpoint slot %d (finalized, execution block %d >= %d), execution headers %d" % (slot, n, block, nh)])
+    print("ok: %s checkpoint slot %d, execution block %d" % (sys.argv[1], slot, n))
+    checkpoint_block(net, out)
+
+
 def sources(out, lines):
     with open(os.path.join(out, "SOURCES.txt"), "a") as f:
         f.write("fetched %s by scripts/fetch-vectors.py %s\n" % (time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), " ".join(sys.argv[1:])))
@@ -317,6 +348,9 @@ def main():
         return
     if args[2:3] == ["--checkpoint-block"]:
         checkpoint_block(net, out)
+        return
+    if args[2:3] == ["--finalized-after"]:
+        finalized_after(net, out, int(args[3]))
         return
     if args[2:3] == ["--range"]:
         first, count = int(args[3]), int(args[4])
