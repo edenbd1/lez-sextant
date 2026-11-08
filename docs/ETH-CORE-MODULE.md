@@ -48,11 +48,13 @@ the module's loopback endpoint.
 
 ### Building and running it on macOS
 
-It is a Nix flake (`nativeSystems` includes `aarch64-darwin`):
+It is a Nix flake (`nativeSystems` includes `aarch64-darwin`). The cold build
+is heavy: on a 24 GB machine, run one `nix build` at a time with modest
+parallelism (for example `--max-jobs 2 --cores 4`):
 
 ```console
-~/logos-monitor/bin/nixb .#unit-tests   # mocked libverifproxy, fast
-~/logos-monitor/bin/nixb .#default      # the plugin; builds libverifproxy (Nim 2.2.12) from nimbus-eth1 f7bb258, ~25 min cold
+nix build .#unit-tests   # mocked libverifproxy, fast
+nix build .#default      # the plugin; builds libverifproxy (Nim 2.2.12) from nimbus-eth1 f7bb258, ~25 min cold
 lm methods ./result/lib/verified_proxy_module_plugin.so
 logoscore call verified_proxy_module configure 'json:{"network":"sepolia","trustedBlockRoot":"0x…"}'
 logoscore call verified_proxy_module start

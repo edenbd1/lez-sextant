@@ -7,8 +7,11 @@
 #   DOCKER=1 scripts/build-guests.sh receiver   the same for the erc20_receiver consumer
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# --remap-path-prefix keeps the build machine's paths out of the panic-location
+# strings: the repository becomes `.`, the cargo home `/cargo`.
 FLAGS=$(printf '%s\x1f' -C passes=lower-atomic -C link-arg=-Ttext=0x00200800 -C link-arg=--fatal-warnings \
-  -C panic=abort --cfg 'getrandom_backend="custom"')
+  -C panic=abort --cfg 'getrandom_backend="custom"' \
+  --remap-path-prefix="$(pwd -P)=." --remap-path-prefix="${CARGO_HOME:-$HOME/.cargo}=/cargo")
 FLAGS=${FLAGS%$'\x1f'}
 build() { # dir bin  (local toolchains, looked up only when a local build runs)
   local TC CC_RV

@@ -33,7 +33,8 @@ scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the 
 scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier fails on each of 7 corruptions
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia/run.tsv  # the Sepolia instance (24 checks)
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-hoodi/run.tsv    # the Hoodi instance (11 checks)
-scripts/verify-onchain.sh                         # the first run (main's binary), against https://testnet.lez.logos.co
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia-portage/run.tsv  # the Sepolia instance for a bridge deposit (8 checks)
+scripts/verify-onchain.sh                         # the first run (the earlier binary, fa229edd), against https://testnet.lez.logos.co
 scripts/mutation-test-verifier.sh                 # the same over the first run's manifest
 ```
 
@@ -187,7 +188,7 @@ UTC):
 The payer holds 294,451,612 after it. Part 3 was run with:
 
 ```console
-LEE_WALLET_HOME_DIR=~/logos-bedrock/lez-wallet-home PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
+LEE_WALLET_HOME_DIR="$WALLET_HOME" PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
 RPC=https://testnet.lez.logos.co SEXTANT_PROGRAM=Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB \
 INSTANCE=mainnet-v2-10171005 RESUME=1 SCENARIO=testnet-rest UPDATES=4 UPDATE_MIN=100000000 \
 BASE_FEE_MAX=8 OUT=evidence/testnet-v2/run.tsv scripts/e2e.sh
@@ -313,18 +314,18 @@ The payer held 294,451,612 before the first runs and 151,815,724 after them;
 topped up to 491,815,724, it paid 313,602,240 for the Sepolia resume
 (178,213,484 left) and 111,954,368 for Hoodi's update 1 (66,259,116 left).
 
-Not done on the public testnet yet:
+Not done on the public testnet:
 
 - **Hoodi updates 2 to 4** and the attestations against Hoodi's last header
   (period 508, execution block 3,829,448): about 111M for each of updates 2
   and 3 (handoffs), 101M for update 4 (finality only, its `Begin` lighter) and
-  about 4M for the attestations, so about 330M; the payer's 66,259,116 does
-  not cover one update. The deadline to plan on is the committed Hoodi
-  checkpoint's window, **2026-10-27 02:02 UTC**. Strictly, `Begin` and
-  `Finish` declare a window ending two weeks after the instance's finalized
-  header, which update 1 moved to slot 4,142,752, so update 2 is still
-  accepted until 2026-10-27 21:20 UTC; past that the instance takes no
-  further update and a fresh checkpoint has to be fetched.
+  about 4M for the attestations, so about 330M; the payer's 66,259,116 did
+  not cover one update, and they were not sent. The Hoodi instance stops at
+  update 1 (slot 4,142,752, period 505). `Begin` and `Finish` declare
+  a window ending two weeks after the instance's finalized header, so the
+  last moment it could take update 2 was 2026-10-27 21:20 UTC; that has
+  passed, and continuing Hoodi on chain needs a fresh checkpoint and a new
+  instance.
 - **The Sepolia instance across the Gloas fork** (from the Fulu checkpoint,
   period 1377): it ran on the local v0.3.1 sequencer only. Its checkpoint left
   the timestamp window at 2026-10-18 07:16 UTC, so it can no longer be
@@ -339,7 +340,7 @@ attestations under them, on the local v0.3.1 sequencer with the same scenario
 The runs:
 
 ```console
-LEE_WALLET_HOME_DIR=~/logos-bedrock/lez-wallet-home PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
+LEE_WALLET_HOME_DIR="$WALLET_HOME" PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
 RPC=https://testnet.lez.logos.co SEXTANT_PROGRAM=Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB \
 SCENARIO=chain CHAIN=sepolia INSTANCE=sepolia-v2-10172031 UPDATES=1 UPDATE_MIN=110000000 BASE_FEE_MAX=8 \
 OUT=evidence/testnet-v2-sepolia/run.tsv scripts/e2e.sh
@@ -349,7 +350,7 @@ OUT=evidence/testnet-v2-sepolia/run.tsv scripts/e2e.sh
 and, on 2026-10-18, the resumes (appending to the same manifests):
 
 ```console
-LEE_WALLET_HOME_DIR=~/logos-bedrock/lez-wallet-home PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
+LEE_WALLET_HOME_DIR="$WALLET_HOME" PAYER=9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw \
 RPC=https://testnet.lez.logos.co SEXTANT_PROGRAM=Ebe8rifvjyvwWUXnk7bsKeTwuyCAFSRMFuPMVHE8CbUB \
 RESUME=1 SCENARIO=chain CHAIN=sepolia INSTANCE=sepolia-v2-10172031 UPDATES="2 3 4" UPDATE_MIN=110000000 \
 BASE_FEE_MAX=8 OUT=evidence/testnet-v2-sepolia/run.tsv scripts/e2e.sh
@@ -388,7 +389,7 @@ privacy-preserving one, each a chained `Attest` of the vault's
 `knownRoot[root]` slot, are recorded in
 [edenbd1/lez-portage](https://github.com/edenbd1/lez-portage/blob/main/docs/TESTNET.md).
 
-## The public testnet run (main's binary)
+## The public testnet run (the earlier binary)
 
 Payer `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id
 `mainnet-10152211` (instance account `3T51gKhDkckqi3XuvPdN9Wj1wckAQouDMg9CsfBXG2iZ`,
@@ -556,18 +557,19 @@ attestable. The plan, and where it stands:
    attestations against the last header, with `verify-onchain.sh` and the
    mutation test over the new manifest
    ([The v2 testnet run](#the-v2-testnet-run)).
-3. Sepolia done, Hoodi begun: a Sepolia instance (Gloas), `Init`, updates 1
+3. Sepolia done, Hoodi to update 1: a Sepolia instance (Gloas), `Init`, updates 1
    to 4 to period 1388 and the attestations against its last header; a Hoodi
    instance to update 1; each with an attestation against its checkpoint's
    header and the chain-binding refusal
    ([Sepolia and Hoodi on the v2 program](#sepolia-and-hoodi-on-the-v2-program)).
-   Hoodi's updates 2 to 4 and the attestations against its last header wait
-   for funding (before 2026-10-27 02:02 UTC), and ran in full on the local
-   sequencer.
+   Hoodi's updates 2 to 4 and the attestations against its last header were
+   not sent on the public testnet (the testnet token budget did not cover
+   them, and the checkpoint's window has since closed); they ran in full on
+   the local sequencer.
 
 One deadline: `Init`, `Begin` and `Finish` now declare a timestamp window that
 closes two weeks after the store's finalized header, so the committed
-checkpoints stop being usable on a sequencer at 2026-10-25 15:50 UTC
+checkpoints stopped being usable on a sequencer at 2026-10-25 15:50 UTC
 (mainnet, slot 15,409,152; the mainnet instance reached period 1884 before
 it, on 2026-10-17), 2026-10-27 02:02 UTC (Hoodi) and 2026-10-27
 09:44 UTC (Sepolia). After those, fresh checkpoints have to be fetched

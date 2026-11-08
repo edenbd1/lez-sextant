@@ -21,6 +21,15 @@ patched in (`guest/Cargo.toml`: blst `v0.3.16-risczero.0`, zkcrypto
 `bls12_381/v0.8.0-risczero.1`, sha2, tiny-keccak). The two builds must return
 the same verdict on every row or the harness aborts.
 
+The committed guests (`artifacts/bench/*.elf`) are built from the source of
+`91923e3`, the commit these tables were measured at, by
+`scripts/build-guests.sh` with `--remap-path-prefix` (no build-machine paths
+in them); run with that commit's `host`, they reproduce
+[`raw/measure-2026-10-15.txt`](raw/measure-2026-10-15.txt) to the cycle.
+Built from the current tree instead, whose `sextant-core` has since gained
+`E7206` and Gloas, most rows move by about 140 cycles, and the bootstrap row by
+-7,325; no verdict changes.
+
 ### 1.1 The primitives, on the update of period 1882 (512 of 512 signed)
 
 | operation | stock | accelerated | speedup | share of 10M |

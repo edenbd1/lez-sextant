@@ -70,7 +70,8 @@ scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the 
 scripts/mutation-test-verifier.sh --manifest evidence/testnet-v2/run.tsv  # the verifier catches each corruption of the manifest
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia/run.tsv  # the Sepolia instance
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-hoodi/run.tsv    # the Hoodi instance
-scripts/verify-onchain.sh                     # the first run (main's binary)
+scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia-portage/run.tsv  # the Sepolia instance for a bridge deposit
+scripts/verify-onchain.sh                     # the first run (the earlier binary, fa229edd)
 ```
 
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
@@ -105,7 +106,9 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
   block 3,805,646), the same two refusals, then update 1 (slot 4,142,752,
   execution block 3,810,766, the period-506 committee recorded); 7
   transactions, 5 applied and 2 refused. Verifier 11 checks, 0 fail; mutation
-  test 6 of 6. Updates 2 to 4 are not sent yet.
+  test 6 of 6. The instance stops there: updates 2 to 4 were not sent (the
+  payer's testnet token did not cover them), and its checkpoint's window has
+  closed, so it takes no further update.
   [`evidence/testnet-v2-hoodi/run.tsv`](evidence/testnet-v2-hoodi/run.tsv).
 - **Public LEZ testnet**, the same program, a **Sepolia instance for a bridge
   deposit** (2026-11-08): `Init` from a checkpoint finalized after two deposits
@@ -136,10 +139,11 @@ Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 No instance tracks a live chain; no Logos core module or update daemon (the
 client in `cli/` drives the committed vectors only); the reference consumer
 program (`erc20_receiver`) runs in the executor tests only, not on a sequencer;
-the Hoodi instance on chain stops at update 1 (updates 2 to 4 and the
-attestations under its last header, about 330M of the testnet token, must
-land before its checkpoint's window closes on 2026-10-27 02:02 UTC), and the
-Sepolia instance that crosses the Gloas fork runs only on a local sequencer;
+the Hoodi instance on chain stops at update 1, period 505 (updates 2 to 4
+and the attestations under its last header, about 330M of the testnet token,
+were not sent because the testnet token budget did not cover them; its
+checkpoint's window closed on 2026-10-27, so continuing Hoodi on chain means
+a fresh checkpoint and a new instance), and the Sepolia instance that crosses the Gloas fork runs only on a local sequencer;
 no transaction proofs (native ether sender), no historical headers;
 end-to-end runs against a sequencer are not in CI. These are the
 milestones of the proposal.
