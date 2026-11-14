@@ -1,0 +1,30 @@
+# sextant_lc through lee::V03State (LEZ v0.4.0-rc3), gas cap 10000000 per transaction
+
+| transaction | cycles charged | share of the cap | actor runs |
+|---|---:|---:|---:|
+| `Init` from the mainnet checkpoint (slot 15409152) | 1816989 | 18.2% | 2 |
+| update 1 (period 1881, with handoff): `Begin` | 5390861 | 53.9% | 2 |
+| update 1 (period 1881): `Miller` | 4217445 | 42.2% | 1 |
+| update 1 (period 1881): `Finish` | 3753893 | 37.5% | 3 |
+| update 2 (period 1882, with handoff): `Begin` | 5436361 | 54.4% | 2 |
+| update 2 (period 1882): `Miller` | 4217445 | 42.2% | 1 |
+| update 2 (period 1882): `Finish` | 3752978 | 37.5% | 3 |
+| update 3 (period 1883, with handoff): `Begin` | 5428167 | 54.3% | 2 |
+| update 3 (period 1883): `Miller` | 4217445 | 42.2% | 1 |
+| update 3 (period 1883): `Finish` | 3752978 | 37.5% | 3 |
+| update 4 (period 1884, finality only): `Begin` | 3650261 | 36.5% | 2 |
+| update 4 (period 1884): `Miller` | 4216722 | 42.2% | 1 |
+| update 4 (period 1884): `Finish` | 3751508 | 37.5% | 3 |
+| `Attest`: WETH balance slot of an account ≥ 1 wei, block 26197200 | 216428 | 2.2% | 1 |
+| `Attest`: an ERC-20 `Transfer` log in tx 2 of block 26197200 | 62572 | 0.6% | 1 |
+
+| update | three transactions together |
+|---|---:|
+| period 1881, with handoff | 13362199 (1.34x the cap of one transaction) |
+| period 1882, with handoff | 13406784 (1.34x the cap of one transaction) |
+| period 1883, with handoff | 13398590 (1.34x the cap of one transaction) |
+| period 1884, finality only | 11618491 (1.16x the cap of one transaction) |
+
+final store: slot 15436224, period 1884, execution block 26197200
+actor state sizes (borsh): instance 403 bytes, header record 120 bytes
+message size: Begin with handoff 51826 bytes

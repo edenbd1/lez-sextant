@@ -390,3 +390,21 @@ fn the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable() {
     };
     attest(&mut c, ID, slot, q).unwrap();
 }
+
+#[test]
+fn a_whole_update_in_one_public_transaction_is_over_the_cap() {
+    // `Update` is for a private actor inside a privacy-preserving transaction
+    // (docs/V04.md): as a public root call it runs the whole update, about 13M
+    // cycles, and the 10M cap refuses it before anything moves.
+    let m = mainnet();
+    let mut c = Chain::new();
+    init(&mut c, &m, ID).unwrap();
+    let (_, u, committee) = mainnet_steps(&m)[0].clone();
+    let current = c.instance(&ID);
+    let w = witness(&committee, &u.bits, AggMode::Subtract);
+    let k = c.fresh();
+    let msg = Message::Update { instance_id: ID, current: current.clone(), update: u, committee, witness: w };
+    let e = c.send_signed("Update (public)", lc(k.id), &[lc(instance_account(&LC, &ID))], &[&k], &[], &msg).unwrap_err();
+    assert!(e.to_lowercase().contains("gas") || e.to_lowercase().contains("cycle"), "{e}");
+    assert_eq!(c.instance(&ID), current);
+}

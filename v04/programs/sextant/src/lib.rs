@@ -31,6 +31,9 @@
 //! Finish  root → job(Finish)      → instance(Advance) → header(Record)
 //!                  final exponentiation; the job is spent
 //! Attest  root or a consumer → header(Attest)
+//! Update  private root → instance(Advance) → header(Record)
+//!                  the whole update in one private run (a privacy-preserving
+//!                  transaction): one proof, one public effect
 //! ```
 //!
 //! `Open`, `Advance` and `Record` are accepted only from another actor of
@@ -131,6 +134,14 @@ pub enum Message {
     Miller { instance_id: [u8; 32], job_id: [u8; 32] },
     /// To the job actor.
     Finish { instance_id: [u8; 32], job_id: [u8; 32] },
+    /// The whole update in one run, for a **private** actor of this program
+    /// inside a privacy-preserving transaction (docs/V04.md, the private-proof
+    /// update): about 13M cycles, over a public transaction's cap but not a
+    /// client-side proof's. A private actor cannot read the public instance,
+    /// so the instance travels in the message and is bound by its digest; the
+    /// verified transition goes to the public instance as `Advance`, which
+    /// checks that digest against its own state, exactly as after `Finish`.
+    Update { instance_id: [u8; 32], current: Instance, update: Update, committee: SyncCommittee, witness: KeyWitness },
 }
 
 /// What only this program's own actors send each other.
@@ -296,6 +307,13 @@ pub fn handle_message(input: &ReceiveInput) -> Response {
             let to = Actor::new(instance_account(&me, &instance_id), me);
             // The job is spent; its storage is released.
             Response::set_state(Vec::<u8>::new()).send(SyncMessage::new(to, &Internal::Advance { instance_id, prev: j.prev, next: j.next }).with_pda_seeds([instance_seed(&instance_id)]))
+        }
+        Message::Update { instance_id, current, update, committee, witness } => {
+            let next = lc::apply_update(&current.cfg, &current.store, &update, &committee, &witness, lc::FAST, &mut |_| {}).unwrap_or_else(|e| refuse_with(e));
+            let prev = digest(&current);
+            let next = Instance { store: next, ..current };
+            let to = Actor::new(instance_account(&me, &instance_id), me);
+            Response::keep_state().send(SyncMessage::new(to, &Internal::Advance { instance_id, prev, next }).with_pda_seeds([instance_seed(&instance_id)]))
         }
         Message::Attest { instance_id, slot, query } => {
             at(input, header_account(&me, &instance_id, slot), "Attest goes to the header PDA of this instance and slot");

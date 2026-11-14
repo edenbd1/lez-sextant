@@ -37,3 +37,12 @@ path = "src/bin/image_id.rs"
 [[bin]]
 name = "measure_lez"
 path = "src/bin/measure_lez.rs"
+[[bin]]
+name = "seq_drive"
+path = "src/bin/seq_drive.rs"
+[[bin]]
+name = "prove"
+path = "src/bin/prove.rs"
+[[bin]]
+name = "private_update"
+path = "src/bin/private_update.rs"

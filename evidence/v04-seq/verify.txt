@@ -1,0 +1,102 @@
+PASS Init from the Sepolia checkpoint: block 9 tx 0 is b96280ac4b079315
+PASS Init from the Sepolia checkpoint: applied by the block's reverted list (expected applied)
+PASS Init from the Sepolia checkpoint: replayed on rc3's state machine: applied (1815870 cycles)
+PASS Init again at the same id: block 10 tx 0 is 49223d96063c7cb6
+PASS Init again at the same id: reverted by the block's reverted list (expected reverted)
+PASS Init again at the same id: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS Init again at the same id: refusal E7291 on replay (got E7291)
+PASS Init from the mainnet checkpoint past its weak-subjectivity bound: block 11 tx 0 is 7ef13ee1165744ac
+PASS Init from the mainnet checkpoint past its weak-subjectivity bound: reverted by the block's reverted list (expected reverted)
+PASS Init from the mainnet checkpoint past its weak-subjectivity bound: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS tampered signature: Begin: block 12 tx 0 is aa901fd9349a21a2
+PASS tampered signature: Begin: applied by the block's reverted list (expected applied)
+PASS tampered signature: Begin: replayed on rc3's state machine: applied (5507621 cycles)
+PASS tampered signature: Miller: block 13 tx 0 is b74c45d27890e242
+PASS tampered signature: Miller: applied by the block's reverted list (expected applied)
+PASS tampered signature: Miller: replayed on rc3's state machine: applied (4217642 cycles)
+PASS tampered signature: Finish: block 14 tx 0 is d0babb13112cbe1a
+PASS tampered signature: Finish: reverted by the block's reverted list (expected reverted)
+PASS tampered signature: Finish: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS tampered signature: Finish: refusal E7203 on replay (got E7203)
+PASS participation below the floor: Begin: block 15 tx 0 is 879730d51539c8f0
+PASS participation below the floor: Begin: reverted by the block's reverted list (expected reverted)
+PASS participation below the floor: Begin: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS participation below the floor: Begin: refusal E7205 on replay (got E7205)
+PASS update 1 (period 1410): Begin: block 16 tx 0 is 55e2d3f5e85c39e3
+PASS update 1 (period 1410): Begin: applied by the block's reverted list (expected applied)
+PASS update 1 (period 1410): Begin: replayed on rc3's state machine: applied (5507621 cycles)
+PASS update 1 (period 1410): Miller: block 17 tx 0 is 3cc7496d82792ebc
+PASS update 1 (period 1410): Miller: applied by the block's reverted list (expected applied)
+PASS update 1 (period 1410): Miller: replayed on rc3's state machine: applied (4217642 cycles)
+PASS update 1 (period 1410): Finish: block 18 tx 0 is efabd50ec8b973d8
+PASS update 1 (period 1410): Finish: applied by the block's reverted list (expected applied)
+PASS update 1 (period 1410): Finish: replayed on rc3's state machine: applied (3754589 cycles)
+PASS replay of update 1 built against the old store: block 19 tx 0 is 089ee15d49c6e826
+PASS replay of update 1 built against the old store: reverted by the block's reverted list (expected reverted)
+PASS replay of update 1 built against the old store: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS replay of update 1 built against the old store: refusal E7293 on replay (got E7293)
+PASS replay of update 1 against the current store: block 20 tx 0 is 80af22b6508c2006
+PASS replay of update 1 against the current store: reverted by the block's reverted list (expected reverted)
+PASS replay of update 1 against the current store: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS replay of update 1 against the current store: refusal E7210 on replay (got E7210)
+PASS update 2 (period 1411): Begin: block 21 tx 0 is c566c248f78cef17
+PASS update 2 (period 1411): Begin: applied by the block's reverted list (expected applied)
+PASS update 2 (period 1411): Begin: replayed on rc3's state machine: applied (5498999 cycles)
+PASS update 2 (period 1411): Miller: block 22 tx 0 is 4b1c4fe9ff23a84c
+PASS update 2 (period 1411): Miller: applied by the block's reverted list (expected applied)
+PASS update 2 (period 1411): Miller: replayed on rc3's state machine: applied (4217642 cycles)
+PASS update 2 (period 1411): Finish: block 23 tx 0 is fa71b0d1b5c4e3dc
+PASS update 2 (period 1411): Finish: applied by the block's reverted list (expected applied)
+PASS update 2 (period 1411): Finish: replayed on rc3's state machine: applied (3753724 cycles)
+PASS update 3 (period 1412): Begin: block 24 tx 0 is d25a79ae1059226a
+PASS update 3 (period 1412): Begin: applied by the block's reverted list (expected applied)
+PASS update 3 (period 1412): Begin: replayed on rc3's state machine: applied (5562017 cycles)
+PASS update 3 (period 1412): Miller: block 25 tx 0 is 52477503e69a7417
+PASS update 3 (period 1412): Miller: applied by the block's reverted list (expected applied)
+PASS update 3 (period 1412): Miller: replayed on rc3's state machine: applied (4217642 cycles)
+PASS update 3 (period 1412): Finish: block 26 tx 0 is 8dae2a0a1684fc60
+PASS update 3 (period 1412): Finish: applied by the block's reverted list (expected applied)
+PASS update 3 (period 1412): Finish: replayed on rc3's state machine: applied (3753724 cycles)
+PASS update 4 (period 1413): Begin: block 27 tx 0 is a14c6beb60af9e9b
+PASS update 4 (period 1413): Begin: applied by the block's reverted list (expected applied)
+PASS update 4 (period 1413): Begin: replayed on rc3's state machine: applied (3632807 cycles)
+PASS update 4 (period 1413): Miller: block 28 tx 0 is b785d16ffba2ce12
+PASS update 4 (period 1413): Miller: applied by the block's reverted list (expected applied)
+PASS update 4 (period 1413): Miller: replayed on rc3's state machine: applied (4216919 cycles)
+PASS update 4 (period 1413): Finish: block 29 tx 0 is 4a9eae9d70db379d
+PASS update 4 (period 1413): Finish: applied by the block's reverted list (expected applied)
+PASS update 4 (period 1413): Finish: replayed on rc3's state machine: applied (3752254 cycles)
+PASS Attest: WETH balanceOf[holder] == 0 at the last header: block 30 tx 0 is 63591df72aedd651
+PASS Attest: WETH balanceOf[holder] == 0 at the last header: applied by the block's reverted list (expected applied)
+PASS Attest: WETH balanceOf[holder] == 0 at the last header: replayed on rc3's state machine: applied (194750 cycles)
+PASS Attest: a log of tx 92 at the last header: block 31 tx 0 is eb8e3d24d91c1d69
+PASS Attest: a log of tx 92 at the last header: applied by the block's reverted list (expected applied)
+PASS Attest: a log of tx 92 at the last header: replayed on rc3's state machine: applied (305058 cycles)
+PASS Attest: a log of tx 0 at the checkpoint header: block 32 tx 0 is c9c815747087d5b4
+PASS Attest: a log of tx 0 at the checkpoint header: applied by the block's reverted list (expected applied)
+PASS Attest: a log of tx 0 at the checkpoint header: replayed on rc3's state machine: applied (59159 cycles)
+PASS Attest as a mainnet statement (other chain): block 33 tx 0 is 858825eff70c4bca
+PASS Attest as a mainnet statement (other chain): reverted by the block's reverted list (expected reverted)
+PASS Attest as a mainnet statement (other chain): replayed on rc3's state machine: reverted (10000000 cycles)
+PASS Attest as a mainnet statement (other chain): refusal E7209 on replay (got E7209)
+PASS Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: block 34 tx 0 is 99bb9e0fc7227b42
+PASS Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: reverted by the block's reverted list (expected reverted)
+PASS Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: refusal E7208 on replay (got E7208)
+PASS Attest: the checkpoint's receipt against the last header: block 35 tx 0 is 14f4501b413d1c5c
+PASS Attest: the checkpoint's receipt against the last header: reverted by the block's reverted list (expected reverted)
+PASS Attest: the checkpoint's receipt against the last header: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS Attest: the checkpoint's receipt against the last header: refusal E7207 on replay (got E7207)
+PASS Attest at a slot never recorded: block 36 tx 0 is 5a149e49566775c0
+PASS Attest at a slot never recorded: reverted by the block's reverted list (expected reverted)
+PASS Attest at a slot never recorded: replayed on rc3's state machine: reverted (10000000 cycles)
+PASS Attest at a slot never recorded: refusal E7292 on replay (got E7292)
+PASS the instance's store on the sequencer is the native verifier's after every update
+PASS the instance on the sequencer is the replay's, byte for byte
+PASS header record at slot 11550720 (period 1410, execution block 12106981) is the native verifier's
+PASS header record at slot 11558912 (period 1411, execution block 12115055) is the native verifier's
+PASS header record at slot 11567104 (period 1412, execution block 12123154) is the native verifier's
+PASS header record at slot 11578208 (period 1413, execution block 12134154) is the native verifier's
+PASS no mainnet instance: the stale checkpoint never landed
+
+verify: 100 passed, 0 failed

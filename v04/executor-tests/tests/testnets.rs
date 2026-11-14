@@ -86,3 +86,27 @@ fn the_portage_deposit_checkpoint_initialises_on_v04() {
     let rec: sextant_core::statement::HeaderRecord = borsh::from_slice(&c.state_of(header_account(&LC, &id, s.finalized.slot))).unwrap();
     assert_eq!(rec.state_root, s.finalized_execution_state_root);
 }
+
+#[test]
+fn the_fresh_sepolia_set_runs_through_the_binary_and_attests() {
+    // vectors/sepolia-v04 (fetched 2026-11-14): the set the sequencer run uses.
+    let m = sextant_host::load_chain("vectors/sepolia-v04", 11_155_111);
+    let id = *b"sepolia-v04/test/instance/000001";
+    let mut c = Chain::new();
+    let (s, _) = run(&mut c, &m, id);
+    assert_eq!(lc::period(s.finalized.slot), 1413);
+    // The WETH holder of the vector set holds nothing at this block: the slot
+    // reads zero, which is itself a statement the record attests.
+    use sextant_core::statement::{Cmp, Field, Predicate};
+    let mut one = [0u8; 32];
+    one[31] = 1;
+    let q = |cmp, value| Query {
+        chain_id: 11_155_111,
+        proof: Proof::Storage(weth_proof_from("vectors/sepolia-v04/getproof-weth.json")),
+        predicates: vec![Predicate { field: Field::SlotValue, cmp, value }],
+    };
+    attest(&mut c, id, s.finalized.slot, q(Cmp::Eq, [0; 32])).unwrap();
+    assert_eq!(refused(attest(&mut c, id, s.finalized.slot, q(Cmp::Ge, one))), E_BASE + Error::PredicateFalse as u32);
+    let log = Query { chain_id: 11_155_111, proof: Proof::Log(receipt_proof_from("vectors/sepolia-v04/receipt-proof-tx92.json", 92)), predicates: vec![] };
+    attest(&mut c, id, s.finalized.slot, log).unwrap();
+}
