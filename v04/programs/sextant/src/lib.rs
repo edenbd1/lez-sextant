@@ -34,7 +34,20 @@
 //! Update  private root → instance(Advance) → header(Record)
 //!                  the whole update in one private run (a privacy-preserving
 //!                  transaction): one proof, one public effect
+//! AttestPrivate  private root or a consumer's private actor
+//!                  → a private actor of this program → instance(CheckRoot)
+//!                  a statement about a header record proven in private
+//!                  against the instance's record index: the public part
+//!                  names only the instance and a root it holds
 //! ```
+//!
+//! **The record index.** Every instance keeps an append-only Merkle tree
+//! (depth [`INDEX_DEPTH`], SHA-256) over the header records it has written, in
+//! the order it wrote them, and its last [`INDEX_ROOTS`] roots. `Init` and
+//! every `Advance` that records a new header append its leaf
+//! ([`record_leaf`]). A private attestation proves a record's membership under
+//! one of those roots inside a privacy-preserving transaction, so a consumer
+//! reads a header without revealing which.
 //!
 //! `Open`, `Advance` and `Record` are accepted only from another actor of
 //! this program (`ReceiveInput::from_own_program`): no transaction and no
@@ -57,6 +70,15 @@ pub const E_NO_INSTANCE: u32 = 7292;
 pub const E_STALE: u32 = 7293;
 pub const E_NO_JOB: u32 = 7294;
 pub const E_JOB_STEP: u32 = 7295;
+/// `CheckRoot`: the root is not one of the instance's last [`INDEX_ROOTS`].
+pub const E_UNKNOWN_ROOT: u32 = 7296;
+/// `AttestPrivate`: the record is not under the given root at that position.
+pub const E_NOT_INDEXED: u32 = 7297;
+
+/// Depth of the record index: room for 2^20 header records.
+pub const INDEX_DEPTH: usize = 20;
+/// How many of its latest roots an instance accepts.
+pub const INDEX_ROOTS: usize = 16;
 
 #[track_caller]
 pub fn refuse(code: u32, why: &str) -> ! {
@@ -102,6 +124,105 @@ pub struct Instance {
     pub checkpoint: [u8; 32],
     pub cfg: ChainConfig,
     pub store: Store,
+    /// The header records this instance wrote, as a Merkle tree.
+    pub index: Index,
+}
+
+/// An append-only Merkle tree over header records (the deposit-contract
+/// construction: a frontier of `INDEX_DEPTH` nodes, empty subtrees hashed
+/// from zero leaves), and its latest roots, newest last.
+#[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
+pub struct Index {
+    pub count: u64,
+    pub frontier: Vec<[u8; 32]>,
+    pub roots: Vec<[u8; 32]>,
+}
+
+/// The leaf of a header record in the index.
+pub fn record_leaf(r: &HeaderRecord) -> [u8; 32] {
+    sha256(&[b"sextant_lc/v0.4/record", &put(r)])
+}
+
+fn node(l: &[u8; 32], r: &[u8; 32]) -> [u8; 32] {
+    sha256(&[l, r])
+}
+
+/// The roots of the empty subtrees of height 0..=INDEX_DEPTH.
+pub fn zero_hashes() -> Vec<[u8; 32]> {
+    let mut z = vec![[0u8; 32]];
+    for h in 0..INDEX_DEPTH {
+        let n = node(&z[h], &z[h]);
+        z.push(n);
+    }
+    z
+}
+
+impl Index {
+    #[must_use]
+    pub fn new() -> Self {
+        Self { count: 0, frontier: vec![[0; 32]; INDEX_DEPTH], roots: vec![] }
+    }
+
+    #[must_use]
+    pub fn root(&self) -> [u8; 32] {
+        let z = zero_hashes();
+        let mut n = [0u8; 32];
+        let mut size = self.count;
+        for h in 0..INDEX_DEPTH {
+            n = if size & 1 == 1 { node(&self.frontier[h], &n) } else { node(&n, &z[h]) };
+            size >>= 1;
+        }
+        n
+    }
+
+    pub fn append(&mut self, leaf: [u8; 32]) {
+        assert!(self.count < (1 << INDEX_DEPTH), "the record index is full");
+        let mut n = leaf;
+        let mut size = self.count + 1;
+        for h in 0..INDEX_DEPTH {
+            if size & 1 == 1 {
+                self.frontier[h] = n;
+                break;
+            }
+            n = node(&self.frontier[h], &n);
+            size >>= 1;
+        }
+        self.count += 1;
+        self.roots.push(self.root());
+        if self.roots.len() > INDEX_ROOTS {
+            self.roots.remove(0);
+        }
+    }
+}
+
+impl Default for Index {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// The root a leaf at `position` with sibling `path` hashes to.
+pub fn index_root_of(leaf: [u8; 32], position: u64, path: &[[u8; 32]]) -> [u8; 32] {
+    let mut n = leaf;
+    for (h, s) in path.iter().enumerate() {
+        n = if (position >> h) & 1 == 1 { node(s, &n) } else { node(&n, s) };
+    }
+    n
+}
+
+/// The path of the leaf at `position` in a tree of `leaves` (host side: a
+/// consumer rebuilds it from the records the instance wrote, in order).
+pub fn index_path(leaves: &[[u8; 32]], position: usize) -> Vec<[u8; 32]> {
+    let z = zero_hashes();
+    let mut level = leaves.to_vec();
+    let mut i = position;
+    let mut path = Vec::with_capacity(INDEX_DEPTH);
+    for zh in z.iter().take(INDEX_DEPTH) {
+        path.push(level.get(i ^ 1).copied().unwrap_or(*zh));
+        level = level.chunks(2).map(|c| node(&c[0], c.get(1).unwrap_or(zh))).collect();
+        i >>= 1;
+    }
+    path
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, BorshSerialize, BorshDeserialize)]
@@ -142,6 +263,14 @@ pub enum Message {
     /// verified transition goes to the public instance as `Advance`, which
     /// checks that digest against its own state, exactly as after `Finish`.
     Update { instance_id: [u8; 32], current: Instance, update: Update, committee: SyncCommittee, witness: KeyWitness },
+    /// To a **private** actor of this program, as the root of a
+    /// privacy-preserving transaction or from a consumer's private actor:
+    /// refuses unless `record` is the leaf at `position` under `root`
+    /// (`E7297`) and `query` holds against it (as `Attest`), then asks the
+    /// instance to confirm `root` is one of its latest (`CheckRoot`, `E7296`).
+    /// The record, its position and the query stay in the proof; the public
+    /// part carries the instance id and the root.
+    AttestPrivate { instance_id: [u8; 32], root: [u8; 32], position: u64, record: HeaderRecord, path: Vec<[u8; 32]>, query: Query },
 }
 
 /// What only this program's own actors send each other.
@@ -153,6 +282,9 @@ pub enum Internal {
     Advance { instance_id: [u8; 32], prev: [u8; 32], next: Instance },
     /// Instance to header.
     Record { instance_id: [u8; 32], record: HeaderRecord },
+    /// A private attestation to the instance: `root` must be one of its
+    /// latest index roots. Read-only.
+    CheckRoot { instance_id: [u8; 32], root: [u8; 32] },
 }
 
 pub fn sha256(parts: &[&[u8]]) -> [u8; 32] {
@@ -268,7 +400,9 @@ pub fn handle_message(input: &ReceiveInput) -> Response {
             let r = record(&cfg, &store);
             // A checkpoint already older than the bound is refused by the sequencer's clock.
             let stale = lc::stale_from_ms(&cfg, store.finalized.slot);
-            Response::set_state(put(&Instance { checkpoint, cfg, store })).timestamp_window(..stale).send(to_header(me, instance_id, r))
+            let mut index = Index::new();
+            index.append(record_leaf(&r));
+            Response::set_state(put(&Instance { checkpoint, cfg, store, index })).timestamp_window(..stale).send(to_header(me, instance_id, r))
         }
         Message::Begin { instance_id, current, update, committee, witness } => {
             at(input, instance_account(&me, &instance_id), "Begin goes to the instance PDA of this id");
@@ -315,6 +449,13 @@ pub fn handle_message(input: &ReceiveInput) -> Response {
             let to = Actor::new(instance_account(&me, &instance_id), me);
             Response::keep_state().send(SyncMessage::new(to, &Internal::Advance { instance_id, prev, next }).with_pda_seeds([instance_seed(&instance_id)]))
         }
+        Message::AttestPrivate { instance_id, root, position, record, path, query } => {
+            refuse_unless(path.len() == INDEX_DEPTH && position < (1 << INDEX_DEPTH), E_NOT_INDEXED, "the index path must have INDEX_DEPTH nodes");
+            refuse_unless(index_root_of(record_leaf(&record), position, &path) == root, E_NOT_INDEXED, "the record is not under this root at this position: rebuild the path from the instance's records");
+            statement::evaluate(&record, &query).unwrap_or_else(|e| refuse_with(e));
+            let to = Actor::new(instance_account(&me, &instance_id), me);
+            Response::keep_state().send(SyncMessage::new(to, &Internal::CheckRoot { instance_id, root }))
+        }
         Message::Attest { instance_id, slot, query } => {
             at(input, header_account(&me, &instance_id, slot), "Attest goes to the header PDA of this instance and slot");
             refuse_unless(!pre.is_empty(), E_NO_INSTANCE, "no header recorded at this slot");
@@ -343,6 +484,12 @@ fn internal(input: &ReceiveInput, me: AccountId, m: Internal) -> Response {
             let stale = lc::stale_from_ms(&current.cfg, current.store.finalized.slot);
             let r = record(&next.cfg, &next.store);
             let ev = Advanced { instance_id, slot: r.slot, period: lc::period(r.slot), block_number: r.block_number };
+            // The index is the instance's own: a new finalized header is appended once.
+            let mut index = current.index;
+            if r.slot != current.store.finalized.slot {
+                index.append(record_leaf(&r));
+            }
+            let next = Instance { index, ..next };
             Response::set_state(put(&next)).timestamp_window(..stale).send(to_header(me, instance_id, r)).event(event("Advanced", &ev))
         }
         Internal::Record { instance_id, record } => {
@@ -350,6 +497,13 @@ fn internal(input: &ReceiveInput, me: AccountId, m: Internal) -> Response {
             let new = put(&record);
             refuse_unless(pre.is_empty() || pre == new.as_slice(), E_EXISTS, "a different record exists for this slot");
             Response::set_state(new)
+        }
+        Internal::CheckRoot { instance_id, root } => {
+            at(input, instance_account(&me, &instance_id), "CheckRoot goes to the instance PDA of this id");
+            refuse_unless(!pre.is_empty(), E_NO_INSTANCE, "no instance at this id");
+            let inst: Instance = borsh::from_slice(pre).expect("an instance");
+            refuse_unless(inst.index.roots.contains(&root), E_UNKNOWN_ROOT, "not one of the instance's latest index roots: rebuild the path against its current root");
+            Response::keep_state()
         }
     }
 }

@@ -10,12 +10,20 @@
 #      the floor at Begin), every update (three handoffs and a finality update,
 #      each Begin, Miller, Finish), replays, attestations and their refusals;
 #      every block saved;
-#   4. seq_drive verify: every verdict re-read from the blocks, every
-#      transaction replayed on rc3's state machine, the instance and the header
-#      records read back against the native verifier.
+#   4. seq_drive private: a second instance, its update 1 as ONE
+#      privacy-preserving transaction (the whole verification, pairing included,
+#      proven client-side, about 30 minutes with RISC0_DEV_MODE=0) paying its fee
+#      in-proof from a private payer funded at genesis, then a private
+#      attestation against that instance's record index;
+#   5. seq_drive verify: every verdict re-read from the blocks, every
+#      public transaction replayed on rc3's state machine, every private one's
+#      receipt verified against the privacy circuit, the instances and the
+#      header records read back against the native verifier.
 # Needs SEQ (the sequencer_service binary of logos-execution-zone v0.4.0-rc3,
 # built with --features standalone) and LEZ (that checkout, for networks/local.json).
 #   SEQ=... LEZ=... v04/scripts/e2e-seq.sh [RUN]
+# STEPS (default "run private") picks the drives; RISC0_DEV_MODE=1 (sequencer
+# and prover) checks the flow with fake receipts in minutes.
 # Nothing here reaches a public network.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -23,7 +31,8 @@ cd "$(dirname "$0")/../.."
 : "${LEZ:?set LEZ to the logos-execution-zone v0.4.0-rc3 checkout}"
 RUN="${1:-${TMPDIR:-/tmp}/sextant-v04-e2e}"
 PORT="${PORT:-3078}"; METRICS_PORT="${METRICS_PORT:-9478}"
-export RISC0_DEV_MODE=0
+export RISC0_DEV_MODE="${RISC0_DEV_MODE:-0}"
+STEPS="${STEPS:-run private}"
 rm -rf "$RUN"; mkdir -p "$RUN"
 # The binary under test, copied so a rebuild during the run cannot change it.
 cp "${SEXTANT_BIN:-v04/artifacts/sextant_lc.bin}" "$RUN/sextant_lc.bin"
@@ -44,6 +53,8 @@ c["block_create_timeout"] = "2s"
 c["metrics_listen_address"] = f"127.0.0.1:{metrics}"
 c["gossip"] = None
 c["genesis"]["actions"][0]["supply_account"]["recipient"] = {"identified": {"key": payer}}
+# The genesis keeps local.json's two private supplies: the private path's fee
+# payers (seq_drive payers), whose pending credits its transactions claim.
 json.dump(c, open(p, "w"), indent=1)
 PY
 RUST_LOG=info,risc0_zkvm=warn,kameo=warn "$SEQ" start "$RUN/seq" --rpc-listen-address "127.0.0.1:$PORT" > "$RUN/sequencer.log" 2>&1 &
@@ -54,6 +65,8 @@ for _ in $(seq 60); do
 done
 echo "# sequencer up on $PORT (RISC0_DEV_MODE=$RISC0_DEV_MODE)"
 "${DRIVE[@]}" deploy "http://127.0.0.1:$PORT" "$RUN"
-"${DRIVE[@]}" run "http://127.0.0.1:$PORT" "$RUN" | tee "$RUN/run.txt"
+for step in $STEPS; do
+  "${DRIVE[@]}" "$step" "http://127.0.0.1:$PORT" "$RUN" | tee "$RUN/$step.txt"
+done
 "${DRIVE[@]}" verify "http://127.0.0.1:$PORT" "$RUN" | tee "$RUN/verify.txt"
 echo "# done: $RUN/manifest.tsv, $RUN/verify.txt, $RUN/blocks/"

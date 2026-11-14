@@ -4,9 +4,17 @@ An Ethereum light client inside a LEZ v0.3 program, and the consumer check
 against what it verified, measured on real Ethereum mainnet data.
 
 This branch (`v0.4`) adds the same light client on LEZ v0.4.0-rc3's actor
-model under `v04/`: tests on rc3's state machine, a local rc3 sequencer run,
-real proving per step and a one-transaction private-proof update
-([`docs/V04.md`](docs/V04.md)).
+model under `v04/` ([`docs/V04.md`](docs/V04.md)): 33 tests on rc3's state
+machine; a local rc3 sequencer run (`v04/scripts/e2e-seq.sh`, verifier
+`seq_drive verify` 119/0); real proving per step; **a whole update as one
+privacy-preserving transaction on the sequencer**, its fee paid in-proof by a
+funded private payer (block 851: proved in 1,625.9 s, 8.95 GB peak, 236,936
+bytes, 503,861 execution gas); **a private consumer path**, a statement about a
+header record proven against the instance's record index so the transaction
+reveals only the instance and a shared root (`AttestPrivate`, run on the
+sequencer, block 1110); a native-ETH reference consumer (a WrapVault `Deposit`
+on Sepolia); and the update operators' contention policy with tests of racing
+submitters.
 
 - `core/`: `sextant-core`, the verification: SSZ and the light-client rules
   (`lc.rs`, `ssz.rs`), `FastAggregateVerify` over two BLS12-381 libraries

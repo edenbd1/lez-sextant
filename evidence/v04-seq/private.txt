@@ -1,0 +1,8 @@
+private path: Init the second instance from the Sepolia checkpoint: block 38 tx 0 applied
+private update 1 (period 1410, handoff): one privacy-preserving transaction: public part 94097 cycles; base fees exec 17 stor 8; fee at head 10358141, reserve 102863656 of 10000000000000
+private update 1 (period 1410, handoff): one privacy-preserving transaction: proved in 1625.9 s, peak resident 0.04 GB, 236935 bytes
+private update 1 (period 1410, handoff): one privacy-preserving transaction: block 851 tx 0 applied (236936 bytes); block fees Some(Summary { gas_used_exec: 503861, gas_used_stor: 224063, revenue_base: 5823392, revenue_tip: 0 })
+private attestation: a log of the checkpoint block's tx 0, under the index root: public part 30830 cycles; base fees exec 8 stor 8; fee at head 5317256, reserve 49924608 of 20000000000000
+private attestation: a log of the checkpoint block's tx 0, under the index root: proved in 517.1 s, peak resident 0.04 GB, 234473 bytes
+private attestation: a log of the checkpoint block's tx 0, under the index root: block 1110 tx 0 applied (234474 bytes); block fees Some(Summary { gas_used_exec: 440594, gas_used_stor: 224063, revenue_base: 5317256, revenue_tip: 0 })
+private path done: blocks 38..=1110

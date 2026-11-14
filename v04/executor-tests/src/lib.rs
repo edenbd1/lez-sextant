@@ -233,3 +233,110 @@ pub fn native_final(m: &Mainnet) -> Option<sextant_core::Store> {
         lc::apply_update(&m.cfg, s, u, k, &w, lc::FAST, &mut |_| {}).unwrap()
     })
 }
+
+/// Privacy-preserving transactions to sextant_lc on rc3's state machine:
+/// a private actor's keys, and one root call to a fresh private actor of a
+/// program proven (`lee::execute_and_prove`) and settled with
+/// `V03State::transition_from_privacy_preserving_transaction`, the
+/// verification a sequencer runs. No fee leg: the state machine does not
+/// classify fees (the sequencer does; `seq_drive private` builds it).
+pub mod private {
+    use std::collections::{BTreeMap, BTreeSet, HashMap};
+
+    use lee::{
+        privacy_preserving_transaction::{circuit::ProgramCatalog, message::Message as PMessage, witness_set::WitnessSet as PWitness},
+        program::Program,
+        AccountId, Actor, PrivacyPreservingTransaction, ProvingInput, PublicExecutionContext, SenderPresentation, Simulation,
+    };
+    use lee_core::{
+        encryption::ViewingPublicKey, execution_state::TransactionEntry, program::MessageBody, AuthorizationSecretKey, NullifierPublicKey, NullifierSecretKey,
+        NullifierWitness, PrivateWitness, RecipientEncryption, RegularKey, RootCall, WitnessKind, DUMMY_COMMITMENT_HASH,
+    };
+
+    use super::Chain;
+
+    /// A private account's keys (lee's `test_utils::TestPrivateKeys`, which
+    /// only a debug build may enable).
+    pub struct Keys {
+        pub ask: AuthorizationSecretKey,
+        pub d: [u8; 32],
+        pub z: [u8; 32],
+    }
+
+    impl Keys {
+        #[must_use]
+        pub fn new(seed: u8) -> Self {
+            Self { ask: AuthorizationSecretKey([seed; 32]), d: [seed.wrapping_add(1); 32], z: [seed.wrapping_add(2); 32] }
+        }
+        #[must_use]
+        pub fn nsk(&self) -> NullifierSecretKey {
+            NullifierSecretKey::from(&self.ask)
+        }
+        #[must_use]
+        pub fn npk(&self) -> NullifierPublicKey {
+            NullifierPublicKey::from(&self.nsk())
+        }
+        #[must_use]
+        pub fn vpk(&self) -> ViewingPublicKey {
+            ViewingPublicKey::from_seed(&self.d, &self.z)
+        }
+        #[must_use]
+        pub fn account_id(&self) -> AccountId {
+            AccountId::for_regular_private_account(&self.npk(), &self.vpk())
+        }
+        /// A fresh private account: no commitment yet, so no membership proof.
+        #[must_use]
+        pub fn init_witness(&self) -> PrivateWitness {
+            PrivateWitness {
+                vpk: self.vpk(),
+                random_seed: [0; 32],
+                kind: WitnessKind::Regular(RegularKey::Authorized(self.ask.clone())),
+                nullifier: NullifierWitness::Init { commitment_root: DUMMY_COMMITMENT_HASH },
+                address_openings: BTreeSet::new(),
+            }
+        }
+    }
+
+    pub fn no_seal(body: &MessageBody) -> Result<RecipientEncryption, lee::error::LeeError> {
+        Err(lee::error::LeeError::InvalidInput(format!("no seal for an async message to {:?}", body.to)))
+    }
+
+    /// Prove `message` to the private actor of `program` at `keys`' fresh
+    /// account, the public part reaching `public_actors` (their states read
+    /// from `c`), and return the transaction (not settled).
+    pub fn prove(c: &Chain, program: AccountId, keys: &Keys, message: Vec<u8>, public_actors: &[Actor]) -> Result<PrivacyPreservingTransaction, lee::error::LeeError> {
+        let me = Actor::new(keys.account_id(), program);
+        let input = ProvingInput {
+            root: TransactionEntry::Sync(RootCall { to: me, message }),
+            claims: vec![],
+            fee: None,
+            public_context: PublicExecutionContext::new(public_actors.iter().copied(), []),
+            private_witnesses: vec![keys.init_witness()],
+            dummy_inputs: vec![],
+            ciphertext_padding: None,
+            recoveries: vec![],
+            private_promotions: BTreeSet::new(),
+        };
+        let states: HashMap<Actor, lee_core::account::ActorState> =
+            public_actors.iter().map(|a| (*a, c.state.get_account_by_id(a.account_id).data.actor_state(a.program_account_id).clone())).collect();
+        let sim = Simulation { public_actor_states: states, admitted_accounts: None };
+        let catalog = ProgramCatalog::from([(program, Program::new(super::bin().into()).expect("a program"))]);
+        let (output, proof) = lee::execute_and_prove(input, &sim, &catalog, |_| SenderPresentation::Canonical, |_, _| false, no_seal)?;
+        let message = PMessage::from_circuit_output(BTreeMap::new(), output);
+        Ok(PrivacyPreservingTransaction::new(message.clone(), PWitness::for_message(&message, proof, &[])))
+    }
+
+    /// Settle a proven transaction on `c` (one block).
+    pub fn settle(c: &mut Chain, tx: &PrivacyPreservingTransaction) -> Result<(), String> {
+        let r = c.state.transition_from_privacy_preserving_transaction(tx, c.block, c.now).map(|_| ()).map_err(|e| e.to_string());
+        c.block += 1;
+        c.now += 12_000;
+        r
+    }
+
+    /// Fake proofs for the executor tests (the circuit still runs in full;
+    /// the receipt is not a STARK). Real proving: `--bin private_update`, `seq_drive private`.
+    pub fn dev_mode() {
+        std::env::set_var("RISC0_DEV_MODE", "1");
+    }
+}

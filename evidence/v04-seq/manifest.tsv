@@ -1,32 +1,32 @@
 # label	expected	code	verdict	block	tx	hash	bytes
-Init from the Sepolia checkpoint	applied	-	applied	9	0	b96280ac4b079315d10d20739dca9f6b889ebaeab3faa8263ef1808e43c09a47	27233
-Init again at the same id	reverted	E7291	reverted	10	0	49223d96063c7cb6d3eb04291217a11df1973a1f8ba394981a25ce4295ced05c	27168
-Init from the mainnet checkpoint past its weak-subjectivity bound	reverted	-	reverted	11	0	7ef13ee1165744ace51591300fcd08238e3935473d3e8fea8eb3051917fd6cd2	26430
-tampered signature: Begin	applied	-	applied	12	0	aa901fd9349a21a220fd7aba07998c6c3de49fa26b369cf801448b7d1dea319e	53305
-tampered signature: Miller	applied	-	applied	13	0	b74c45d27890e2423e9fce35a51d90b1332b10bc5996dcdc0f47c35110761716	463
-tampered signature: Finish	reverted	E7203	reverted	14	0	d0babb13112cbe1af14f9b31ab284a71bfda3dc37b8999fa56a5c7639e744803	591
-participation below the floor: Begin	reverted	E7205	reverted	15	0	879730d51539c8f019f2e4fa29249f5765facace0b2ce0fdccf8947d337a225a	70645
-update 1 (period 1410): Begin	applied	-	applied	16	0	55e2d3f5e85c39e3e8ff3f0f72896aabdb94724918414d88ccbe455f7a16180a	53305
-update 1 (period 1410): Miller	applied	-	applied	17	0	3cc7496d82792ebcbb43a1a6953db9d78d4d8e7f17e42bad10f21aa033252816	463
-update 1 (period 1410): Finish	applied	-	applied	18	0	efabd50ec8b973d8b058e525d37c357c68c09ef8c91a6ff715f0416195390931	591
-replay of update 1 built against the old store	reverted	E7293	reverted	19	0	089ee15d49c6e8267abadedb3ddd1c054d12a436c18cb26273d2459266421735	53305
-replay of update 1 against the current store	reverted	E7210	reverted	20	0	80af22b6508c200620fb7a3fc4c302067764fe8d0871d9bb29d7d00cec524330	53305
-update 2 (period 1411): Begin	applied	-	applied	21	0	c566c248f78cef17c7c1c44a3c05658d28ccc7bb3487bfe93b7b273060e0aae4	53295
-update 2 (period 1411): Miller	applied	-	applied	22	0	4b1c4fe9ff23a84c1c806467152ad27b5f99013c9d4771fb86a67dfcee8d88f8	463
-update 2 (period 1411): Finish	applied	-	applied	23	0	fa71b0d1b5c4e3dc73a4c8847c60222da8e70a9a758b34e80e7372f0b587c72f	591
-update 3 (period 1412): Begin	applied	-	applied	24	0	d25a79ae1059226a6dee568e0f9ff72a93630e4d8abd0675ad793747e26a3e3a	53815
-update 3 (period 1412): Miller	applied	-	applied	25	0	52477503e69a741786edfe08329afae24c5bacda488ca4718ea0b025c355a696	463
-update 3 (period 1412): Finish	applied	-	applied	26	0	8dae2a0a1684fc60d4023deb4c90f9fdeead9fd60f5c3e1d98709612d429041c	591
-update 4 (period 1413): Begin	applied	-	applied	27	0	a14c6beb60af9e9bff0780777239cad354c805253564688e9f5e7f09a19593f0	28508
-update 4 (period 1413): Miller	applied	-	applied	28	0	b785d16ffba2ce12a056b8f8541265af18b48422d9ede1de3edf035b3999f530	463
-update 4 (period 1413): Finish	applied	-	applied	29	0	4a9eae9d70db379d5cb6b1b2e2f30966ad43555503597fee4c22b721802d14a9	591
-Attest: WETH balanceOf[holder] == 0 at the last header	applied	-	applied	30	0	63591df72aedd651e4ba6ac600117ab29b7221a5250ec1056384a9410f0fb71a	6509
-Attest: a log of tx 92 at the last header	applied	-	applied	31	0	eb8e3d24d91c1d69f4251dccfd9e50ff5417d60cd1f7dd69e13cd34af74e5b7f	12241
-Attest: a log of tx 0 at the checkpoint header	applied	-	applied	32	0	c9c815747087d5b42f81c8365a2b9e198be1f737fb7a78c9d1e885a3a2bf18d6	1748
-Attest as a mainnet statement (other chain)	reverted	E7209	reverted	33	0	858825eff70c4bca39639f73eb3187d9dc7bef30470b20bf2480a8eaa0a7f71c	6509
-Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy	reverted	E7208	reverted	34	0	99bb9e0fc7227b42d44ee39ec3e84dab000ecc896cccb2b15132028ba031e188	6509
-Attest: the checkpoint's receipt against the last header	reverted	E7207	reverted	35	0	14f4501b413d1c5c4a48653e5047e91a570cbfdc83f7f476c2e4a80b0548e90e	1748
-Attest at a slot never recorded	reverted	E7292	reverted	36	0	5a149e49566775c0ce181ab8cf863df154bc8a83d62e416b51dcc948c2e63c4f	6574
+Init from the Sepolia checkpoint	applied	-	applied	10	0	59566714200a506f39759befe7ef2b767fecc3e9fbb74bc43a42ca31dd227031	27233
+Init again at the same id	reverted	E7291	reverted	11	0	686ee3ade87694c0f5a6fa3b1fe0784d6f8da9aa437c4b0d921b111975e71105	27168
+Init from the mainnet checkpoint past its weak-subjectivity bound	reverted	-	reverted	12	0	657ddb3ba8aa3a12aad573a9229c959f179fcf669b355b28a2b4699d9019222a	26430
+tampered signature: Begin	applied	-	applied	13	0	9db106ba88fc790e484b730ae08b61c7a8f996123beb17c7839ef1a4182faa8e	53305
+tampered signature: Miller	applied	-	applied	14	0	ada681a38e8e389721664cafe10f69b440f2eea5a0824531c0397f6f9b18b95d	463
+tampered signature: Finish	reverted	E7203	reverted	15	0	ac4ef1fb70915298eb84719d7311859c6af99361f45eb50de5849ab63bdb1fad	591
+participation below the floor: Begin	reverted	E7205	reverted	16	0	e678b567731b3a1d6a7ec212a90e679ed1dba6ef4c4fa3d460921afe4caf14e0	70645
+update 1 (period 1410): Begin	applied	-	applied	17	0	d3bbbefa114915e5a2bdeadb0be7608be5b806db3bd7a5127bf04252587780c1	53305
+update 1 (period 1410): Miller	applied	-	applied	18	0	7495e5e3a16b724fd891ed9384d444b9767460d4627d4065ec6dc60d4e32b455	463
+update 1 (period 1410): Finish	applied	-	applied	19	0	279e32f77b157479de17f22c914bc92ca6d82c228d8ce73658dd8886751d1286	591
+replay of update 1 built against the old store	reverted	E7293	reverted	20	0	97f5c9228c3a70c80614380fa6eae392028d80e171b73dcaabd08535386e6ae3	53305
+replay of update 1 against the current store	reverted	E7210	reverted	21	0	127d79194f633fbc9091b65603662a0e87bb964f221e986c8139f74ada3c62b2	53305
+update 2 (period 1411): Begin	applied	-	applied	22	0	ce51439e60962a70d6d06fb9066f8edd2f57c038814cf16cad910c59bb727e21	53295
+update 2 (period 1411): Miller	applied	-	applied	23	0	5b3772543c40e4614581964fee1a46db00dabbd70678c0390e3daf2a0cc635b5	463
+update 2 (period 1411): Finish	applied	-	applied	24	0	38bd0c91dd9cbe41e328da45d9192cdc004b45beb285f20a06261a1890d9febc	591
+update 3 (period 1412): Begin	applied	-	applied	25	0	8ab892efa270940da80898bf6fb6d3b2a9f7c14825882ab6fc1017999ecbf813	53815
+update 3 (period 1412): Miller	applied	-	applied	26	0	fd6a52425094ed358b3158abebfdf8f0cea4769f6f4113871ff2a14abccfc955	463
+update 3 (period 1412): Finish	applied	-	applied	27	0	90a6e660d7942d537fb63082d4b56b7361df9a29917b5de8e4a99909cd073c38	591
+update 4 (period 1413): Begin	applied	-	applied	28	0	3a9bf31389a1e9167d6283f1bc8b58d351518bff3407da813ec796639e6a86f2	28508
+update 4 (period 1413): Miller	applied	-	applied	29	0	de89ac077a7d2ebd0b6371d547b873fd24aa6a52ce1c50c4ad5b6168a2db75b5	463
+update 4 (period 1413): Finish	applied	-	applied	30	0	bbb9ce26f604485a8d7dcf1c338e9771e9426396c1944e1dcb3adc2d8be2853f	591
+Attest: WETH balanceOf[holder] == 0 at the last header	applied	-	applied	31	0	b79845cfa0af8e1f32edc7d0b2c81980fb5ee4f6c8d7d672c486f3729ba38fd3	6509
+Attest: a log of tx 92 at the last header	applied	-	applied	32	0	cd4e046613a1f8a31d269182e1c0c6e9c8a5ba7d2970e5515886772e0c4846dc	12241
+Attest: a log of tx 0 at the checkpoint header	applied	-	applied	33	0	454a2a6e2c6fa6d4645964673b5422e257801610b10dc61d72bb92e67215b49e	1748
+Attest as a mainnet statement (other chain)	reverted	E7209	reverted	34	0	60e38c9b4eadac375eb58fd7eeb5c6e28052f5f94846e75b4f9463522671b74a	6509
+Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy	reverted	E7208	reverted	35	0	e7c72534ac6c507a05bda848aa4648c57e30c281e191097f496bc45d6bee1d2c	6509
+Attest: the checkpoint's receipt against the last header	reverted	E7207	reverted	36	0	cf8d39266e114dd276736016d929031f2b18f8fe95d203d63f59a967d435fd3b	1748
+Attest at a slot never recorded	reverted	E7292	reverted	37	0	491bb598c6400d894aaa529d42a8a02467bdb501baa07f009d9faa14ab2ec7e9	6574
 # program sextant_lc D9NCt9wCCDJuVii6EW8fnJwyiGbfm8s2HxxMJNBYTaUD
 # instance sepolia-v04/seq/instance/0000001 (DBnfDTBVndhJQN9iSUSi8n2xkRnoPsWwFysfxtwNbQe2) final slot 11578208 period 1413 execution block 12134154
-# blocks 9..=36
+# blocks 10..=37

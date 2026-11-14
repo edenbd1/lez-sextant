@@ -53,7 +53,13 @@ fn main() {
     let m = mainnet();
     let steps = mainnet_steps(&m);
     let (store, u, committee) = steps[1].clone(); // period 1882, with handoff
-    let current = Instance { checkpoint: m.checkpoint, cfg: m.cfg.clone(), store: store.clone() };
+    // The instance's index after Init and update 1: the checkpoint's record, then update 1's if it moved.
+    let mut index = Index::new();
+    index.append(record_leaf(&record(&m.cfg, &steps[0].0)));
+    if store.finalized.slot != steps[0].0.finalized.slot {
+        index.append(record_leaf(&record(&m.cfg, &store)));
+    }
+    let current = Instance { checkpoint: m.checkpoint, cfg: m.cfg.clone(), store: store.clone(), index };
     let w = witness(&committee, &u.bits, AggMode::Subtract);
     let p = lc::prepare(&current.cfg, &store, &u, &committee, &w, lc::FAST, &mut |_| {}).unwrap();
     let next = Instance { store: p.next.clone(), ..current.clone() };

@@ -1,0 +1,8 @@
+# label	verdict	block	tx	hash	bytes	prove_s	peak_rss_bytes	public_cycles	fee_at_head	reserve	block_gas_exec	block_gas_stor	block_revenue_base	block_revenue_tip
+# peak_rss_bytes: the r0vm prover process's peak resident set, sampled every 2 s with ps (the driver's own getrusage read only itself, 40.7 MB; it now also reads its finished children). RISC0_DEV_MODE=0 on the sequencer and the prover.
+private update 1 (period 1410, handoff): one privacy-preserving transaction	applied	851	0	6b5f393ab5351a9de03c856a013c59ee2cd42ab552d46f5073bb492840f22fdd	236936	1625.9	8952446976	94097	10358141	102863656	503861	224063	5823392	0
+private attestation: a log of the checkpoint block's tx 0, under the index root	applied	1110	0	9e203cee6ab4db946128857b119fb8c71b9664dc22223961a88736341b807ce6	234474	517.1	8743960576	30830	5317256	49924608	440594	224063	5317256	0
+# public	private path: Init the second instance from the Sepolia checkpoint	applied	-	applied	38	0	d335c77ab4830d6e884a3ea2f51f9b20918b51e7d7301519c4317dcca86a8f06	27233
+# instance sepolia-v04/seq/private/00000001 (DJYVi4mhns3tGhGXq8qyqc9gP34NWgto2pbRg2LfvQxX) slot 11550720 period 1410 execution block 12106981
+# blocks 38..=1110
+# blocks kept here: 38 (Init), 851 and 1110 (the two private transactions); the blocks between carry only the clock and fee transactions

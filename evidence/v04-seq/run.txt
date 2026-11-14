@@ -1,29 +1,29 @@
-Init from the Sepolia checkpoint: block 9 tx 0 applied
-Init again at the same id: block 10 tx 0 reverted
-Init from the mainnet checkpoint past its weak-subjectivity bound: block 11 tx 0 reverted
-tampered signature: Begin: block 12 tx 0 applied
-tampered signature: Miller: block 13 tx 0 applied
-tampered signature: Finish: block 14 tx 0 reverted
-participation below the floor: Begin: block 15 tx 0 reverted
-update 1 (period 1410): Begin: block 16 tx 0 applied
-update 1 (period 1410): Miller: block 17 tx 0 applied
-update 1 (period 1410): Finish: block 18 tx 0 applied
-replay of update 1 built against the old store: block 19 tx 0 reverted
-replay of update 1 against the current store: block 20 tx 0 reverted
-update 2 (period 1411): Begin: block 21 tx 0 applied
-update 2 (period 1411): Miller: block 22 tx 0 applied
-update 2 (period 1411): Finish: block 23 tx 0 applied
-update 3 (period 1412): Begin: block 24 tx 0 applied
-update 3 (period 1412): Miller: block 25 tx 0 applied
-update 3 (period 1412): Finish: block 26 tx 0 applied
-update 4 (period 1413): Begin: block 27 tx 0 applied
-update 4 (period 1413): Miller: block 28 tx 0 applied
-update 4 (period 1413): Finish: block 29 tx 0 applied
-Attest: WETH balanceOf[holder] == 0 at the last header: block 30 tx 0 applied
-Attest: a log of tx 92 at the last header: block 31 tx 0 applied
-Attest: a log of tx 0 at the checkpoint header: block 32 tx 0 applied
-Attest as a mainnet statement (other chain): block 33 tx 0 reverted
-Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: block 34 tx 0 reverted
-Attest: the checkpoint's receipt against the last header: block 35 tx 0 reverted
-Attest at a slot never recorded: block 36 tx 0 reverted
-run done: blocks 9..=36, final slot 11578208 (period 1413), execution block 12134154
+Init from the Sepolia checkpoint: block 10 tx 0 applied
+Init again at the same id: block 11 tx 0 reverted
+Init from the mainnet checkpoint past its weak-subjectivity bound: block 12 tx 0 reverted
+tampered signature: Begin: block 13 tx 0 applied
+tampered signature: Miller: block 14 tx 0 applied
+tampered signature: Finish: block 15 tx 0 reverted
+participation below the floor: Begin: block 16 tx 0 reverted
+update 1 (period 1410): Begin: block 17 tx 0 applied
+update 1 (period 1410): Miller: block 18 tx 0 applied
+update 1 (period 1410): Finish: block 19 tx 0 applied
+replay of update 1 built against the old store: block 20 tx 0 reverted
+replay of update 1 against the current store: block 21 tx 0 reverted
+update 2 (period 1411): Begin: block 22 tx 0 applied
+update 2 (period 1411): Miller: block 23 tx 0 applied
+update 2 (period 1411): Finish: block 24 tx 0 applied
+update 3 (period 1412): Begin: block 25 tx 0 applied
+update 3 (period 1412): Miller: block 26 tx 0 applied
+update 3 (period 1412): Finish: block 27 tx 0 applied
+update 4 (period 1413): Begin: block 28 tx 0 applied
+update 4 (period 1413): Miller: block 29 tx 0 applied
+update 4 (period 1413): Finish: block 30 tx 0 applied
+Attest: WETH balanceOf[holder] == 0 at the last header: block 31 tx 0 applied
+Attest: a log of tx 92 at the last header: block 32 tx 0 applied
+Attest: a log of tx 0 at the checkpoint header: block 33 tx 0 applied
+Attest as a mainnet statement (other chain): block 34 tx 0 reverted
+Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy: block 35 tx 0 reverted
+Attest: the checkpoint's receipt against the last header: block 36 tx 0 reverted
+Attest at a slot never recorded: block 37 tx 0 reverted
+run done: blocks 10..=37, final slot 11578208 (period 1413), execution block 12134154

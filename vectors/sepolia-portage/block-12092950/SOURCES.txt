@@ -14,3 +14,4 @@ RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x95055659
 RPC  https://ethereum-sepolia-rpc.publicnode.com eth_getBlockByHash ["0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23", false]
 RPC  https://sepolia.gateway.tenderly.co eth_getBlockReceipts ["0xb88616"]
 RPC  https://sepolia.gateway.tenderly.co eth_getProof ["0x0000F90827F1C53a10cb7A02335B175320002935", ["0x0000000000000000000000000000000000000000000000000000000000000bd9"], {"blockHash": "0x95055659f1eddddfcd28503ecefe076c9ae0d89e49f85f21fa05903532af6c23"}]
+receipt-proof-tx63.json: added 2026-11-14 offline from receipts.json by scripts/receipt_proof.py (tx 63, 0x2508a663..., the WrapVault native-ETH deposit of index 1; receipts root matches the block)

@@ -13,10 +13,9 @@
 //! `V03State::transition_from_privacy_preserving_transaction`, the
 //! verification a sequencer runs.
 //!
-//! Not included: the fee. A sequencer (lez/chain_state `classify`) also wants
-//! a native transfer from a funded private payer inside the same proof; that
-//! is one more private account and one native-token run, small next to the
-//! update. Settlement here is lee's, without it.
+//! Not included: the fee, which only a sequencer classifies (lez/chain_state
+//! `classify`). `seq_drive private` (v04/scripts/e2e-seq.sh) builds the same
+//! transaction with its in-proof fee and submits it to a local rc3 sequencer.
 //!
 //! `RISC0_DEV_MODE=0 cargo run --release --bin private_update` (real proof;
 //! `RISC0_DEV_MODE=1` for a fake one, to check the flow).
