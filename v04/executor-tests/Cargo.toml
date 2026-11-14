@@ -1,0 +1,39 @@
+# Runs the v0.4 sextant_lc binary (v04/artifacts/sextant_lc.bin) through
+# `lee::V03State` at LEZ v0.4.0-rc3, the state machine its sequencer settles
+# public transactions with, under the 10,000,000-cycle per-transaction gas
+# cap, on the real mainnet, Sepolia and Hoodi vectors of vectors/; and drives
+# a local v0.4.0-rc3 standalone sequencer (seq_drive).
+[workspace]
+
+[package]
+name = "sextant-executor-tests-v04"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+sextant-program-v04 = { path = "../programs/sextant" }
+sextant-core = { path = "../../core", default-features = false }
+sextant-host = { path = "../../host" }
+lee        = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", tag = "v0.4.0-rc3" }
+lee_core   = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", tag = "v0.4.0-rc3", features = ["host"] }
+common     = { git = "https://github.com/logos-blockchain/logos-execution-zone.git", tag = "v0.4.0-rc3" }
+borsh = { version = "1.5", features = ["derive"] }
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
+hex = "0.4"
+risc0-binfmt = "3.0"
+risc0-zkvm = { version = "=3.0.5", features = ["client"] }
+risc0-zkos-v1compat = "=2.2.2"
+
+[[bin]]
+name = "pack"
+path = "src/bin/pack.rs"
+[[bin]]
+name = "image_id"
+path = "src/bin/image_id.rs"
+[[bin]]
+name = "measure_lez"
+path = "src/bin/measure_lez.rs"
