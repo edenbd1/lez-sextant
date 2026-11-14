@@ -14,7 +14,7 @@
 #
 #   scripts/mutation-test-verifier.sh [--manifest FILE] [--rpc URL]
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 2
 MANIFEST="evidence/testnet/run.tsv"; RPC="https://testnet.lez.logos.co"
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -61,28 +61,31 @@ elif how in ("lost-instance", "lost-final-header"):  # the final state that prov
 open(dst, "w").write("\n".join(lines) + "\n")
 PY
 }
-fail=0
+fail=0; tried=0; caught=0
 ./scripts/verify-onchain.sh --manifest "$MANIFEST" --rpc "$RPC" > "$T/clean.out" 2>&1 \
   && echo "  ok   the recorded manifest verifies ($(tail -1 "$T/clean.out"))" || { echo "  FAIL the recorded manifest does not verify"; fail=1; }
 SHARED="$(sed -n 's/^  ok   \([^:]*\): .*block shared with other charged transactions.*/\1/p' "$T/clean.out" | tr '\n' ' ')"
 for m in fake-hash refusal-as-applied applied-as-refused wrong-gas final-state image-id deploy-hash; do
   if [ "$m" = deploy-hash ] && ! grep -q '^# deploy ' "$MANIFEST"; then continue; fi
-  mutate "$m"
+  mutate "$m"; tried=$((tried + 1))
   if ./scripts/verify-onchain.sh --manifest "$T/$m.tsv" --rpc "$RPC" > "$T/$m.out" 2>&1; then
     echo "  FAIL mutation $m was NOT caught"; fail=1
   else
+    caught=$((caught + 1))
     echo "  ok   mutation $m caught: $(grep -m1 FAIL "$T/$m.out" | sed 's/^ *FAIL *//' | cut -c1-110)"
   fi
 done
 for label in $(sed -n 's/^  ok   \([^:]*\): applied, .*index lost after a block rewrite.*/\1/p' "$T/clean.out"); do
   for m in lost-fake-hash lost-as-refused lost-instance lost-final-header; do
-    mutate "$m" "$label"
+    mutate "$m" "$label"; tried=$((tried + 1))
     if ! ./scripts/verify-onchain.sh --manifest "$T/$m.tsv" --rpc "$RPC" > "$T/$m-$label.out" 2>&1 \
        && grep -q "^  FAIL $label:" "$T/$m-$label.out"; then
+      caught=$((caught + 1))
       echo "  ok   mutation $m on $label caught: $(grep -m1 "FAIL $label:" "$T/$m-$label.out" | sed 's/^ *FAIL *//' | cut -c1-110)"
     else
       echo "  FAIL mutation $m on $label was NOT caught on its own line"; fail=1
     fi
   done
 done
+echo "== mutation test: $caught of $tried mutations caught$( [ $fail = 0 ] || echo ', FAIL')"
 exit $fail

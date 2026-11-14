@@ -140,6 +140,13 @@ Every RFP-021 requirement, its status and evidence: [`docs/REQUIREMENTS.md`](doc
   The current binary there runs the Sepolia and Hoodi vectors in full, to
   their last headers with the attestations under them, and the Sepolia
   instance across the Gloas fork ([`evidence/local/chain-*.tsv`](docs/ONCHAIN.md#the-local-v031-sequencer-run)).
+  These runs predate 2026-10-25: since then (2026-10-27 for Hoodi and
+  Sepolia) a sequencer refuses `Init` from the committed checkpoints, whose
+  timestamp window has closed, so a local run needs a freshly fetched
+  checkpoint (`scripts/fetch-vectors.py`, Hoodi and Sepolia only). The
+  executor tests still run the same transactions on the committed vectors.
+  Sequencer and wallet setup, and a fresh-checkpoint run that passed on
+  2026-11-14: [docs/ONCHAIN.md, Reproduce](docs/ONCHAIN.md#reproduce).
 
 ## What this prototype is not yet
 

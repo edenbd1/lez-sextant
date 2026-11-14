@@ -582,9 +582,67 @@ handoff, 11.6M gas and about 93M for a finality-only one), plus about 15M for
 
 ## Reproduce
 
+**The committed runs can no longer be replayed on a live sequencer as they
+were.** Since 2026-10-25 (mainnet) and 2026-10-27 (Hoodi, Sepolia), a
+sequencer refuses `Init` from the committed mainnet, Hoodi and Sepolia
+checkpoints: their timestamp window (the deadline under
+[Redeploying v2](#redeploying-v2)) has closed, so `SCENARIO=full`
+(the mainnet vectors) now stops at its first step with `Init` reverted. The
+same transactions still run, on the committed vectors with their recorded
+timestamps, in `cargo test --release --manifest-path executor-tests/Cargo.toml`
+(16 tests). On a sequencer, a fresh checkpoint has to be fetched first
+(`scripts/fetch-vectors.py`, Hoodi and Sepolia only; there are no mainnet
+endpoints).
+
+A local v0.3.1 standalone sequencer and a v0.3.0 wallet holding the debug
+configuration's funded genesis key (`PRIVATE_KEY_PUB_ACC_A` in LEZ's
+`testnet_initial_state`, a public test key; the v0.3.0 wallet derives its id
+as `6iArKUX…`), as lez-portage's `scripts/e2e-local.sh` sets them up:
+
+```console
+# LEZ at db66590a (v0.3.0): cargo build --release -p wallet
+# LEZ at 1a003bfb (v0.3.1): cargo build --release --features standalone -p sequencer_service
+LEZ_SRC=<lez@1a003bfb> SEQ=$LEZ_SRC/target/release/sequencer_service WALLET=<lez@db66590a>/target/release/wallet
+R=<a new directory>; mkdir -p $R/seq $R/wallet
+python3 -c 'import json,sys;c=json.load(open(sys.argv[1]));c["block_create_timeout"]="5s";json.dump(c,open(sys.argv[2],"w"))' \
+  $LEZ_SRC/lez/sequencer/service/configs/debug/sequencer_config.json $R/seq/sequencer_config.json
+(cd $R/seq && exec $SEQ sequencer_config.json --listen-address 127.0.0.1 --port 3040 --home $R/seq --metrics-address 127.0.0.1:9440 > seq.log 2>&1) &
+export LEE_WALLET_HOME_DIR=$R/wallet
+cat > $R/wallet/wallet_config.json <<EOF
+{"sequencers":[{"sequencer_addr":"http://127.0.0.1:3040/"}],"seq_poll_timeout":"10s","seq_tx_poll_max_blocks":40,
+ "seq_poll_max_retries":30,"seq_block_poll_max_amount":100,
+ "multi_sequencer_client_config":{"distribution_limit":1,"calibration_limit":10},"gas_limit":10000000}
+EOF
+printf 'local\n' | $WALLET check-health    # creates the wallet's storage
+$WALLET account import public --private-key "$(python3 -c 'import re,sys;m=re.search(r"PRIVATE_KEY_PUB_ACC_A: \[u8; 32\] = \[([^\]]*)\]",open(sys.argv[1]).read());print(bytes(int(x) for x in m.group(1).split(",") if x.strip()).hex())' $LEZ_SRC/lez/testnet_initial_state/src/lib.rs)"
+export PAYER=6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV RPC=http://127.0.0.1:3040
+```
+
+Then, in this checkout (the client reads `vectors/` from the checkout it was
+built in), a fresh Sepolia checkpoint, finalized after a recent block, and an
+instance from it: `Init`, a log attested against the checkpoint's header, the
+same query refused as a mainnet statement (`E7209`) and a false predicate
+refused (`E7208`):
+
 ```console
 cargo build --release --manifest-path cli/Cargo.toml
-# a v0.3.1 standalone sequencer and a v0.3.0 wallet holding a funded key, then:
-LEE_WALLET_HOME_DIR=... PAYER=... RPC=http://127.0.0.1:3040 DEPLOY=1 SCENARIO=full scripts/e2e.sh
+B=$(curl -s -X POST https://ethereum-sepolia-rpc.publicnode.com -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"eth_getBlockByNumber","params":["finalized",false]}' \
+  | python3 -c 'import json,sys;print(int(json.load(sys.stdin)["result"]["number"],16))')
+rm -rf vectors/sepolia-portage    # rewritten; restore with git checkout -- vectors/sepolia-portage && git clean -fd vectors/sepolia-portage
+python3 scripts/fetch-vectors.py sepolia vectors/sepolia-portage --finalized-after $((B - 200))
+DEPLOY=1 SCENARIO=chain CHAIN=sepolia-portage OUT=$R/e2e.tsv scripts/e2e.sh
+scripts/verify-onchain.sh --manifest $R/e2e.tsv --rpc $RPC
+```
+
+On 2026-11-14 this ran as written: a checkpoint at slot 11,579,360
+(execution block 12,135,300), PASS with 4 transactions (`Init` 1,834,658
+gas, the attestation 80,384, `E7209` and `E7208` refused), verifier 17
+checks, 0 fail. The committed `vectors/sepolia-portage/` itself (slot
+11,536,448) stays usable this way until 2026-11-22 20:49 UTC. The committed
+local run was made, before the window closed, with:
+
+```console
+DEPLOY=1 SCENARIO=full scripts/e2e.sh     # the mainnet vectors, 36 transactions; refused at Init since 2026-10-25
 scripts/verify-onchain.sh --manifest evidence/local/e2e.tsv --rpc http://127.0.0.1:3040
 ```
