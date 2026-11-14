@@ -1,0 +1,10 @@
+# v04/executor-tests --bin prove, RISC0_DEV_MODE=0, SEGMENT_PO2=20, committed binary bf3df59e, 2026-11-14 (/usr/bin/time -l)
+# 2026-11-14T17:35:25Z prove (SEGMENT_PO2=20)
+| actor run (v0.4 binary) | user cycles | total cycles (with paging, padding) | segments | prove (s, wall) | succinct receipt (bytes) |
+|---|---:|---:|---:|---:|---:|
+| `Begin` at the instance, period 1882 with handoff | 5408034 | 6291456 | 6 | 655.8 | 330145 |
+| `Miller` at the job | 4217445 | 4718592 | 5 | 490.0 | 228785 |
+| `Finish` at the job (final exponentiation) | 3691783 | 4194304 | 4 | 420.8 | 227855 |
+| `Attest` at a header record (ERC-20 Transfer log, receipt proof) | 62572 | 131072 | 1 | 63.9 | 226323 |
+     1631.28 real     16975.18 user       132.11 sys
+          8683503616  maximum resident set size

@@ -3,6 +3,11 @@
 An Ethereum light client inside a LEZ v0.3 program, and the consumer check
 against what it verified, measured on real Ethereum mainnet data.
 
+This branch (`v0.4`) adds the same light client on LEZ v0.4.0-rc3's actor
+model under `v04/`: tests on rc3's state machine, a local rc3 sequencer run,
+real proving per step and a one-transaction private-proof update
+([`docs/V04.md`](docs/V04.md)).
+
 - `core/`: `sextant-core`, the verification: SSZ and the light-client rules
   (`lc.rs`, `ssz.rs`), `FastAggregateVerify` over two BLS12-381 libraries
   (`bls.rs`, `bl.rs` for blst, `zk.rs` for zkcrypto), Merkle-Patricia proofs

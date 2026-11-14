@@ -1,0 +1,10 @@
+# v04/executor-tests --bin private_update, RISC0_DEV_MODE=0, committed binary bf3df59e, 2026-11-14 (/usr/bin/time -l)
+# 2026-11-14T17:03:33Z private_update
+RISC0_DEV_MODE="0" (real proof)
+private run (Update at a private actor): 13123590 user cycles, 14155776 total, 14 segments
+proved in 1910.5 s (wall, whole transaction: the program run and the privacy circuit); transaction 227525 bytes, message 52197 bytes
+verified and settled in 0.13 s
+instance advanced to slot 15409152 (period 1881), execution block 26170219; header recorded
+replay of the same transaction: refused: Invalid input: Commitment Commitment(4679a9ea12a7d5e8d423c957f809cc4f2a19aaecaf5fd945cbe05ae458ea5919) already seen
+     1911.58 real     19479.99 user       158.09 sys
+          8655765504  maximum resident set size
