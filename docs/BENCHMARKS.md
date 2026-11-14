@@ -191,6 +191,39 @@ non-signers to subtract from the committee aggregate than on mainnet. A Gloas
 update carries the RLP execution header (about 670 bytes); the program
 checks its keccak against the proven `execution_block_hash`.
 
+### The worst case: a full committee at full participation and at the two-thirds floor
+
+`Begin` is the only step whose cost depends on who signed: it subtracts each
+non-signer's key from the committee aggregate (decision D3). The real vectors
+run from 510 to 512 signers on mainnet; the cost at the floor needs a
+committee whose participation can be chosen. `measure_worst` builds one: 512
+synthetic keys, mainnet's configuration (fork versions, genesis validators
+root), a checkpoint at the first slot of period 1881 and one finalized update
+in the same period, with every branch, root and the aggregate signature real
+(`sextant_host::synthetic_chain`; member `i` signs when `7 i mod 512` is below
+the signer count). Same binary (ImageID `ad6fbedb…`), `lee::V03State`, the
+cycle count is the gas. Raw output:
+[`raw/measure-worst-2026-11-14.txt`](raw/measure-worst-2026-11-14.txt)
+(`cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_worst`).
+
+| signers of 512 | handoff | `Begin` | `Miller` | `Finish` | three together | largest step, share of 10M |
+|---:|---|---:|---:|---:|---:|---:|
+| 512 (every member) | yes | 5,475,094 | 4,217,768 | 3,768,199 | 13,461,061 | 54.8% |
+| 512 (every member) | no | 3,633,593 | 4,217,768 | 3,766,498 | 11,617,859 | 42.2% |
+| **342 (the floor, 170 non-signers)** | **yes** | **7,389,387** | 4,217,768 | 3,768,199 | 15,375,354 | **73.9%** |
+| 342 (the floor) | no | 5,547,878 | 4,217,768 | 3,766,498 | 13,532,144 | 55.5% |
+
+341 signers: `Begin` refused, `E7205`. The worst update the program accepts,
+two thirds of the committee with a handoff, costs 7.39M in `Begin`, 26% under
+the cap; the 1.91M over full participation is the 170 witnessed keys
+subtracted (section 1.2: 2,324,517 against 448,732). `Miller` does not depend
+on the update and `Finish` only on whether a next committee is recorded. The
+512-signer row sits beside the real chain: update 1 on mainnet's own keys
+(period 1881, 511 signers, with a handoff) costs 5,474,785 in `Begin`, above.
+`a_full_committee_and_the_two_thirds_floor_each_fit_every_step_under_the_cap`
+(`executor-tests/tests/program.rs`) holds both rows and the `E7205` refusal
+in CI.
+
 ## 3. Real proving (Performance #2, #4)
 
 `RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove`

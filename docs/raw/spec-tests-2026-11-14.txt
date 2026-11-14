@@ -1,0 +1,40 @@
+# consensus-specs v1.7.0-beta.4 light_client vectors against sextant-core
+
+| suite | fork | case | result | compared |
+|---|---|---|---|---|
+| single_merkle_proof | electra | BeaconBlockBody/execution_merkle_proof | pass | gindex 25, depth 4 |
+| single_merkle_proof | electra | BeaconState/current_sync_committee_merkle_proof | pass | gindex 86, depth 6 |
+| single_merkle_proof | electra | BeaconState/finality_root_merkle_proof | pass | gindex 169, depth 7 |
+| single_merkle_proof | electra | BeaconState/next_sync_committee_merkle_proof | pass | gindex 87, depth 6 |
+| single_merkle_proof | fulu | BeaconBlockBody/execution_merkle_proof | pass | gindex 25, depth 4 |
+| single_merkle_proof | fulu | BeaconState/current_sync_committee_merkle_proof | pass | gindex 86, depth 6 |
+| single_merkle_proof | fulu | BeaconState/finality_root_merkle_proof | pass | gindex 169, depth 7 |
+| single_merkle_proof | fulu | BeaconState/next_sync_committee_merkle_proof | pass | gindex 87, depth 6 |
+| single_merkle_proof | gloas | BeaconBlockBody/execution_block_hash_merkle_proof | pass | gindex 2856, depth 11 |
+| single_merkle_proof | gloas | BeaconState/current_sync_committee_merkle_proof | pass | gindex 2945, depth 11 |
+| single_merkle_proof | gloas | BeaconState/finality_root_merkle_proof | pass | gindex 735, depth 9 |
+| single_merkle_proof | gloas | BeaconState/next_sync_committee_merkle_proof | pass | gindex 2946, depth 11 |
+| sync | electra | advance_finality_without_sync_committee | pass | 5 steps, 4 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 5 of 5 checks |
+| sync | electra | gloas_store_with_legacy_data | pass, scoped: step 0: next committee from an update finalizing genesis, refused (BadExecutionBranch) | 1 steps, 0 updates applied, 1 refused (1 BadExecutionBranch); finalized header agrees at 1 of 1 checks |
+| sync | electra | light_client_sync | pass, scoped: step 5: force_update (sextant applies finalized updates only); step 8: force_update (sextant applies finalized updates only) | 10 steps, 3 updates applied, 5 refused (2 AlreadyApplied, 3 HandoffNotVerified); finalized header agrees at 5 of 10 checks |
+| sync | electra | light_client_sync_no_force_update | pass | 3 steps, 1 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 3 of 3 checks |
+| sync | electra | supply_sync_committee_from_past_update | pass | 1 steps, 1 updates applied, 0 refused; finalized header agrees at 1 of 1 checks |
+| sync | fulu | advance_finality_without_sync_committee | pass | 5 steps, 4 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 5 of 5 checks |
+| sync | fulu | gloas_fork | pass, scoped: step 0: next committee from an update finalizing genesis, refused (BadExecutionBranch); step 1: next committee from an update finalizing genesis, refused (BadExecutionBranch); step 3: next committee from an update finalizing genesis, refused (BadExecutionBranch); step 4: next committee from an update finalizing genesis, refused (BadExecutionBranch); step 5: next committee from an update finalizing genesis, refused (BadExecutionBranch); step 6: next committee from an update finalizing genesis, refused (BadExecutionBranch) | 8 steps, 1 updates applied, 6 refused (6 BadExecutionBranch); finalized header agrees at 8 of 8 checks |
+| sync | fulu | gloas_store_with_legacy_data | pass, scoped: step 0: next committee from an update finalizing genesis, refused (BadExecutionBranch) | 1 steps, 0 updates applied, 1 refused (1 BadExecutionBranch); finalized header agrees at 1 of 1 checks |
+| sync | fulu | light_client_sync | pass, scoped: step 5: force_update (sextant applies finalized updates only); step 8: force_update (sextant applies finalized updates only) | 10 steps, 3 updates applied, 5 refused (2 AlreadyApplied, 3 HandoffNotVerified); finalized header agrees at 5 of 10 checks |
+| sync | fulu | light_client_sync_no_force_update | pass | 3 steps, 1 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 3 of 3 checks |
+| sync | fulu | supply_sync_committee_from_past_update | pass | 1 steps, 1 updates applied, 0 refused; finalized header agrees at 1 of 1 checks |
+| sync | gloas | advance_finality_without_sync_committee | pass | 5 steps, 4 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 5 of 5 checks |
+| sync | gloas | light_client_sync | pass, scoped: step 5: force_update (sextant applies finalized updates only); step 8: force_update (sextant applies finalized updates only) | 10 steps, 3 updates applied, 5 refused (2 AlreadyApplied, 3 HandoffNotVerified); finalized header agrees at 5 of 10 checks |
+| sync | gloas | light_client_sync_no_force_update | pass | 3 steps, 1 updates applied, 1 refused (1 AlreadyApplied); finalized header agrees at 3 of 3 checks |
+| sync | gloas | supply_sync_committee_from_past_update | pass | 1 steps, 1 updates applied, 0 refused; finalized header agrees at 1 of 1 checks |
+
+| suite | fork | cases | pass | pass, scoped | fail |
+|---|---|---:|---:|---:|---:|
+| single_merkle_proof | electra | 4 | 4 | 0 | 0 |
+| single_merkle_proof | fulu | 4 | 4 | 0 | 0 |
+| single_merkle_proof | gloas | 4 | 4 | 0 | 0 |
+| sync | electra | 5 | 3 | 2 | 0 |
+| sync | fulu | 6 | 3 | 3 | 0 |
+| sync | gloas | 4 | 3 | 1 | 0 |

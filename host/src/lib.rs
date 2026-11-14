@@ -376,3 +376,135 @@ pub fn receipt_proof_from(rel: &str, tx: u64) -> sextant_core::mpt::ReceiptProof
         log_index: 0,
     }
 }
+
+// ---- a synthetic chain, for participation the real vectors do not have ----
+
+/// Fixed-depth Merkle tree with chosen leaves at chosen generalized indices
+/// and arbitrary (but fixed) filler everywhere else: a stand-in beacon state
+/// or block body whose root and branches are consistent.
+pub struct Sparse(pub Vec<(u64, [u8; 32])>);
+
+impl Sparse {
+    fn depth(g: u64) -> u32 {
+        63 - g.leading_zeros()
+    }
+    fn holds(&self, g: u64) -> bool {
+        self.0.iter().any(|(l, _)| Self::depth(*l) >= Self::depth(g) && l >> (Self::depth(*l) - Self::depth(g)) == g)
+    }
+    pub fn node(&self, g: u64) -> [u8; 32] {
+        if let Some((_, v)) = self.0.iter().find(|(l, _)| *l == g) {
+            return *v;
+        }
+        if !self.holds(g) {
+            let mut c = [0u8; 32];
+            c[..8].copy_from_slice(&g.to_le_bytes());
+            c[31] = 0xf1;
+            return c;
+        }
+        ssz::hash2(&self.node(2 * g), &self.node(2 * g + 1))
+    }
+    pub fn root(&self) -> [u8; 32] {
+        self.node(1)
+    }
+    pub fn branch(&self, g: u64) -> Vec<[u8; 32]> {
+        let mut out = vec![];
+        let mut g = g;
+        while g > 1 {
+            out.push(self.node(g ^ 1));
+            g >>= 1;
+        }
+        out
+    }
+}
+
+/// 512 synthetic keys from a seed; `(secret keys, committee)`.
+pub fn synthetic_committee(seed: u64) -> (Vec<Scalar>, SyncCommittee) {
+    let sks: Vec<Scalar> = (0..512u64).map(|i| Scalar::from(seed + i * 7919 + 1)).collect();
+    let pks: Vec<G1Affine> = sks.iter().map(|s| G1Affine::from(G1Affine::generator() * s)).collect();
+    let agg = G1Affine::from(pks.iter().fold(G1Projective::identity(), |a, p| a + p));
+    (sks, SyncCommittee { pubkeys: pks.iter().map(|p| p.to_compressed()).collect(), aggregate: agg.to_compressed() })
+}
+
+/// A pre-Gloas light-client header at `slot` whose execution payload header
+/// sits under its body root at `EXECUTION_PAYLOAD_GINDEX` (25).
+fn synthetic_header(slot: u64, state_root: [u8; 32]) -> LcHeader {
+    let execution = ExecutionHeader {
+        state_root: ssz::hash2(&[0x51; 32], &u64_root(slot)),
+        receipts_root: ssz::hash2(&[0x52; 32], &u64_root(slot)),
+        logs_bloom: vec![0; 256],
+        block_number: 26_000_000 + slot - 15_409_152,
+        block_hash: ssz::hash2(&[0x53; 32], &u64_root(slot)),
+        ..Default::default()
+    };
+    let body = Sparse(vec![(25, ssz::execution_header_root(&execution))]);
+    LcHeader {
+        beacon: BeaconHeader { slot, proposer_index: slot % 1000, parent_root: [0x50; 32], state_root, body_root: body.root() },
+        execution,
+        execution_branch: body.branch(25),
+        execution_rlp: vec![],
+    }
+}
+
+fn u64_root(v: u64) -> [u8; 32] {
+    let mut c = [0u8; 32];
+    c[..8].copy_from_slice(&v.to_le_bytes());
+    c
+}
+
+/// A mainnet-configured chain whose sync committee is 512 synthetic keys:
+/// a checkpoint at the first slot of period 1881 and one finalized update in
+/// the same period, signed by `participants` of the 512 (member `i` signs
+/// when `(7 i) mod 512 < participants`), carrying the next committee when
+/// `handoff`. Everything the program checks is real (branches, roots,
+/// domain, the aggregate signature); only the keys are not mainnet's.
+pub fn synthetic_chain(participants: usize, handoff: bool) -> (Vectors, SyncCommittee) {
+    let cfg = mainnet_config();
+    let (sks, current) = synthetic_committee(0x5e7a_0000_0000);
+    let (_, next) = synthetic_committee(0x5e7b_0000_0000);
+    let s0 = 1881 * lc::SLOTS_PER_PERIOD;
+    // The checkpoint: its state holds the current committee (gindex 86).
+    let boot_state = Sparse(vec![(86, ssz::sync_committee_root(&current))]);
+    let boot_header = synthetic_header(s0, boot_state.root());
+    let checkpoint = ssz::beacon_header_root(&boot_header.beacon);
+    // The update: finalized two epochs in, attested two epochs later; the
+    // attested state holds the finalized root (169) and the next committee (87).
+    let finalized = synthetic_header(s0 + 64, [0x60; 32]);
+    let mut leaves = vec![(169, ssz::beacon_header_root(&finalized.beacon))];
+    if handoff {
+        leaves.push((87, ssz::sync_committee_root(&next)));
+    }
+    let att_state = Sparse(leaves);
+    let attested = synthetic_header(s0 + 128, att_state.root());
+    let signature_slot = s0 + 129;
+    let mut bits = [0u8; 64];
+    for i in 0..512 {
+        if (7 * i) % 512 < participants {
+            bits[i / 8] |= 1 << (i % 8);
+        }
+    }
+    let epoch = (signature_slot - 1) / lc::SLOTS_PER_EPOCH;
+    let domain = ssz::sync_committee_domain(lc::fork_version(&cfg, epoch), &cfg.genesis_validators_root);
+    let msg = ssz::signing_root(&ssz::beacon_header_root(&attested.beacon), &domain);
+    let hm = G2Projective::from(G2Affine::from_uncompressed(&sextant_core::zk::hash_to_g2(&msg)).unwrap());
+    let sk: Scalar = (0..512).filter(|i| bls::bit(&bits, *i)).map(|i| sks[i]).sum();
+    let signature = G2Affine::from(hm * sk).to_compressed();
+    let update = Update {
+        attested,
+        next_committee: handoff.then(|| (next.clone(), att_state.branch(87))),
+        finalized,
+        finality_branch: att_state.branch(169),
+        bits,
+        signature,
+        signature_slot,
+    };
+    let v = Mainnet {
+        cfg,
+        checkpoint,
+        boot_header,
+        boot_committee: current.clone(),
+        boot_branch: boot_state.branch(86),
+        updates: vec![],
+        finality: update,
+    };
+    (v, current)
+}

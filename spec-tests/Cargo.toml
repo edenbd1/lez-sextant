@@ -1,0 +1,31 @@
+# The official consensus-spec light-client test vectors against sextant-core.
+#
+# `single_merkle_proof` (mainnet preset) runs against sextant-core itself.
+# `sync` exists only in the minimal preset (32-member committees, 8-slot
+# epochs, 8-epoch periods); build.rs compiles a second copy of the same
+# sextant-core source with the preset constants substituted, each
+# substitution counted (see build.rs and README.md).
+[workspace]
+
+[package]
+name = "sextant-spec-tests"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+sextant-core = { path = "../core", default-features = false }
+# What the minimal-preset copy of sextant-core needs, as core declares it.
+sha2 = { version = "0.10", default-features = false }
+borsh = { version = "1.5", features = ["derive"] }
+tiny-keccak = { version = "2.0", features = ["keccak"] }
+blst = "0.3.16"
+# The vectors: snappy-compressed SSZ and YAML.
+snap = "1"
+serde_yaml = "0.9"
+serde_json = "1"
+hex = "0.4"
+
+[profile.release]
+opt-level = 3

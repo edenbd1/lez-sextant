@@ -247,3 +247,26 @@ fn the_sequencer_clock_refuses_a_stale_store_and_records_stay_attestable() {
     };
     attest(&mut c, slot, q).unwrap();
 }
+
+#[test]
+fn a_full_committee_and_the_two_thirds_floor_each_fit_every_step_under_the_cap() {
+    use sextant_host::synthetic_chain;
+    for (n, handoff) in [(512, true), (342, true)] {
+        let (v, committee) = synthetic_chain(n, handoff);
+        let mut c = Chain::new();
+        init(&mut c, &v, ID).unwrap();
+        let gas = advance(&mut c, ID, &v.finality, &committee).unwrap();
+        assert!(gas.iter().all(|g| *g < GAS_CAP / 100 * 80), "{n} signers: {gas:?}");
+        assert_eq!(c.instance(&ID).store.finalized, v.finality.finalized.beacon);
+    }
+    // One fewer than two thirds: refused at Begin with E7205.
+    let (v, committee) = synthetic_chain(341, true);
+    let mut c = Chain::new();
+    init(&mut c, &v, ID).unwrap();
+    let u = &v.finality;
+    let current = c.instance(&ID);
+    let job = job_account(&LC, &ID, &job_id(&current, u));
+    let w = witness(&committee, &u.bits, AggMode::Subtract);
+    let begin = Instruction::Begin { instance_id: ID, current, update: u.clone(), committee, witness: w };
+    assert_eq!(refused(c.send(&begin, vec![instance_account(&LC, &ID), job])), code(Error::BelowParticipation));
+}

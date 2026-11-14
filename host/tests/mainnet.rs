@@ -209,3 +209,22 @@ fn a_store_older_than_the_weak_subjectivity_bound_is_refused() {
         assert_eq!(verdict(&m, &s, &u, &c).unwrap_err(), Error::CheckpointStale);
     }
 }
+
+#[test]
+fn a_synthetic_committee_at_full_and_floor_participation_verifies_and_below_the_floor_does_not() {
+    use sextant_core::lc::{self, AggMode};
+    use sextant_host::{synthetic_chain, witness};
+    for (n, handoff) in [(512, true), (342, true), (342, false)] {
+        let (v, c) = synthetic_chain(n, handoff);
+        let s = lc::bootstrap(&v.cfg, &v.checkpoint, &v.boot_header, &v.boot_committee, &v.boot_branch).unwrap();
+        let u = &v.finality;
+        let s2 = lc::apply_update(&v.cfg, &s, u, &c, &witness(&c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {}).unwrap();
+        assert_eq!(s2.finalized, u.finalized.beacon);
+        assert_eq!(s2.next_committee.is_some(), handoff);
+    }
+    let (v, c) = synthetic_chain(341, true);
+    let s = lc::bootstrap(&v.cfg, &v.checkpoint, &v.boot_header, &v.boot_committee, &v.boot_branch).unwrap();
+    let u = &v.finality;
+    let e = lc::apply_update(&v.cfg, &s, u, &c, &witness(&c, &u.bits, AggMode::Subtract), lc::FAST, &mut |_| {});
+    assert_eq!(e, Err(sextant_core::Error::BelowParticipation));
+}

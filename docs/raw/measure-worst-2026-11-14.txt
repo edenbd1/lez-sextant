@@ -1,0 +1,12 @@
+# sextant_lc through lee::V03State (LEZ v0.3.0), synthetic 512-key committee, gas cap 10000000 per transaction
+
+| signers of 512 | handoff | `Begin` | `Miller` | `Finish` | three together | largest share of the cap |
+|---:|---|---:|---:|---:|---:|---:|
+| 512 | yes | 5475094 | 4217768 | 3768199 | 13461061 | 54.8% |
+| 512 | no | 3633593 | 4217768 | 3766498 | 11617859 | 42.2% |
+| 342 | yes | 7389387 | 4217768 | 3768199 | 15375354 | 73.9% |
+| 342 | no | 5547878 | 4217768 | 3766498 | 13532144 | 55.5% |
+
+
+341 of 512 (below the floor), `Begin`: refused, E7205
+

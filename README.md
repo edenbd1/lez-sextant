@@ -28,6 +28,10 @@ against what it verified, measured on real Ethereum mainnet data.
   ([`docs/CONSUMER.md`](docs/CONSUMER.md)). Not deployed on the testnet.
 - `executor-tests/`: the committed program binaries through `lee::V03State`, the
   state machine the v0.3 sequencer applies, under the 10,000,000 gas cap.
+- `spec-tests/`: the official consensus-specs light-client test vectors
+  (release v1.7.0-beta.4, sha256-pinned and vendored: `single_merkle_proof`
+  and `sync` for Electra, Fulu and Gloas) against `sextant-core`: 27 cases, 0
+  fail ([`spec-tests/README.md`](spec-tests/README.md)).
 - `cli/`: `sextant`, the client that deploys the program and drives it from the
   vectors (`--chain mainnet|hoodi|sepolia|sepolia-gloas-fork`), pre-checking every transaction through `lee::V03State` (built on the
   v0.3.0 wallet crate, with `common` from v0.3.1 for the testnet's block format);
@@ -59,11 +63,13 @@ Requires the RISC Zero toolchains (`rzup install`: rust and cpp, r0vm 3.0.5).
 scripts/build-guests.sh                       # the two benchmark guests -> artifacts/bench/
 DOCKER=1 scripts/build-guests.sh lez          # the program, reproducibly -> artifacts/programs/v0.3/sextant_lc.bin
 DOCKER=1 scripts/build-guests.sh receiver     # the consumer, reproducibly -> artifacts/programs/v0.3/erc20_receiver.bin
-cargo test --release --manifest-path host/Cargo.toml             # 30 tests, natively: mainnet, Hoodi, Sepolia (Gloas)
-cargo test --release --manifest-path executor-tests/Cargo.toml   # 16 tests, the binaries through lee::V03State
+cargo test --release --manifest-path host/Cargo.toml             # 31 tests, natively: mainnet, Hoodi, Sepolia (Gloas)
+cargo test --release --manifest-path spec-tests/Cargo.toml       # the consensus-specs light-client vectors
+cargo test --release --manifest-path executor-tests/Cargo.toml   # 17 tests, the binaries through lee::V03State
 cargo run --release --manifest-path host/Cargo.toml --bin measure            # docs/raw/measure-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez  # docs/raw/measure-lez-*.txt
 cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver  # docs/raw/measure-receiver-*.txt
+cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_worst     # docs/raw/measure-worst-*.txt
 RISC0_DEV_MODE=0 SEGMENT_PO2=18 cargo run --release --manifest-path executor-tests/Cargo.toml --bin prove
 python3 scripts/receipt_proof.py vectors/mainnet/receipts.json vectors/mainnet/block.json 2 /tmp/p.json
 scripts/verify-onchain.sh --manifest evidence/testnet-v2/run.tsv          # the v2 run, against the sequencer's RPC
@@ -77,6 +83,7 @@ scripts/verify-onchain.sh                     # the first run (the earlier binar
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 [`docs/ONCHAIN.md`](docs/ONCHAIN.md). Choices and why:
 [`docs/DECISIONS.md`](docs/DECISIONS.md).
+Every RFP-021 requirement, its status and evidence: [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md).
 
 ## On chain today
 

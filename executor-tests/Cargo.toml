@@ -30,6 +30,9 @@ path = "src/bin/measure_lez.rs"
 name = "measure_receiver"
 path = "src/bin/measure_receiver.rs"
 [[bin]]
+name = "measure_worst"
+path = "src/bin/measure_worst.rs"
+[[bin]]
 name = "pack"
 path = "src/bin/pack.rs"
 [[bin]]

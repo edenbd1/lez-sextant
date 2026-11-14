@@ -10,6 +10,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo test --release --manifest-path host/Cargo.toml
+  spec-tests:
+    name: Consensus-spec light-client vectors (v1.7.0-beta.4) against sextant-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: The vendored vectors are the release's (sha256-pinned tarballs)
+        run: scripts/fetch-spec-tests.sh --check
+      - run: cargo test --release --manifest-path spec-tests/Cargo.toml
+      - name: Per suite, fork and case
+        run: cargo run --release --manifest-path spec-tests/Cargo.toml | tee spec-tests.txt
   executor:
     name: The committed binary through lee::V03State
     runs-on: ubuntu-latest
@@ -34,6 +45,8 @@ jobs:
         run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_lez | tee measure-lez.txt
       - name: The consumer's gas table is reproducible
         run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_receiver | tee measure-receiver.txt
+      - name: The worst-case table (512 and 342 of 512 signers) is reproducible
+        run: cargo run --release --manifest-path executor-tests/Cargo.toml --bin measure_worst | tee measure-worst.txt
   reproduce:
     name: A clean Docker rebuild is the committed binary
     runs-on: ubuntu-latest
