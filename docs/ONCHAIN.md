@@ -396,7 +396,8 @@ Payer `9nqn7xA7z54QZPHs8wWn5VzTeXTgbwq8SREr38tVK9aw`; instance id
 checkpoint header record `H6rGJgtLU67pBchitybgTfi8UdMpH3geS1jK2bMRsdV7`, final
 header record `ERpzfMGRxgm4yZDSghkkHK1u81w5J7PYB7AsZLmouagv`).
 Verifier output: [`evidence/testnet/verify.txt`](../evidence/testnet/verify.txt)
-(37 checks, 0 fail); mutation test (15 of 15 caught):
+(37 checks, 0 fail); mutation test (15 of 15 caught when recorded, 8 of them on transactions then
+unindexed; 7 of 7 today):
 [`evidence/testnet/mutation-test.txt`](../evidence/testnet/mutation-test.txt).
 
 Program header [`A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw`](https://explorer.testnet.lez.logos.co/account/A89TcYmWKXrzGkTUzLAxVExAB6HxSD6yf3dvjWMoiFzw), ImageID `fa229eddbae15b2a20126e37e03fa82a2b42c7c98f74001a7d49e93fafe205c8`.
@@ -590,7 +591,7 @@ checkpoints: their timestamp window (the deadline under
 (the mainnet vectors) now stops at its first step with `Init` reverted. The
 same transactions still run, on the committed vectors with their recorded
 timestamps, in `cargo test --release --manifest-path executor-tests/Cargo.toml`
-(16 tests). On a sequencer, a fresh checkpoint has to be fetched first
+(17 tests). On a sequencer, a fresh checkpoint has to be fetched first
 (`scripts/fetch-vectors.py`, Hoodi and Sepolia only; there are no mainnet
 endpoints).
 
