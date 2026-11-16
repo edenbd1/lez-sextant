@@ -24,6 +24,12 @@
 #   SEQ=... LEZ=... v04/scripts/e2e-seq.sh [RUN]
 # STEPS (default "run private") picks the drives; RISC0_DEV_MODE=1 (sequencer
 # and prover) checks the flow with fake receipts in minutes.
+# FRESH=1 first fetches a new Sepolia vector set into RUN/vectors, read-only from
+# public beacon and execution endpoints (scripts/fetch-vectors.py, which checks
+# two beacon implementations agree), and runs every step against it. The
+# committed vectors/sepolia-v04 checkpoint is only accepted by a live sequencer
+# within its 14-day weak-subjectivity bound (until about 2026-11-24 20:24 UTC);
+# a fresh set is about three days old, so the run works at any date.
 # Nothing here reaches a public network.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -34,6 +40,12 @@ PORT="${PORT:-3078}"; METRICS_PORT="${METRICS_PORT:-9478}"
 export RISC0_DEV_MODE="${RISC0_DEV_MODE:-0}"
 STEPS="${STEPS:-run private}"
 rm -rf "$RUN"; mkdir -p "$RUN"
+if [ "${FRESH:-0}" = 1 ]; then
+  python3 scripts/fetch-vectors.py sepolia "$RUN/vectors" > "$RUN/fetch-vectors.log"
+  python3 scripts/fetch-vectors.py sepolia "$RUN/vectors" --checkpoint-block >> "$RUN/fetch-vectors.log"
+  export SEXTANT_VECTORS="$RUN/vectors"
+  cat "$RUN/fetch-vectors.log"
+fi
 # The binary under test, copied so a rebuild during the run cannot change it.
 cp "${SEXTANT_BIN:-v04/artifacts/sextant_lc.bin}" "$RUN/sextant_lc.bin"
 export SEXTANT_BIN="$RUN/sextant_lc.bin"

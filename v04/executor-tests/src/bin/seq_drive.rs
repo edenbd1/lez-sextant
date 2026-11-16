@@ -6,7 +6,8 @@
 //! ```text
 //! seq_drive pubkey             the payer's public key, hex (for the genesis)
 //! seq_drive deploy RPC DIR     load sextant_lc through the program loader; DIR/programs.json
-//! seq_drive run RPC DIR        Init from the Sepolia checkpoint (vectors/sepolia-v04), every
+//! seq_drive run RPC DIR        Init from the Sepolia checkpoint (vectors/sepolia-v04, or the
+//!                              set SEXTANT_VECTORS names: v04/scripts/e2e-seq.sh FRESH=1), every
 //!                              update, attestations and refusals; DIR/manifest.tsv and
 //!                              DIR/blocks/<id>.borsh for every block of the run
 //! seq_drive payers             the private fee payers (local.json funds them at genesis)
@@ -56,7 +57,34 @@ const GAS_LIMIT: u64 = 9_500_000;
 /// The wallet's `max_fee_for`: `(gas_limit + 100_000) * 64`.
 const MAX_FEE: u128 = (GAS_LIMIT as u128 + 100_000) * 64;
 const SEGMENT: usize = 96 * 1024;
-const VECTORS: &str = "vectors/sepolia-v04";
+/// The committed Sepolia set; `SEXTANT_VECTORS` names another, such as one
+/// fetched minutes before the run (`FRESH=1 v04/scripts/e2e-seq.sh`). A
+/// checkpoint is only accepted within its weak-subjectivity bound (14 days
+/// after its slot, by the sequencer's clock), so the committed set stops
+/// initialising on a live sequencer two weeks after it was fetched; a fresh
+/// set runs the same scenario at any date.
+const COMMITTED: &str = "vectors/sepolia-v04";
+
+fn vectors_dir() -> String {
+    std::env::var("SEXTANT_VECTORS").unwrap_or_else(|_| COMMITTED.to_string())
+}
+
+/// The receipt proofs a directory holds, `(index, path)`, ascending: the
+/// fetcher names them `receipt-proof-tx<i>.json` after the transaction they prove.
+fn receipt_proofs(dir: &str) -> Vec<(u64, String)> {
+    let mut v: Vec<(u64, String)> = std::fs::read_dir(sextant_host::root_dir().join(dir))
+        .unwrap()
+        .filter_map(|e| e.ok()?.file_name().into_string().ok())
+        .filter_map(|f| Some((f.strip_prefix("receipt-proof-tx")?.strip_suffix(".json")?.parse().ok()?, format!("{dir}/{f}"))))
+        .collect();
+    v.sort();
+    v
+}
+
+/// The receipt proof of the checkpoint's execution block (`block-<n>/`).
+fn checkpoint_receipt() -> (u64, String) {
+    receipt_proofs(&format!("{}/block-{}", vectors_dir(), checkpoint_block())).into_iter().next().expect("a receipt proof at the checkpoint block")
+}
 const SEPOLIA: u64 = 11_155_111;
 const ID: [u8; 32] = *b"sepolia-v04/seq/instance/0000001";
 const MAINNET_ID: [u8; 32] = *b"mainnet/seq/instance/00000000001";
@@ -283,7 +311,7 @@ fn code(e: Error) -> Option<u32> {
 }
 
 fn vectors() -> Mainnet {
-    load_chain(VECTORS, SEPOLIA)
+    load_chain(&vectors_dir(), SEPOLIA)
 }
 
 fn main() {
@@ -400,21 +428,41 @@ fn run(rpc: &str, dir: &Path) {
     // 6. Attestations against the last header and the checkpoint's, and refusals.
     let slot = now.store.finalized.slot;
     let hdr = lc(header_account(&me, &ID, slot));
-    // The vector set's WETH holder holds nothing at this block: the attested statement is
-    // `balanceOf[holder] == 0`, and `>= 1 wei` is the predicate the state does not satisfy.
-    let weth = |chain_id| Query { chain_id, proof: Proof::Storage(weth_proof_from(&format!("{VECTORS}/getproof-weth.json"))), predicates: vec![Predicate { field: Field::SlotValue, cmp: Cmp::Eq, value: [0; 32] }] };
+    // The attested statement is `balanceOf[holder] == <the proven balance>`, and one wei
+    // more is the predicate the state does not satisfy.
+    let vdir = vectors_dir();
+    let weth_path = format!("{vdir}/getproof-weth.json");
+    // The balance the proof carries: zero in the committed set; a fresh set's
+    // holder is whoever deposited last, so the statement is that balance.
+    let bal = sextant_host::json(&weth_path)["result"]["storageProof"][0]["value"].as_str().unwrap().to_string();
+    let mut balance = [0u8; 32];
+    let bv = sextant_host::hexv(&bal);
+    balance[32 - bv.len()..].copy_from_slice(&bv);
+    let weth = |chain_id| Query { chain_id, proof: Proof::Storage(weth_proof_from(&weth_path)), predicates: vec![Predicate { field: Field::SlotValue, cmp: Cmp::Eq, value: balance }] };
     let att = |q: Query, s: u64| M::Attest { instance_id: ID, slot: s, query: q };
-    d.send("Attest: WETH balanceOf[holder] == 0 at the last header", Verdict::Applied, None, hdr, &[], &[], &att(weth(SEPOLIA), slot));
-    let log92 = || receipt_proof_from(&format!("{VECTORS}/receipt-proof-tx92.json"), 92);
-    d.send("Attest: a log of tx 92 at the last header", Verdict::Applied, None, hdr, &[], &[], &att(Query { chain_id: SEPOLIA, proof: Proof::Log(log92()), predicates: vec![] }, slot));
-    let ckpt = format!("{VECTORS}/block-{}/receipt-proof-tx0.json", checkpoint_block());
-    let ck = || receipt_proof_from(&ckpt, 0);
-    d.send("Attest: a log of tx 0 at the checkpoint header", Verdict::Applied, None, lc(header_account(&me, &ID, boot_slot)), &[], &[], &att(Query { chain_id: SEPOLIA, proof: Proof::Log(ck()), predicates: vec![] }, boot_slot));
+    let wei = u128::from_be_bytes(balance[16..].try_into().unwrap());
+    d.send(&format!("Attest: WETH balanceOf[holder] == {wei} at the last header"), Verdict::Applied, None, hdr, &[], &[], &att(weth(SEPOLIA), slot));
+    // The busiest receipt the fetcher proved (tx 92 in the committed set).
+    let (ti, tpath) = receipt_proofs(&vdir).pop().expect("a receipt proof at the last header's block");
+    let logt = || receipt_proof_from(&tpath, ti);
+    d.send(&format!("Attest: a log of tx {ti} at the last header"), Verdict::Applied, None, hdr, &[], &[], &att(Query { chain_id: SEPOLIA, proof: Proof::Log(logt()), predicates: vec![] }, slot));
+    let (ci, ckpt) = checkpoint_receipt();
+    let ck = || receipt_proof_from(&ckpt, ci);
+    d.send(&format!("Attest: a log of tx {ci} at the checkpoint header"), Verdict::Applied, None, lc(header_account(&me, &ID, boot_slot)), &[], &[], &att(Query { chain_id: SEPOLIA, proof: Proof::Log(ck()), predicates: vec![] }, boot_slot));
     d.send("Attest as a mainnet statement (other chain)", Verdict::Reverted, code(Error::ChainMismatch), hdr, &[], &[], &att(weth(1), slot));
+    // One wei more than the holder has: a predicate the state does not satisfy.
     let mut zero = weth(SEPOLIA);
     zero.predicates[0].cmp = Cmp::Ge;
-    zero.predicates[0].value[31] = 1;
-    d.send("Attest: WETH balanceOf[holder] >= 1 wei, which the state does not satisfy", Verdict::Reverted, code(Error::PredicateFalse), hdr, &[], &[], &att(zero, slot));
+    let mut more = balance;
+    for byte in more.iter_mut().rev() {
+        let (v, carry) = byte.overflowing_add(1);
+        *byte = v;
+        if !carry {
+            break;
+        }
+    }
+    zero.predicates[0].value = more;
+    d.send(&format!("Attest: WETH balanceOf[holder] >= {} wei, which the state does not satisfy", wei + 1), Verdict::Reverted, code(Error::PredicateFalse), hdr, &[], &[], &att(zero, slot));
     d.send("Attest: the checkpoint's receipt against the last header", Verdict::Reverted, code(Error::BadInclusion), hdr, &[], &[], &att(Query { chain_id: SEPOLIA, proof: Proof::Log(ck()), predicates: vec![] }, slot));
     d.send(
         "Attest at a slot never recorded",
@@ -445,7 +493,7 @@ fn run(rpc: &str, dir: &Path) {
 
 /// The execution block of the checkpoint (vectors/sepolia-v04/block-<n>/).
 fn checkpoint_block() -> u64 {
-    let root = sextant_host::root_dir().join(VECTORS);
+    let root = sextant_host::root_dir().join(vectors_dir());
     std::fs::read_dir(&root)
         .unwrap()
         .filter_map(|e| e.ok()?.file_name().into_string().ok())
@@ -635,7 +683,7 @@ mod private {
     use sextant_host::{mainnet_steps, receipt_proof_from, witness};
     use sextant_program_v04::{self as sx, header_account, index_path, instance_account, instance_seed, record_leaf, Instance, Internal, Message as M};
 
-    use super::{checkpoint_block, fee_payers, programs, vectors, Check, Driver, Rpc, Verdict, PRIVATE_ID, SEPOLIA, VECTORS};
+    use super::{checkpoint_receipt, fee_payers, programs, vectors, Check, Driver, Rpc, Verdict, PRIVATE_ID, SEPOLIA};
 
     fn fee_inbox() -> AccountId {
         fee_core::compute_fee_inbox_account_id(fee_core::fee_account_id())
@@ -830,8 +878,8 @@ mod private {
     }
 
     fn checkpoint_query() -> Query {
-        let ckpt = format!("{VECTORS}/block-{}/receipt-proof-tx0.json", checkpoint_block());
-        Query { chain_id: SEPOLIA, proof: Proof::Log(receipt_proof_from(&ckpt, 0)), predicates: vec![] }
+        let (ci, ckpt) = checkpoint_receipt();
+        Query { chain_id: SEPOLIA, proof: Proof::Log(receipt_proof_from(&ckpt, ci)), predicates: vec![] }
     }
 
     pub fn run(rpc: &str, dir: &Path) {
@@ -859,13 +907,14 @@ mod private {
         let after: Instance = borsh::from_slice(&d.rpc.actor_state(inst, me)).expect("the instance");
         assert_eq!(after.store, next, "the instance advanced to the verified store");
 
-        // 2. A private attestation: a log of the checkpoint block's tx 0, against the
+        // 2. A private attestation: a log of the checkpoint block's proved receipt, against the
         //    checkpoint's record (position 0) under the instance's current index root.
         let recs = records(&m, 1);
         let leaves: Vec<[u8; 32]> = recs.iter().map(record_leaf).collect();
         assert_eq!(after.index.root(), sx::index_root_of(leaves[0], 0, &index_path(&leaves, 0)));
         let msg = M::AttestPrivate { instance_id: PRIVATE_ID, root: after.index.root(), position: 0, record: recs[0].clone(), path: index_path(&leaves, 0), query: checkpoint_query() };
-        let label = "private attestation: a log of the checkpoint block's tx 0, under the index root";
+        let label = format!("private attestation: a log of the checkpoint block's tx {}, under the index root", checkpoint_receipt().0);
+        let label = label.as_str();
         let p = prove(&mut d.rpc, me, label, &payers[1], &Keys::new(0x41), borsh::to_vec(&msg).unwrap(), vec![lc(inst)]);
         d.send_private(label, &p);
 
