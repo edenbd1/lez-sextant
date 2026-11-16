@@ -1,0 +1,134 @@
+$ scripts/verify-archived.sh   (2026-11-16T11:49Z, offline, archive recorded 2026-11-16T11:39:57Z)
+rpc-archive serve evidence/archive/lez.jsonl.gz on 127.0.0.1:8647 (182 answers)
+##### evidence/testnet/run.tsv
+sextant_lc against http://127.0.0.1:8647, from evidence/testnet/run.tsv
+  ok   program header A89TcYmWKXrz… names ImageID fa229eddbae15b2a…
+  ok   deploy segment6: 4696985669407edc… in block 19128
+  ok   deploy segment5: eadf6abf0a4a1442… in block 19145
+  ok   deploy segment4: 493cbc535a1e803b… in block 19150
+  ok   deploy segment3: a2cf0a241e2ffd88… in block 19154
+  ok   deploy segment2: b5006e54a7c5f55b… in block 19166
+  ok   deploy segment1: 3f8b3d81afcb051f… in block 19170
+  ok   deploy segment0: 41faafcc0cce9aac… in block 19184
+  ok   deploy header: cf7e066e244b0b00… in block 19184
+  ok   init: applied, ba6cdef7ccf95674… in block 19250, charged 1833662 gas = the pre-checked gas, below its limit 2017028
+  ok   init-again: refused (E7291), c4b6c79cec2fe1ae… in block 19251, charged its whole limit 2017028
+  ok   attest-checkpoint-transfer-log: applied, 33753c55f9985f03… in block 19252, charged 91173 gas = the pre-checked gas, below its limit 100290
+  ok   attest-checkpoint-weth-balance: applied, ffa95195ab06919c… in block 19253, charged 304267 gas = the pre-checked gas, below its limit 334693
+  ok   attest-wrong-chain: refused (E7209), fcbddb6935b9b450… in block 19397, charged its whole limit 100290
+  ok   attest-predicate-false: refused (E7208), 7c12add0f6cb8f83… in block 19534, charged its whole limit 100290
+  ok   attest-slot-not-covered: refused (E7207), 19be290878d91691… in block 19721, charged its whole limit 334693
+  ok   attest-unrecorded-header: refused (E7292), 345fc37dd43ca767… in block 19736, charged its whole limit 100290
+  ok   u1-begin: applied, f7bc0360db006954… in block 19780, charged 5473086 gas = the pre-checked gas, below its limit 6020394
+  ok   u1-finish-before-miller: refused (E7295), 73de61646bcfdff1… in block 20011, charged its whole limit 4145066
+  ok   u1-miller: applied, 88c03e2d5a48ac32… in block 21861, charged 4217572 gas = the pre-checked gas, below its limit 4269747
+  ok   u1-finish: applied, d414caa45b380502… in block 21874, charged 3768242 gas = the pre-checked gas, below its limit 3815924
+  ok   u2-begin: applied, dcf68b9402c6d7c1… in block 25788, charged 5344557 gas = the pre-checked gas, below its limit 5408002
+  ok   u2-miller: applied, 28f93ac488eb426f… in block 25799 (recorded in 25798: moved by a block rewrite), charged 4217572 gas = the pre-checked gas, below its limit 4269747
+  ok   u2-finish: applied, included in block 25802 (recorded in 25799: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-begin: applied, included in block 25802 (recorded in 25800: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-miller: applied, included in block 25803 (recorded in 25801: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u3-finish: applied, included in block 25803 (recorded in 25802: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u4-begin: applied, included in block 25804; block shared with other charged transactions, charge not separable
+  ok   u4-miller: applied, included in block 25804 (recorded in 25805: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   u4-finish: applied, included in block 25805 (recorded in 25806: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   attest-final-transfer-log: applied, included in block 25805; block shared with other charged transactions, charge not separable
+  ok   attest-final-weth-balance: applied, 3c8b4fea45d1d00d… in block 25814, charged 304267 gas = the pre-checked gas, below its limit 317309
+  ok   attest-final-wrong-chain: refused (E7209), 74edea40a8d5be16… in block 25821, charged its whole limit 100290
+  ok   final state of 3T51gKhDkckq…: 379 bytes as the run left them
+  ok   final state of H6rGJgtLU67p…: 120 bytes as the run left them
+  ok   final state of ERpzfMGRxgm4…: 120 bytes as the run left them
+  ok   control: a random hash (a9b17b95ab17…) does not resolve
+37 checks pass, 0 fail (17 applied and 7 refused transactions in the manifest; 8 in blocks shared with other charged transactions; 7 moved by a block rewrite since the run)
+##### evidence/testnet-v2/run.tsv
+sextant_lc against http://127.0.0.1:8647, from evidence/testnet-v2/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   deploy segment6: 3952262f74bdb5a8… in block 29268
+  ok   deploy segment5: 917101817b51979a… in block 29275
+  ok   deploy segment4: 57241caf369270ab… in block 29275
+  ok   deploy segment3: c7d4fc4ca0fa8373… in block 29275
+  ok   deploy segment2: 0891a911a1b0cbaf… in block 29275
+  ok   deploy segment1: 8c944729fdcf7fac… in block 29275
+  ok   deploy segment0: 8b4d0d0260423ebf… in block 29275
+  ok   deploy header: 3eefcfc6805a8764… in block 29275
+  ok   init: applied, e841867d66a7f27a… in block 29281 (recorded in 29280: moved by a block rewrite), charged 1835474 gas = the pre-checked gas, below its limit 1863828
+  ok   attest-checkpoint-transfer-log: applied, included in block 29290 (recorded in 29281: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   attest-checkpoint-weth-balance: applied, included in block 29290 (recorded in 29282: moved by a block rewrite); block shared with other charged transactions, charge not separable
+  ok   attest-wrong-chain: refused, included in block 29290; block shared with other charged transactions, charge not separable
+  ok   attest-predicate-false: refused (E7208), b7968fa6ed23a9ae… in block 29291, charged its whole limit 100290
+  ok   attest-slot-not-covered: refused (E7207), 372b61d363f75687… in block 29292, charged its whole limit 334693
+  ok   attest-unrecorded-header: refused (E7292), 24a52ad5c32072a1… in block 29293, charged its whole limit 100290
+  ok   u1-begin: applied, 54c7c8c9c103f07f… in block 29294, charged 5474785 gas = the pre-checked gas, below its limit 5539532
+  ok   u1-miller: applied, 50c01142a83b11cb… in block 29296, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, b8432ed7777200a9… in block 29297, charged 3769621 gas = the pre-checked gas, below its limit 3817317
+  ok   u2-begin: applied, 552d0dd84b64b04e… in block 29301, charged 5346523 gas = the pre-checked gas, below its limit 5409988
+  ok   u2-miller: applied, 77ff35f926a82d7e… in block 29303, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, e17bfe494757d504… in block 29304, charged 3769208 gas = the pre-checked gas, below its limit 3816900
+  ok   u3-begin: applied, 0d7569188d3f712e… in block 29305, charged 5390598 gas = the pre-checked gas, below its limit 5454503
+  ok   u3-miller: applied, 2ce5fe9311262113… in block 29307, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, ea82c407a48500a3… in block 29308, charged 3769208 gas = the pre-checked gas, below its limit 3816900
+  ok   u4-begin: applied, 7937b2d71b993167… in block 32290, charged 3664393 gas = the pre-checked gas, below its limit 3711036
+  ok   u4-miller: applied, 7a336425cd196139… in block 32291, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u4-finish: applied, c016b5b23ed83571… in block 32292, charged 3767505 gas = the pre-checked gas, below its limit 3815180
+  ok   attest-final-transfer-log: applied, 55dd4b133af9164a… in block 32293, charged 90919 gas = the pre-checked gas, below its limit 101828
+  ok   attest-final-weth-balance: applied, 5523506f140a3f91… in block 32294, charged 304478 gas = the pre-checked gas, below its limit 317522
+  ok   attest-final-wrong-chain: refused (E7209), f5c372d223125d6e… in block 32295, charged its whole limit 100290
+  ok   u4-finish-again: refused (E7294), 074f11fa49c7addd… in block 32296, charged its whole limit 4145066
+  ok   final state of FyVTHTU4Repn…: 403 bytes as the run left them
+  ok   final state of Sgad8d8XmzNk…: 120 bytes as the run left them
+  ok   final state of En6hFJ5yr1yT…: 120 bytes as the run left them
+  ok   control: a random hash (3a70924ba2d0…) does not resolve
+36 checks pass, 0 fail (17 applied and 6 refused transactions in the manifest; 3 in blocks shared with other charged transactions; 3 moved by a block rewrite since the run)
+##### evidence/testnet-v2-sepolia/run.tsv
+sextant_lc against http://127.0.0.1:8647, from evidence/testnet-v2-sepolia/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, 86d8dcc37e7b669f… in block 32489, charged 1829341 gas = the pre-checked gas, below its limit 1857634
+  ok   attest-checkpoint-log: applied, 55377b0ed16b6a6a… in block 32491, charged 95791 gas = the pre-checked gas, below its limit 106748
+  ok   attest-checkpoint-as-mainnet: refused (E7209), e1b3d2dff137b5be… in block 32506, charged its whole limit 100290
+  ok   attest-checkpoint-predicate-false: refused (E7208), 94446db87628f4a0… in block 32509, charged its whole limit 100290
+  ok   u1-begin: applied, ebae8189ff52fb26… in block 32511, charged 5478912 gas = the pre-checked gas, below its limit 5543701
+  ok   u1-miller: applied, f6f7bee409648397… in block 32514, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, 6d44d1a9a4feb14a… in block 32518, charged 3770380 gas = the pre-checked gas, below its limit 3818083
+  ok   u2-begin: applied, 0280bf7d72deb909… in block 35619, charged 5498751 gas = the pre-checked gas, below its limit 5563738
+  ok   u2-miller: applied, b1750386fd4ef8c6… in block 35939, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u2-finish: applied, 6840f694c7c979fe… in block 35942, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u3-begin: applied, 0953f3dd1395df45… in block 36114, charged 5471263 gas = the pre-checked gas, below its limit 5535975
+  ok   u3-miller: applied, 8b2a77d41bed87f1… in block 36117, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u3-finish: applied, af21803eb8d2d0aa… in block 36118, charged 3770278 gas = the pre-checked gas, below its limit 3817980
+  ok   u4-begin: applied, d83bf0ab886a1f10… in block 36119, charged 3647314 gas = the pre-checked gas, below its limit 3693787
+  ok   u4-miller: applied, c0bc7cd0febc9034… in block 36120, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u4-finish: applied, c72f9411a93c70f2… in block 36121, charged 3768451 gas = the pre-checked gas, below its limit 3816135
+  ok   attest-final-log: applied, 40f389ffdd61b221… in block 36122, charged 90919 gas = the pre-checked gas, below its limit 101828
+  ok   attest-final-storage: applied, d22a175ece92fcba… in block 36123, charged 280143 gas = the pre-checked gas, below its limit 292944
+  ok   attest-final-as-mainnet: refused (E7209), ba26cf3df674b717… in block 36124, charged its whole limit 100290
+  ok   final state of Pi3R6DjZpELF…: 415 bytes as the run left them
+  ok   final state of HDoq6X7AyDu5…: 120 bytes as the run left them
+  ok   final state of DgRrh4mxmK8A…: 120 bytes as the run left them
+  ok   control: a random hash (7166960a1e18…) does not resolve
+24 checks pass, 0 fail (16 applied and 3 refused transactions in the manifest)
+##### evidence/testnet-v2-hoodi/run.tsv
+sextant_lc against http://127.0.0.1:8647, from evidence/testnet-v2-hoodi/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, 342a267a9743c6c4… in block 32537, charged 1839906 gas = the pre-checked gas, below its limit 1868305
+  ok   attest-checkpoint-log: applied, 8835df9a7f7f21a3… in block 32545, charged 78786 gas = the pre-checked gas, below its limit 89573
+  ok   attest-checkpoint-as-mainnet: refused (E7209), 0ea1b78839c5aeb9… in block 32560, charged its whole limit 100290
+  ok   attest-checkpoint-predicate-false: refused (E7208), aacdf2476bd0fbb6… in block 32561, charged its whole limit 100290
+  ok   u1-begin: applied, 3e955f222ba3faef… in block 36135, charged 5949207 gas = the pre-checked gas, below its limit 6018699
+  ok   u1-miller: applied, c88df82be0716f44… in block 36137, charged 4217768 gas = the pre-checked gas, below its limit 4269945
+  ok   u1-finish: applied, 35c74651e1748607… in block 36138, charged 3768958 gas = the pre-checked gas, below its limit 3816647
+  ok   final state of 7LxJDWx4ycNi…: 447 bytes as the run left them
+  ok   final state of EUhe1JgbV5HJ…: 120 bytes as the run left them
+  ok   control: a random hash (bde8c8c4e0e0…) does not resolve
+11 checks pass, 0 fail (5 applied and 2 refused transactions in the manifest)
+##### evidence/testnet-v2-sepolia-portage/run.tsv
+sextant_lc against http://127.0.0.1:8647, from evidence/testnet-v2-sepolia-portage/run.tsv
+  ok   program header Ebe8rifvjyvw… names ImageID ad6fbedb983da6b6…
+  ok   init: applied, a229935353b74089… in block 79184, charged 1834893 gas = the pre-checked gas, below its limit 1863241
+  ok   attest-checkpoint-log: applied, 7cbd9d7bdc7c2ff8… in block 79185, charged 95791 gas = the pre-checked gas, below its limit 106748
+  ok   attest-checkpoint-as-mainnet: refused (E7209), 76a47309ba9625e0… in block 79186, charged its whole limit 100290
+  ok   final state of 8if4JHY17qPN…: 415 bytes as the run left them
+  ok   final state of 9Vs169NnZZP6…: 120 bytes as the run left them
+  ok   final state of 9Vs169NnZZP6…: 120 bytes as the run left them
+  ok   control: a random hash (97dde240c5b6…) does not resolve
+8 checks pass, 0 fail (2 applied and 1 refused transactions in the manifest)
+##### PASS (serve)

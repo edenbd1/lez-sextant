@@ -66,9 +66,14 @@ def call(method, param):
             if attempt == 2:
                 raise
 
+def hashes_to(raw, tx):
+    # A transaction's hash is SHA-256 of its bytes after the variant tag.
+    return hashlib.sha256(raw[1:]).hexdigest() == tx
+
 def block_of(tx):
+    # The block a transaction resolves to, if the bytes the endpoint returns hash to it.
     res = call("getTransaction", tx).get("result")
-    if isinstance(res, list) and len(res) > 1:
+    if isinstance(res, list) and len(res) > 1 and hashes_to(base64.b64decode(res[0]), tx):
         return str(res[1] if not isinstance(res[1], dict) else res[1].get("height"))
     return None
 
@@ -94,10 +99,19 @@ def gas_limit_of(tx):
     assert tx[o] == 1, "a fee-exempt transaction"
     return struct.unpack_from("<Q", tx, o + 1 + 32)[0]
 
+# A LEZ block's hash: SHA256(prefix || borsh(id, prev, timestamp, transactions)),
+# lez/common/src/block.rs HashableBlockData; the header's own hash field and the
+# trailing Bedrock status byte are not covered.
+BLOCK_PREFIX = b"/LEE/v0.3/Message/Block/" + bytes(8)
+def block_hash_ok(raw):
+    return len(raw) > 81 and hashlib.sha256(BLOCK_PREFIX + raw[:40] + raw[72:-1]).digest() == raw[40:72]
+
 def fee_summary(block):
     # The block's fee transaction: program FEE, 4 shard selectors, no nonce, instruction
     # data borsh(Distribute { summary: { gas_used_exec: u64, gas_used_stor: u64, .. }, .. }).
     raw = base64.b64decode(call("getBlock", block)["result"])
+    assert int.from_bytes(raw[:8], "little") == int(block), f"getBlock({block}) returned another block"
+    assert block_hash_ok(raw), f"block {block}: its contents do not hash to its header's hash"
     i = raw.find(unb58(FEE) + struct.pack("<I", 4))
     assert i >= 0, f"block {block} has no fee transaction"
     o = i + 32 + 4 + 4 * 64
@@ -132,6 +146,8 @@ def scan_for(tx, around, program):
         if r is None:
             break
         raw = base64.b64decode(r)
+        if not block_hash_ok(raw):
+            continue
         i = raw.find(pid)
         while i >= 1:
             if raw[i - 1] == 0:
@@ -187,6 +203,9 @@ for line in open(manifest):
             found = str(res[1] if not isinstance(res[1], dict) else res[1].get("height"))
             mine = base64.b64decode(res[0])
             note = ""
+            if not hashes_to(mine, tx):
+                report(False, f"{label}: the bytes getTransaction returns do not hash to {tx[:16]}…")
+                continue
         else:
             hit = scan_for(tx, int(block), program) if program and block.isdigit() else None
             if hit is None:

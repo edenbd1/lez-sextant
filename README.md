@@ -78,7 +78,19 @@ scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia/run.tsv  # the 
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-hoodi/run.tsv    # the Hoodi instance
 scripts/verify-onchain.sh --manifest evidence/testnet-v2-sepolia-portage/run.tsv  # the Sepolia instance for a bridge deposit
 scripts/verify-onchain.sh                     # the first run (the earlier binary, fa229edd)
+scripts/verify-archived.sh                    # all five runs, offline, from evidence/archive/
 ```
+
+The public LEZ testnet is reset when it moves to 0.4, and these runs will no
+longer be on it. [`evidence/archive/`](evidence/archive/) keeps every
+JSON-RPC answer `verify-onchain.sh` reads for the five runs, recorded from
+the public endpoint while it served them (date in `evidence/archive/RECORDED`;
+`scripts/verify-archived.sh --record` re-records). `scripts/verify-archived.sh`
+runs the same verifier against it, offline: 37 + 36 + 24 + 11 + 8 checks,
+0 fail. It still recomputes every transaction hash and every LEZ block hash
+from the bytes, so one byte altered in the archive fails the re-check; what
+an archive cannot show is that the public network served those bytes, which
+the live re-check showed while it could.
 
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 [`docs/ONCHAIN.md`](docs/ONCHAIN.md). Choices and why:
