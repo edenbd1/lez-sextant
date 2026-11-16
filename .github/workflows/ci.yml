@@ -86,6 +86,14 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y libpcsclite-dev pkg-config libclang-dev
       - run: cargo build --release --manifest-path cli/Cargo.toml
       - run: cli/target/release/sextant image-id
+  archive:
+    name: Public testnet runs, re-checked offline from evidence/archive
+    runs-on: ubuntu-latest
+    # The LEZ testnet answers verify-onchain.sh reads, recorded from the public
+    # endpoint; no network is used here.
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/verify-archived.sh
   docs:
     name: Docs links resolve
     runs-on: ubuntu-latest
