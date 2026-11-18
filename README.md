@@ -92,6 +92,21 @@ from the bytes, so one byte altered in the archive fails the re-check; what
 an archive cannot show is that the public network served those bytes, which
 the live re-check showed while it could.
 
+**Following Ethereum unattended.** `scripts/live-follow.py loop sepolia mainnet`
+follows Sepolia and mainnet finality every 384 s: it fetches each finality and
+period update from two independent beacon implementations, keeps only what both
+serve identically, and replays it with `host/src/bin/follow`, which is
+`sextant-core`, the verifier the `sextant_lc` guest runs (BLS sync-committee
+signature, finality branch, committee handoff). Everything it fetched and every
+verdict is in [`evidence/live-run/`](evidence/live-run/);
+`scripts/verify-live.sh` replays it offline (`--online` also checks every
+finalized root against the beacon chain), and `scripts/mutation-test-live.sh`
+shows the replay refusing seven kinds of corrupted update. It runs off chain:
+[`docs/LIVE-RUN.md`](docs/LIVE-RUN.md) says how the same updates go on chain.
+`scripts/crosscheck-helios.sh` replays the same files through Helios'
+consensus core (a16z, test-only) and requires the same verdict, finalized
+header and execution block on every one.
+
 Results: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md). On chain:
 [`docs/ONCHAIN.md`](docs/ONCHAIN.md). Choices and why:
 [`docs/DECISIONS.md`](docs/DECISIONS.md).

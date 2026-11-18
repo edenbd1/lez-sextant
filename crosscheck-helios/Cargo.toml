@@ -1,0 +1,18 @@
+[package]
+name = "crosscheck-helios"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Test-only: replay the live run's bootstrap and updates through Helios' consensus-core and compare with Sextant's verdicts"
+
+# Not part of any guest or program: a separate, test-only crate.
+[workspace]
+
+[dependencies]
+# a16z/helios 0.12.0 (tag 0.12.0, commit 2af9b41), consensus-core only
+helios-consensus-core = { git = "https://github.com/a16z/helios", rev = "2af9b41887e069144ee56cd710f3ddca195473f8" }
+alloy = { version = "2.1.0", default-features = false, features = ["consensus", "rlp"] }
+alloy-rlp = "0.3.12"
+tree_hash = "0.10.0"
+serde_json = "1"
+eyre = "0.6"

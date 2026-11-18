@@ -1,0 +1,12 @@
+{
+ "block_number": 12160844,
+ "finalized_root": "0x2e9a9e273c77929932a95f7ce3e70c27647511da71db3aaad0a744d8e831b379",
+ "finalized_slot": 11605312,
+ "next_committee_known": false,
+ "period": 1416,
+ "receipts_root": "0x20d4a87c37d23e2a8c4a5b8d5c6a30d233c975620b5c2ec705ae9298ef63957e",
+ "state_root": "0xc56098250c926515dd485beb45555aedfd11d63e8c841fe826bd538b25489d29",
+ "applied": 18,
+ "refused": 0,
+ "replayed": "2026-11-18T10:40:09Z"
+}
