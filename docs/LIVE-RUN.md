@@ -122,9 +122,12 @@ genesis validators root) and the script requires:
 It then applies the seven corruptions of `scripts/mutation-test-live.sh` to
 the first applied update and requires Helios not to apply any of them.
 
-On the snapshot committed here (2026-11-18, 08:43 to 10:40 UTC): Sepolia 20
-files and mainnet 20 files (one bootstrap, one unchanged and 18 applied
-each), 0 disagreements; the corruptions are refused by Helios as an invalid
+On the snapshot committed here (2026-11-18, 08:43 to 19:51 UTC): Sepolia 90
+updates applied and mainnet 89 (plus one bootstrap and one unchanged each),
+Helios agreeing on every one. They include Sepolia's sync-committee handoff
+from period 1416 to 1417: the period update (`000011599939-period.json`),
+then updates signed by the new committee, up to finalized slot 11,608,064,
+the first of period 1417. The corruptions are refused by Helios as an invalid
 sync-committee signature (signature, participation bit, and "half the bits
 cleared"), an invalid finality proof (state root, branch), an invalid
 timestamp (attested slot) and an invalid period (signature slot). The "half

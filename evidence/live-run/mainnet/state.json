@@ -1,12 +1,12 @@
 {
- "block_number": 26441325,
- "finalized_root": "0xc88a9887158738ae9e2ca6f54693605ab7e04dcb29adfe3dafd0b5752a4f75d3",
- "finalized_slot": 15681120,
+ "block_number": 26444076,
+ "finalized_root": "0x207a86cc96c633bb86f4343ccbe2e86c4856058ab6f613803704282f6f14ae8c",
+ "finalized_slot": 15683872,
  "next_committee_known": false,
  "period": 1914,
- "receipts_root": "0x01d8b870b2637d246b3e84a05bd2a612224b33cf454c0e073fbe45b24d0dcd08",
- "state_root": "0x9e89ba68804800533ae3beeaac7785c56b9f2d148a3e7b98d98c41989a79fa92",
- "applied": 18,
+ "receipts_root": "0xe82edd6587d42c146dc35a75d5b4105023a508a036641ccaf0e20d995b6d3429",
+ "state_root": "0xeff13e0c1c0a24b827b9dd31a7acbfcc823c690bc179ab0aa6f4902de5f0fa0c",
+ "applied": 89,
  "refused": 0,
- "replayed": "2026-11-18T10:40:09Z"
+ "replayed": "2026-11-18T19:51:02Z"
 }

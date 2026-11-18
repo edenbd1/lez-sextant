@@ -1,26 +1,26 @@
 {
  "sepolia": {
-  "block_number": 12160844,
-  "finalized_root": "0x2e9a9e273c77929932a95f7ce3e70c27647511da71db3aaad0a744d8e831b379",
-  "finalized_slot": 11605312,
+  "block_number": 12163517,
+  "finalized_root": "0x70674bbcf36bd332b22b4aa4d58b27cbd5c42c80937aa662e193c12ee25bc5e0",
+  "finalized_slot": 11608064,
   "next_committee_known": false,
-  "period": 1416,
-  "receipts_root": "0x20d4a87c37d23e2a8c4a5b8d5c6a30d233c975620b5c2ec705ae9298ef63957e",
-  "state_root": "0xc56098250c926515dd485beb45555aedfd11d63e8c841fe826bd538b25489d29",
-  "applied": 18,
+  "period": 1417,
+  "receipts_root": "0xb003804035d79462573c2b580509014b8a3e1104c46fa2d78d09cc1d25b9372b",
+  "state_root": "0x1390cf594be4215604b1ad746cf854b8e559e168666085f8a701a6f542c13100",
+  "applied": 90,
   "refused": 0,
-  "replayed": "2026-11-18T10:40:09Z"
+  "replayed": "2026-11-18T19:51:01Z"
  },
  "mainnet": {
-  "block_number": 26441325,
-  "finalized_root": "0xc88a9887158738ae9e2ca6f54693605ab7e04dcb29adfe3dafd0b5752a4f75d3",
-  "finalized_slot": 15681120,
+  "block_number": 26444076,
+  "finalized_root": "0x207a86cc96c633bb86f4343ccbe2e86c4856058ab6f613803704282f6f14ae8c",
+  "finalized_slot": 15683872,
   "next_committee_known": false,
   "period": 1914,
-  "receipts_root": "0x01d8b870b2637d246b3e84a05bd2a612224b33cf454c0e073fbe45b24d0dcd08",
-  "state_root": "0x9e89ba68804800533ae3beeaac7785c56b9f2d148a3e7b98d98c41989a79fa92",
-  "applied": 18,
+  "receipts_root": "0xe82edd6587d42c146dc35a75d5b4105023a508a036641ccaf0e20d995b6d3429",
+  "state_root": "0xeff13e0c1c0a24b827b9dd31a7acbfcc823c690bc179ab0aa6f4902de5f0fa0c",
+  "applied": 89,
   "refused": 0,
-  "replayed": "2026-11-18T10:40:09Z"
+  "replayed": "2026-11-18T19:51:02Z"
  }
 }
